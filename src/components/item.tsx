@@ -1,27 +1,15 @@
 
-const urlFormat = 
-    'https://firebasestorage.googleapis.com/v0/b/toystrader-a494f.appspot.com/o/projectFiles/<FILE>?alt=media&token=<TOKEN>';
-
-// export interface Toy {
-//     title: string;
-//     id: string;
-//     file: string;
-//     userId: string;
-//     token?: string;
-//     wished?: boolean;
-// }
-
 interface ItemProps {
     title: string;
     id: string;
     file: string;
     userId: string;
     wished: boolean;
-    deleteItem: any;
+    deleteItem?: any;
     addRemoveWish: any;
 }
 
-function Item(props: any) {
+function Item(props: ItemProps) {
 
     return (
         <li>

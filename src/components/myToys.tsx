@@ -56,7 +56,6 @@ import { collection,
         const q = query(toysCollectionRef, where("userId", "==", auth?.currentUser?.uid))
         const querySnapshot = await getDocs(q);
         querySnapshot.forEach(async (doc) => {
-              // doc.data() is never undefined for query doc snapshots
               const d = doc.data();
               const filesFolderRef = ref(storage, `projectFiles/${d.file}`);
               const url = await getDownloadURL(filesFolderRef);
@@ -85,9 +84,9 @@ import { collection,
         <ul id="toyList">
           {toyList.length > 0 ? toyList.map((x) => {
             return (
-              <Item key={x.id} {...x} deleteItem={deleteItem} 
-                wished={myWishedItems.filter(w => w.id === x.id).length} addRemoveWish={addRemoveWish}>
-              </Item>)
+              <Item key={x.id} {...x} deleteItem={deleteItem} addRemoveWish={addRemoveWish}
+                wished={myWishedItems.filter(w => w.id === x.id).length > 0} />
+            )
           }) : <div>you haven't added anything yet</div>}
         </ul>
       </>

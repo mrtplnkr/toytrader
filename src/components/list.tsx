@@ -49,14 +49,13 @@ function ListPage() {
   const getToyList = async () => {
     try {
       setToyList([]);
-      const q = await query(toysCollectionRef, where("userId", "!=", auth?.currentUser?.uid))
+      const q = query(toysCollectionRef, where("userId", "!=", auth?.currentUser?.uid))
       const querySnapshot = await getDocs(q);
-      await querySnapshot.forEach(async (doc) => {
-        // doc.data() is never undefined for query doc snapshots
+      querySnapshot.forEach(async (doc) => {
         const d = doc.data();
         const filesFolderRef = ref(storage, `projectFiles/${d.file}`);
         const url = await getDownloadURL(filesFolderRef);
-        
+
         setToyList(a => [...a, {
           id: doc.id,
           userId: d.userId,
@@ -82,8 +81,7 @@ function ListPage() {
         {toyList.length > 0 ? toyList.map((x) => {
           return (
             <Item key={x.id} {...x} addRemoveWish={addRemoveWish}
-              wished={myWishedItems.filter(w => w.id === x.id).length}> 
-            </Item>)
+              wished={myWishedItems.filter(w => w.id === x.id).length > 0} /> )
         }) : <div>nothing in your area</div>}
       </ul>
     </>
