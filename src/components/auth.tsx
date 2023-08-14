@@ -23,8 +23,10 @@ function Auth() {
               <>
                 <img alt={auth?.currentUser?.displayName??'no name'} src={auth?.currentUser?.photoURL??''} onClick={() => openMenu(s => !s)} />
                 {menu && <ul>
-                  <li>{auth?.currentUser?.uid}</li>
                   <li onClick={(() => alert('click!'))}>{auth.currentUser?.displayName}</li>
+                  <li style={{textDecoration: 'underline', cursor: 'pointer'}} 
+                    onClick={() => navigate('/myToys')}>My Toys</li>
+                  <li>{auth?.currentUser?.uid}</li>
                   <li onClick={(async () => {
                     try {
                       await logOff();

@@ -4,6 +4,12 @@ import { auth, facebookProvider, googleProvider } from "../firebase-config";
 export const logOff = async () => {
     await signOut(auth);
 };
+export const checkStatus = async () => {
+    return await auth.onAuthStateChanged((e) => {
+        console.log('eee', e);
+        return e;
+    });
+}
 export const googleSign = async (callback: any) => {
     try {
         await signInWithPopup(auth, googleProvider)

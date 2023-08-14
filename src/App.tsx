@@ -15,6 +15,7 @@ import Auth from './components/auth';
 import AddNew from "./components/addNew";
 import { auth } from "./firebase-config";
 import { DashboardContext } from "./hooks/context";
+import MyToysPage from "./components/myToys";
 
 function App() {
 
@@ -46,6 +47,14 @@ function App() {
                   }
                 />
                 <Route
+                  path="/myToys"
+                  element={
+                    <RequireAuth>
+                      <MyToysPage />
+                    </RequireAuth>
+                  }
+                />
+                <Route
                   path="/addNew"
                   element={
                     <RequireAuth>
@@ -69,10 +78,10 @@ function Layout() {
 
       <ul className="navigation">
         <li>
-          <Link to="/">Public Page</Link>
+          <Link to="/">Intro</Link>
         </li>
         <li>
-          <Link to="/list">Protected Page</Link>
+          <Link to="/list">Search for toys</Link>
         </li>
       </ul>
 

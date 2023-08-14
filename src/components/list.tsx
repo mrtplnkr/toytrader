@@ -3,10 +3,13 @@ import { collection,
   doc, 
   query,
   where} from "firebase/firestore";
+import { getDownloadURL, ref } from "firebase/storage";
 import { useState } from "react";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { auth, db } from "../firebase-config";
+import { TLSSocket } from "tls";
+import { auth, db, storage } from "../firebase-config";
+import { useUserContext } from "../hooks/context";
 import Item from "./item";
 
 interface Toy {
@@ -51,21 +54,21 @@ function ListPage() {
   
   const getToyList = async () => {
     try {
-      const q = await query(toysCollectionRef, where("userId", "!=", "UtGuMAEDsQbkAKqNstSQ4R9D5uw2"))//await query(data.docs)
-      let da = new Array<Toy>();
+      const q = await query(toysCollectionRef, where("userId", "!=", auth?.currentUser?.uid))//await query(data.docs)
       const querySnapshot = await getDocs(q);
-      querySnapshot.forEach((doc) => {
+      await querySnapshot.forEach(async (doc) => {
         // doc.data() is never undefined for query doc snapshots
-        console.log(doc.id, " => ", doc.data());
         const d = doc.data();
-        da.push({
+        const filesFolderRef = ref(storage, `projectFiles/${d.file}`);
+        const url = await getDownloadURL(filesFolderRef);
+        
+        setToyList(a => [...a, {
           id: doc.id,
           userId: d.userId,
           title: d.title,
-          file: d.file,
-        })
-      }); 
-      if (da.length) setToyList(da);
+          file: url,
+        }]);
+      });
     } catch (err) {
       console.error(err);
     }
@@ -81,13 +84,13 @@ function ListPage() {
       </div>
 
       <ul id="toyList">
-        {toyList.length && toyList.map((x) => {
+        {toyList.length > 0 ? toyList.map((x) => {
           return (
             <Item key={x.id} {...x} 
               isOwned={x.userId === auth?.currentUser?.uid} deleteItem={deleteItem} 
               wished={myWishedItems.filter(w => w.id === x.id).length} addRemoveWish={addRemoveWish}>
             </Item>)
-        })}
+        }) : <div>nothing in your area</div>}
       </ul>
     </>
   );

@@ -1,9 +1,10 @@
 import { createContext, useContext } from 'react';
+import { auth } from '../firebase-config';
 
 export interface User {
-  userId: string,
+  userId?: string,
   userName: string,
-  photoUrl: string,
+  photoUrl?: string,
 };
 
 export const DashboardContext = createContext<User | undefined>(undefined);
@@ -11,8 +12,10 @@ export const DashboardContext = createContext<User | undefined>(undefined);
 export function useUserContext() {
   const user = useContext(DashboardContext);
 
-  if (user === undefined) {
+  if (!auth) {
     throw new Error('useUserContext must be used with a DashboardContext');
+  } else {
+    //set user?
   }
 
   return user;
