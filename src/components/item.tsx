@@ -8,7 +8,6 @@ const urlFormat =
 //     file: string;
 //     userId: string;
 //     token?: string;
-//     isOwned?: boolean;
 //     wished?: boolean;
 // }
 
@@ -17,7 +16,6 @@ interface ItemProps {
     id: string;
     file: string;
     userId: string;
-    isOwned: boolean;
     wished: boolean;
     deleteItem: any;
     addRemoveWish: any;
@@ -27,7 +25,7 @@ function Item(props: any) {
 
     return (
         <li>
-            {props.isOwned && <button onClick={() => props.deleteItem(props.id)}>del</button>}
+            {props.deleteItem && <button onClick={() => props.deleteItem(props.id)}>del</button>}
             <img alt={props.title} src={props.file} />
             <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between' }}>
                 <span style={{flex: 1}}>{props.title}</span>

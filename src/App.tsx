@@ -32,7 +32,11 @@ function App() {
   return (
     <div className="App">
       <header>
-        <DashboardContext.Provider value={undefined}>
+        <DashboardContext.Provider value={{
+          userId: auth?.currentUser?.uid,
+          userName: auth?.currentUser?.displayName,
+          photoUrl: auth?.currentUser?.photoURL,
+        }}>
           <BrowserRouter>
             <Routes>
               <Route element={<Layout />}>

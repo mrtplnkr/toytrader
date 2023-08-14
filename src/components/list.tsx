@@ -22,7 +22,7 @@ interface Toy {
 function ListPage() {
   let navigate = useNavigate();
 
-  const [toyList, setToyList] = useState(Array<Toy>);
+  const [toyList, setToyList] = useState<Array<Toy>>([]);
 
   const toysCollectionRef = collection(db, "toys");
 
@@ -46,15 +46,10 @@ function ListPage() {
       }
   }
 
-  const deleteItem = async (id: string) => {
-    const movieDoc = doc(db, "toys", id);
-    await deleteDoc(movieDoc);
-    getToyList();
-  };
-  
   const getToyList = async () => {
     try {
-      const q = await query(toysCollectionRef, where("userId", "!=", auth?.currentUser?.uid))//await query(data.docs)
+      setToyList([]);
+      const q = await query(toysCollectionRef, where("userId", "!=", auth?.currentUser?.uid))
       const querySnapshot = await getDocs(q);
       await querySnapshot.forEach(async (doc) => {
         // doc.data() is never undefined for query doc snapshots
@@ -86,9 +81,8 @@ function ListPage() {
       <ul id="toyList">
         {toyList.length > 0 ? toyList.map((x) => {
           return (
-            <Item key={x.id} {...x} 
-              isOwned={x.userId === auth?.currentUser?.uid} deleteItem={deleteItem} 
-              wished={myWishedItems.filter(w => w.id === x.id).length} addRemoveWish={addRemoveWish}>
+            <Item key={x.id} {...x} addRemoveWish={addRemoveWish}
+              wished={myWishedItems.filter(w => w.id === x.id).length}> 
             </Item>)
         }) : <div>nothing in your area</div>}
       </ul>
