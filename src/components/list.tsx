@@ -1,15 +1,12 @@
 import { collection, 
-  getDocs, deleteDoc,
-  doc, 
+  getDocs,
   query,
   where} from "firebase/firestore";
 import { getDownloadURL, ref } from "firebase/storage";
 import { useState } from "react";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { TLSSocket } from "tls";
 import { auth, db, storage } from "../firebase-config";
-import { useUserContext } from "../hooks/context";
 import Item from "./item";
 
 interface Toy {
@@ -34,7 +31,7 @@ function ListPage() {
   const [myWishedItems, setMyWishedItems] = useState<any[]>([]);
 
   useEffect(() => {
-    localStorage.setItem("'wishListItems", JSON.stringify(myWishedItems))
+    localStorage.setItem("wishListItems", JSON.stringify(myWishedItems))
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [myWishedItems?.length]);
 
@@ -82,7 +79,11 @@ function ListPage() {
           return (
             <Item key={x.id} {...x} addRemoveWish={addRemoveWish}
               wished={myWishedItems.filter(w => w.id === x.id).length > 0} /> )
-        }) : <div>nothing in your area</div>}
+        }) :
+        <div style={{fontSize: '0.5em'}}>
+          <h2>nothing in your area</h2>
+          <h3 style={{textDecoration: 'underline'}}>update your location settings</h3>
+        </div>}
       </ul>
     </>
   );

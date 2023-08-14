@@ -25,7 +25,7 @@ function Auth() {
                 {menu && <ul>
                   <li onClick={(() => alert('click!'))}>{auth.currentUser?.displayName}</li>
                   <li style={{textDecoration: 'underline', cursor: 'pointer'}} 
-                    onClick={() => navigate('/myToys')}>My Toys</li>
+                    onClick={() => navigate('/myToys')}>My Toys ({localStorage.getItem('myToys')})</li>
                   <li>{auth?.currentUser?.uid}</li>
                   <li onClick={(async () => {
                     try {

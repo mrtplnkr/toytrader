@@ -28,13 +28,12 @@ import { collection,
       getToyList();
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    useEffect(() => {
+        if (toyList.length > 0) localStorage.setItem('myToys', toyList.length.toString())
+    }, [toyList.length])
   
     const [myWishedItems, setMyWishedItems] = useState<any[]>([]);
-  
-    useEffect(() => {
-      localStorage.setItem("'wishListItems", JSON.stringify(myWishedItems))
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [myWishedItems?.length]);
   
     const addRemoveWish = (newItem: any) => {
         if (myWishedItems && myWishedItems.filter(x => x.id === newItem.id).length) {
@@ -84,8 +83,7 @@ import { collection,
         <ul id="toyList">
           {toyList.length > 0 ? toyList.map((x) => {
             return (
-              <Item key={x.id} {...x} deleteItem={deleteItem} addRemoveWish={addRemoveWish}
-                wished={myWishedItems.filter(w => w.id === x.id).length > 0} />
+              <Item key={x.id} {...x} deleteItem={deleteItem} addRemoveWish={addRemoveWish} />
             )
           }) : <div>you haven't added anything yet</div>}
         </ul>
