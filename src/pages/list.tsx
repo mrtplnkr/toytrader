@@ -9,7 +9,8 @@ import { useState } from "react";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, db, storage } from "../firebase-config";
-import Item from "./item";
+import { DashboardContext } from "../hooks/context";
+import Item from "../components/item";
 
 interface Toy {
   title: string;
@@ -48,7 +49,7 @@ function ListPage() {
   const getToyList = async () => {
     try {
       setToyList([]);
-      const q = query(toysCollectionRef, where("userId", "!=", auth?.currentUser?.uid))
+      const q = query(toysCollectionRef, where("userId", "!=", auth.currentUser?.uid))
       const querySnapshot = await getDocs(q);
       querySnapshot.forEach(async (doc) => {
         const d = doc.data();
@@ -69,30 +70,36 @@ function ListPage() {
 
   return (
     <>
-      <h3>Search for toys in your area</h3>
+      <DashboardContext.Provider value={{
+        userId: auth?.currentUser?.uid,
+        userName: auth?.currentUser?.displayName,
+        photoUrl: auth?.currentUser?.photoURL,
+      }}>
+        <h3>Search for toys in your area</h3>
 
-      <div style={{display: 'flex', flexDirection: 'column'}}>
-        <button style={{alignSelf: 'flex-end'}} onClick={() => navigate('/addNew')}>add your toy</button>
-        <button style={{alignSelf: 'flex-start'}} onClick={() => getToyList()}>refresh</button>
-      </div>
+        <div style={{display: 'flex', flexDirection: 'column'}}>
+          <button style={{alignSelf: 'flex-end'}} onClick={() => navigate('/addNew')}>add your toy</button>
+          <button style={{alignSelf: 'flex-start'}} onClick={() => getToyList()}>refresh</button>
+        </div>
 
-      <ul id="toyList">
-        {toyList.length > 0 ? toyList.map((x) => {
-          return (
-            <Item key={x.id} {...x} addRemoveWish={addRemoveWish}
-              wished={myWishedItems.filter(w => w.id === x.id).length > 0} /> )
-        }) :
-        <div style={{fontSize: '0.5em'}}>
-          <h2>
-            <FontAwesomeIcon icon={faBatteryEmpty} />  
-            {' '}nothing in your area
-          </h2>
-          <h3 style={{textDecoration: 'underline'}}>
-            update your location settings{' '}
-            <FontAwesomeIcon icon={faGear} />
-          </h3>
-        </div>}
-      </ul>
+        <ul id="toyList">
+          {toyList.length > 0 ? toyList.map((x) => {
+            return (
+              <Item key={x.id} {...x} addRemoveWish={addRemoveWish}
+                wished={myWishedItems.filter(w => w.id === x.id).length > 0} /> )
+          }) :
+          <div style={{fontSize: '0.5em'}}>
+            <h2>
+              <FontAwesomeIcon icon={faBatteryEmpty} />  
+              {' '}nothing in your area
+            </h2>
+            <h3 style={{textDecoration: 'underline'}}>
+              update your location settings{' '}
+              <FontAwesomeIcon icon={faGear} />
+            </h3>
+          </div>}
+        </ul>
+      </DashboardContext.Provider>
     </>
   );
 }

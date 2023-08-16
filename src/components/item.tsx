@@ -1,3 +1,4 @@
+import { memo } from "react";
 
 interface ItemProps {
     title: string;
@@ -6,7 +7,7 @@ interface ItemProps {
     userId: string;
     wished?: boolean;
     deleteItem?: any;
-    addRemoveWish: any;
+    addRemoveWish?: any;
 }
 
 function Item(props: ItemProps) {
@@ -25,4 +26,4 @@ function Item(props: ItemProps) {
     );
 }
 
-export default Item;
+export default memo(Item);
