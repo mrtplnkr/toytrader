@@ -1,16 +1,13 @@
 import { faBatteryEmpty, faGear } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { collection, 
-  getDocs,
-  query,
-  where} from "firebase/firestore";
-import { getDownloadURL, ref } from "firebase/storage";
+import { collection } from "firebase/firestore";
 import { useState } from "react";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { auth, db, storage } from "../firebase-config";
+import { auth, db } from "../firebase-config";
 import { DashboardContext } from "../hooks/context";
 import Item from "../components/item";
+import { getToyList } from "../hooks/helper";
 
 interface Toy {
   title: string;
@@ -27,7 +24,7 @@ function ListPage() {
   const toysCollectionRef = collection(db, "toys");
 
   useEffect(() => {
-    getToyList();
+    getToys();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -46,26 +43,8 @@ function ListPage() {
       }
   }
 
-  const getToyList = async () => {
-    try {
-      setToyList([]);
-      const q = query(toysCollectionRef, where("userId", "!=", auth.currentUser?.uid))
-      const querySnapshot = await getDocs(q);
-      querySnapshot.forEach(async (doc) => {
-        const d = doc.data();
-        const filesFolderRef = ref(storage, `projectFiles/${d.file}`);
-        const url = await getDownloadURL(filesFolderRef);
-
-        setToyList(a => [...a, {
-          id: doc.id,
-          userId: d.userId,
-          title: d.title,
-          file: url,
-        }]);
-      });
-    } catch (err) {
-      console.error(err);
-    }
+  const getToys = async () => {
+    setToyList(await getToyList(false));
   };
 
   return (
@@ -79,7 +58,7 @@ function ListPage() {
 
         <div style={{display: 'flex', flexDirection: 'column'}}>
           <button style={{alignSelf: 'flex-end'}} onClick={() => navigate('/addNew')}>add your toy</button>
-          <button style={{alignSelf: 'flex-start'}} onClick={() => getToyList()}>refresh</button>
+          <button style={{alignSelf: 'flex-start'}} onClick={() => getToys()}>refresh</button>
         </div>
 
         <ul id="toyList">
