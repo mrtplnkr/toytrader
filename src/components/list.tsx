@@ -1,3 +1,5 @@
+import { faBatteryEmpty, faGear } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { collection, 
   getDocs,
   query,
@@ -67,7 +69,7 @@ function ListPage() {
 
   return (
     <>
-      <h3>All other toys in your area</h3>
+      <h3>Search for toys in your area</h3>
 
       <div style={{display: 'flex', flexDirection: 'column'}}>
         <button style={{alignSelf: 'flex-end'}} onClick={() => navigate('/addNew')}>add your toy</button>
@@ -81,8 +83,14 @@ function ListPage() {
               wished={myWishedItems.filter(w => w.id === x.id).length > 0} /> )
         }) :
         <div style={{fontSize: '0.5em'}}>
-          <h2>nothing in your area</h2>
-          <h3 style={{textDecoration: 'underline'}}>update your location settings</h3>
+          <h2>
+            <FontAwesomeIcon icon={faBatteryEmpty} />  
+            {' '}nothing in your area
+          </h2>
+          <h3 style={{textDecoration: 'underline'}}>
+            update your location settings{' '}
+            <FontAwesomeIcon icon={faGear} />
+          </h3>
         </div>}
       </ul>
     </>

@@ -73,7 +73,7 @@ import { collection,
   
     return (
       <>
-        <h3>All other toys in your area</h3>
+        <h3>All your toys</h3>
   
         <div style={{display: 'flex', flexDirection: 'column'}}>
           <button style={{alignSelf: 'flex-end'}} onClick={() => navigate('/addNew')}>add your toy</button>

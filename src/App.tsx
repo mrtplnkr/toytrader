@@ -14,15 +14,16 @@ import './App.css';
 import Auth from './components/auth';
 import AddNew from "./components/addNew";
 import { auth } from "./firebase-config";
-import { DashboardContext } from "./hooks/context";
+import { DashboardContext, useUserContext } from "./hooks/context";
 import MyToysPage from "./components/myToys";
 
 function App() {
 
   function RequireAuth(children: any) {
     let location = useLocation();
-
-    if (!auth.currentUser?.uid) {
+    const user = useUserContext();
+    
+    if (!user) {
       return <Navigate to="/login" state={{ from: location }} replace />;
     }
   
