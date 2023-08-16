@@ -44,7 +44,7 @@ function ListPage() {
   }
 
   const getToys = async () => {
-    setToyList(await getToyList(false));
+    if (auth.currentUser) setToyList(await getToyList(false, auth.currentUser.uid));
   };
 
   return (

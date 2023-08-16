@@ -6,8 +6,7 @@ interface ItemProps {
     id: string;
     file: string;
     userId: string;
-    wished: boolean;
-    addRemoveWish?: any;
+    refuseOffer: any;
 }
 
 function ItemForOffer(props: ItemProps) {
@@ -22,18 +21,14 @@ function ItemForOffer(props: ItemProps) {
     return (
         <li>
             <>
-                {<button onClick={() => initiateOffer(props.id)}>make offer</button>}
-                <img alt={props.title} src={props.file} />
+                <button onClick={() => initiateOffer(props.id)}>accept (tick)</button>
+                <button onClick={() => props.refuseOffer(props.id)}>refuse (x)</button>
+                <img style={{width: '2em'}} onClick={() => alert('enlarge')} alt={props.title} src={props.file} />
                 <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between' }}>
                     <span style={{flex: 1}}>{props.title}</span>
-                    {props.wished != null && <button style={{ alignSelf: 'center' }} onClick={() => props.addRemoveWish(props)}>
-                        {props.wished ? 'wished' : 'wish'}</button>}
                 </div>
                 <span style={{flex: 1}}>{props.userId}</span>
             </>
-            <div style={{}}>
-
-            </div>
         </li>
     );
 }

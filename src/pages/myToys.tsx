@@ -1,17 +1,19 @@
-import { deleteDoc, doc } from "firebase/firestore";
+import { deleteDoc, doc, updateDoc } from "firebase/firestore";
 import { useState } from "react";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase-config";
 import { DashboardContext } from "../hooks/context";
 import Item from "../components/item";
-import { getToyList } from "../hooks/helper";
+import { getOfferList, getToyList, offersCollectionRef } from "../hooks/helper";
 import { Toy } from "../types/toy";
+import ItemForOffer from "../components/itemForOffer";
   
 function MyToysPage() {
   let navigate = useNavigate();
 
   const [toyList, setToyList] = useState<Array<Toy>>([]);
+  const [allOffers, setAllOffers] = useState<Array<Toy>>([]);
 
   useEffect(() => {
     getToys();
@@ -19,20 +21,30 @@ function MyToysPage() {
   }, []);
 
   const getToys = async () => {
-    setToyList(await getToyList(true));
-  }
+    if (auth.currentUser) setToyList(await getToyList(true, auth.currentUser.uid));
+  };
 
   useEffect(() => {
       if (toyList.length > 0) localStorage.setItem('myToys', toyList.length.toString())
-  }, [toyList.length])
+  }, [toyList.length]);
+
+  const getOffers = async (id: string) => {
+    setAllOffers(await getOfferList(id));
+  };
 
   const deleteItem = async (id: string) => {
     const movieDoc = doc(db, "toys", id);
     await deleteDoc(movieDoc);
     await getToys();
   };
-  
 
+  const refuseOffer = async () => {
+    alert('not implemented');
+    // await updateDoc(offersCollectionRef, );
+    // where 1 toy
+    // and where 2 toy
+  };
+  
   return (
     <>
       <DashboardContext.Provider value={{
@@ -50,7 +62,21 @@ function MyToysPage() {
         <ul id="toyList">
           {toyList.length > 0 ? toyList.map((x) => {
             return (
-              <Item key={x.id} {...x} deleteItem={deleteItem} />
+              <div>
+                <span style={{position: 'absolute'}} onClick={() => getOffers(x.id)}>check for offers</span>
+                <Item key={x.id} {...x} deleteItem={deleteItem} />
+                {allOffers.some(o => o.id === x.id) ? 
+                  <>
+                    {allOffers.map((ao) => {
+                      return (
+                        <ItemForOffer key={ao.id} {...ao} refuseOffer={refuseOffer} />
+                      )
+                    })}
+                  </> 
+                  : 
+                  <span>no offers</span>
+                }
+              </div>
             )
           }) : <div>you haven't added anything yet</div>}
         </ul>

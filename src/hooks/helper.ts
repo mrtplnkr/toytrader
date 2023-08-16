@@ -32,11 +32,12 @@ export const facebookSign = async (callback: any) => {
     return true;
 };
 
-export const getToyList = async (equals: boolean) => {
+export const toysCollectionRef = collection(db, "toys");
+
+export const getToyList = async (equals: boolean, uid: string) => {
     try {
         const toyList: Toy[] = [];
-        const toysCollectionRef = collection(db, "toys");
-        const q = query(toysCollectionRef, where("userId", equals ? "==" : "!=", auth?.currentUser?.uid))
+        const q = query(toysCollectionRef, where("userId", equals ? "==" : "!=", uid))
         const querySnapshot = await getDocs(q);
 
         const dataList: DocumentData[] = [];
@@ -60,4 +61,43 @@ export const getToyList = async (equals: boolean) => {
       console.error(err);
       return [];
     }
-  };
+};
+
+export const offersCollectionRef = collection(db, "offers");
+
+export const getOfferList = async (id: string) => {
+    try {
+        const toyList: Toy[] = [];
+        const q = query(offersCollectionRef, where("targetId", "==", id))
+        const querySnapshot = await getDocs(q);
+
+        const offeredItemIds: DocumentData[] = [];
+        querySnapshot.forEach((doc) => {
+            offeredItemIds.push(doc.data().destinationToy);
+        });
+
+        const dataList: Toy[] = [];
+        const toq = query(toysCollectionRef, where("id", "==", offeredItemIds));
+        const qs = await getDocs(toq);
+
+        qs.forEach((doc: any) => {
+            dataList.push({...doc.data(), id: doc.id});
+        });
+      
+        await Promise.all(dataList.map(async (d) => {
+            const filesFolderRef = ref(storage, `projectFiles/${d.file}`);
+            const url = await getDownloadURL(filesFolderRef);
+            
+            toyList.push({
+                id: d.id,
+                userId: d.userId,
+                title: d.title,
+                file: url,
+            });
+        }));
+        return toyList;
+    } catch (err) {
+      console.error(err);
+      return [];
+    }
+};
