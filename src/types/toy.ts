@@ -4,8 +4,5 @@ export interface Toy {
     id: string;
     file: string;
     userId: string;
-    offers?: number;
+    offers?: string[];
 }
- export interface ToyOffer extends Toy {
-    offerId: string;
- }

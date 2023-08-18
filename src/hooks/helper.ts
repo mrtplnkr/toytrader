@@ -2,7 +2,9 @@ import { signInWithPopup, signOut } from "firebase/auth";
 import { collection, DocumentData, getDocs, query, where } from "firebase/firestore";
 import { getDownloadURL, ref } from "firebase/storage";
 import { auth, db, facebookProvider, googleProvider, storage } from "../firebase-config";
+import { OfferModel } from "../types/offerModel";
 import { Toy } from "../types/toy";
+import { ToyOffer } from "../types/toyOffer";
 
 export const logOff = async () => {
     await signOut(auth);
@@ -48,12 +50,20 @@ export const getToyList = async (equals: boolean, uid: string) => {
       await Promise.all(dataList.map(async (d) => {
         const filesFolderRef = ref(storage, `projectFiles/${d.file}`);
         const url = await getDownloadURL(filesFolderRef);
-        
+
+        const offerCount = query(toyOffersCollectionRef, where("targetToy", "==", d.id));
+        const ocSnapshot = await getDocs(offerCount);
+        const offerList: string[] | undefined = [];
+        ocSnapshot.forEach(async (doc) => {
+            offerList.push(doc.data().targetToy);
+        });
+
         toyList.push({
             id: d.id,
             userId: d.userId,
             title: d.title,
             file: url,
+            offers: offerList ? offerList : [],
         });
     }));
       return toyList;
@@ -63,25 +73,20 @@ export const getToyList = async (equals: boolean, uid: string) => {
     }
 };
 
-export const offersCollectionRef = collection(db, "offers");
+export const toyOffersCollectionRef = collection(db, "offers");
+// export const offersCollectionRef = collection(db, "offers", "1", "2");
 
-export const getOfferList = async (id: string) => {
+export const getOfferList = async (toy: string, toyOffers: string[]) => {
     try {
-        const toyList: Toy[] = [];
-        const q = query(offersCollectionRef, where("targetId", "==", id))
-        const querySnapshot = await getDocs(q);
-
-        const offeredItemIds: DocumentData[] = [];
-        querySnapshot.forEach((doc) => {
-            offeredItemIds.push(doc.data().destinationToy);
-        });
+        const toyList: ToyOffer[] = [];
 
         const dataList: Toy[] = [];
-        const toq = query(toysCollectionRef, where("id", "==", offeredItemIds));
+        const toq = query(toysCollectionRef);
         const qs = await getDocs(toq);
 
         qs.forEach((doc: any) => {
-            dataList.push({...doc.data(), id: doc.id});
+            if (toyOffers.indexOf(doc.id))
+                dataList.push({...doc.data(), id: doc.id});
         });
       
         await Promise.all(dataList.map(async (d) => {
@@ -93,6 +98,7 @@ export const getOfferList = async (id: string) => {
                 userId: d.userId,
                 title: d.title,
                 file: url,
+                toyOffered: toy,
             });
         }));
         return toyList;

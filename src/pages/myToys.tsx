@@ -1,11 +1,11 @@
-import { deleteDoc, doc, updateDoc } from "firebase/firestore";
+import { deleteDoc, doc } from "firebase/firestore";
 import { useState } from "react";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase-config";
 import { DashboardContext } from "../hooks/context";
 import Item from "../components/item";
-import { getOfferList, getToyList, offersCollectionRef } from "../hooks/helper";
+import { getOfferList, getToyList } from "../hooks/helper";
 import { Toy } from "../types/toy";
 import ItemForOffer from "../components/itemForOffer";
   
@@ -28,8 +28,8 @@ function MyToysPage() {
       if (toyList.length > 0) localStorage.setItem('myToys', toyList.length.toString())
   }, [toyList.length]);
 
-  const getOffers = async (id: string) => {
-    setAllOffers(await getOfferList(id));
+  const getOffers = async (toy: string, targetToys: string[]) => {
+    setAllOffers(await getOfferList(toy, targetToys));
   };
 
   const deleteItem = async (id: string) => {
@@ -62,19 +62,20 @@ function MyToysPage() {
         <ul id="toyList">
           {toyList.length > 0 ? toyList.map((x) => {
             return (
-              <div>
-                <span style={{position: 'absolute'}} onClick={() => getOffers(x.id)}>check for offers</span>
-                <Item key={x.id} {...x} deleteItem={deleteItem} />
-                {allOffers.some(o => o.id === x.id) ? 
+              <div key={x.id}>
+                <Item {...x} offers={x.offers} deleteItem={deleteItem} getOffers={getOffers} />
+                {allOffers ? 
                   <>
                     {allOffers.map((ao) => {
                       return (
-                        <ItemForOffer key={ao.id} {...ao} refuseOffer={refuseOffer} />
+                        <div key={ao.id} >
+                          <ItemForOffer {...ao} refuseOffer={refuseOffer} />
+                        </div>
                       )
                     })}
-                  </> 
+                  </>
                   : 
-                  <span>no offers</span>
+                  <span>no offers yet (views)</span>
                 }
               </div>
             )
