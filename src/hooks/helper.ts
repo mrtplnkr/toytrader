@@ -1,5 +1,5 @@
 import { signInWithPopup, signOut } from "firebase/auth";
-import { collection, DocumentData, getDocs, query, where } from "firebase/firestore";
+import { collection, collectionGroup, DocumentData, documentId, getDocs, query, where } from "firebase/firestore";
 import { getDownloadURL, ref } from "firebase/storage";
 import { auth, db, facebookProvider, googleProvider, storage } from "../firebase-config";
 import { OfferModel } from "../types/offerModel";
@@ -81,12 +81,13 @@ export const getOfferList = async (toy: string, toyOffers: string[]) => {
         const toyList: ToyOffer[] = [];
 
         const dataList: Toy[] = [];
-        const toq = query(toysCollectionRef);
+
+        const allWheres = toyOffers.map((toyId) => { return where(documentId(), "==", toyId) });
+        const toq = query(collection(db, "toys"), ...allWheres);
         const qs = await getDocs(toq);
 
         qs.forEach((doc: any) => {
-            if (toyOffers.indexOf(doc.id))
-                dataList.push({...doc.data(), id: doc.id});
+            dataList.push({...doc.data(), id: doc.id});
         });
       
         await Promise.all(dataList.map(async (d) => {
