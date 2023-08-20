@@ -55,7 +55,7 @@ export const getToyList = async (equals: boolean, uid: string) => {
         const ocSnapshot = await getDocs(offerCount);
         const offerList: string[] | undefined = [];
         ocSnapshot.forEach(async (doc) => {
-            offerList.push(doc.data().targetToy);
+            offerList.push(doc.data().toyOffered);
         });
 
         toyList.push({
@@ -81,9 +81,7 @@ export const getOfferList = async (toy: string, toyOffers: string[]) => {
         const toyList: ToyOffer[] = [];
 
         const dataList: Toy[] = [];
-
-        const allWheres = toyOffers.map((toyId) => { return where(documentId(), "==", toyId) });
-        const toq = query(collection(db, "toys"), ...allWheres);
+        const toq = query(collection(db, "toys"), where(documentId(), "in", toyOffers));
         const qs = await getDocs(toq);
 
         qs.forEach((doc: any) => {
