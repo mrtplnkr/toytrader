@@ -103,8 +103,8 @@ html {
   align-self: flex-end;
 }
 
-#toyList li {
-  border: 1px solid orange;
+#toyList div {
+  border: 1px dashed orange;
 }
 
 #toyList li img {

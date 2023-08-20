@@ -19,15 +19,15 @@ function ItemForOffer(props: ItemProps) {
     };
 
     return (
-        <li>
+        <li style={{flex: 1, border: '1px dashed orange', margin: '0.5em'}}>
             <>
-                <button onClick={() => initiateOffer(props.id)}>accept (tick)</button>
-                <button onClick={() => props.refuseOffer(props.id)}>refuse (x)</button>
-                <img style={{width: '2em'}} onClick={() => alert('enlarge')} alt={props.title} src={props.file} />
-                <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between' }}>
+                {/* <button onClick={() => initiateOffer(props.id)}>accept (tick)</button>
+                <button onClick={() => props.refuseOffer(props.id)}>refuse (x)</button> */}
+                <img style={{ height: '5em', width: 'auto' }} onClick={() => alert('enlarge')} alt={props.title} src={props.file} />
+                {/* <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between' }}>
                     <span style={{flex: 1}}>{props.title}</span>
-                </div>
-                <span style={{flex: 1}}>{props.userId}</span>
+                </div> */}
+                {/* <span style={{flex: 1}}>{props.userId}</span> */}
             </>
         </li>
     );

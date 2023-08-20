@@ -65,7 +65,7 @@ function MyToysPage() {
               <div key={x.id}>
                 <Item {...x} offers={x.offers} deleteItem={deleteItem} getOffers={getOffers} />
                 {allOffers ? 
-                  <>
+                  <div style={{display: 'flex', flexDirection: 'row'}}>
                     {allOffers.map((ao) => {
                       return (
                         <div key={ao.id} >
@@ -73,7 +73,7 @@ function MyToysPage() {
                         </div>
                       )
                     })}
-                  </>
+                  </div>
                   : 
                   <span>no offers yet (views)</span>
                 }
