@@ -75,22 +75,10 @@ export const getOfferList = async (userId: string) => {
         const qs = await getDocs(toq);
 
         qs.forEach((doc: any) => {
-            if (doc.exists()) offers.push({...doc.data(), id: doc.id});
+            console.log('doc 1 2 3', doc.data());
+            offers.push({...doc.data(), id: doc.id});
         });
-      
-        await Promise.all(offers.map(async (d: Offer) => {
-            offers.push({
-                id: d.id,
-                offerAccepted: d.offerAccepted,
-                offerReceived: d.offerReceived,
-                targetCompleted: d.targetCompleted,
-                toyTargeted: d.toyTargeted,
-                toyOffered: d.toyOffered,
-                userInitiated: d.userInitiated,
-                userReceived: d.userReceived,
-            });
-        }));
-        console.log('there should be offer 2 or 0', offers, userId);
+
         return offers;
     } catch (err) {
       console.error(err);
