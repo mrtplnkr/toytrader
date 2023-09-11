@@ -75,7 +75,6 @@ export const getOfferList = async (userId: string) => {
         const qs = await getDocs(toq);
 
         qs.forEach((doc: any) => {
-            console.log('doc 1 2 3', doc.data());
             offers.push({...doc.data(), id: doc.id});
         });
 

@@ -24,16 +24,16 @@ function MyToysPage() {
   };
   
   const showOffers = async (target: string) => {
-    const filterOffer = offers.filter((x:Offer) => x.toyTargeted === target);
-    const offeredToyIds = filterOffer.map((x:Offer) => x.toyOffered);
-    setSelectedOfferId(target);
+    const filterOffers = offers.filter((x:Offer) => x.toyTargeted === target);
+    const offeredToys = filterOffers.map((x:Offer) => { return x.toyOffered });
+    setSelectedOfferId(filterOffers[0].id);
     setSelectedToyOffers(
       toys
-        .filter((x: Offer) => offeredToyIds.indexOf(x.id) > -1)
-        .map((x: Offer) => { return {...x, toyTargeted: target} })
+        .filter((x: Toy) => offeredToys.some((a: any) => a === x.id))
+        .map((x: Toy) => { return { ...x } })
     );
   };
-
+  
   const deleteItem = async (id: string) => {
     const movieDoc = doc(db, "toys", id);
     await deleteDoc(movieDoc)
@@ -85,7 +85,7 @@ function MyToysPage() {
         </div>
   
         <ul id="toyList">
-          {toys.length > 0 ? toys.filter((x: Toy) => x.userId === auth.currentUser?.uid).map((x: Offer) => {
+          {toys.length > 0 ? toys.filter((x: Toy) => x.userId === auth.currentUser?.uid).map((x: Toy) => {
             return (
               <div key={x.id}>
                 <Item {...toys.find((o: Toy) => x.id === o.id)} deleteItem={deleteItem} />
@@ -99,7 +99,7 @@ function MyToysPage() {
                 </div>
                 {selectedToyOffers.length > 0 &&
                   <div style={{display: 'flex', flexDirection: 'row'}}>
-                    {selectedToyOffers.map((ao: Toy) => {
+                    {selectedToyOffers.map((ao: any) => {
                       return (
                         <div key={ao.id}>
                           <ItemForOffer {...ao} refuseOffer={refuseOffer} offerId={selectedOfferId!} />

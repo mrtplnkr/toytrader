@@ -52,7 +52,7 @@ function ItemForOffer(props: ItemProps) {
                 <button onClick={() => props.refuseOffer(props.id)}>refuse (x)</button> */}
                 <img onClick={() => setHovered(x => !x)} alt={props.title} src={props.file}
                     className={hovered ? 'largeOffer' : 'smallOffer'} />
-                <button onClick={() => acceptOffer(props.id)}
+                <button onClick={() => acceptOffer(props.offerId)}
                     className={hovered ? 'buttonFixedLeft' : ''}>
                         <FontAwesomeIcon icon={faHandshake} />
                 </button>
