@@ -15,3 +15,38 @@ code {
 button {
   cursor: pointer;
 }
+
+.smallOffer {
+  height: 5em;
+  width: auto;
+  cursor: pointer;
+}
+
+.largeOffer {
+  position: fixed;
+  top: 0;
+  left: 0;  
+  padding: 0 !important;
+  height: 100% !important;
+  width: 100% !important;
+}
+
+.buttonFixedLeft {
+  background: green;
+  position: fixed;
+  height: 5em;
+  margin: 5em;
+  bottom: 0;
+  left: 0;
+  z-index: 1;
+}
+
+.buttonFixedRight {
+  background: red;
+  position: fixed;
+  height: 5em;
+  margin: 5em;
+  bottom: 0;
+  right: 0;
+  z-index: 1;
+}

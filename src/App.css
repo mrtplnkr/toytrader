@@ -99,9 +99,9 @@ html {
   color: white;
 }
 
-#toyList button {
+/* #toyList button {
   align-self: flex-end;
-}
+} */
 
 #toyList div {
   border: 1px dashed orange;

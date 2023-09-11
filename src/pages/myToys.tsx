@@ -1,41 +1,71 @@
 import { deleteDoc, doc } from "firebase/firestore";
 import { useState } from "react";
-import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase-config";
-import { DashboardContext } from "../hooks/context";
 import Item from "../components/item";
-import { getOfferList, getToyList } from "../hooks/helper";
-import { Toy } from "../types/toy";
 import ItemForOffer from "../components/itemForOffer";
-  
+import { Offer } from "../types/offer";
+import { GoodAppContext } from "../hooks/context";
+import { useContextSelector } from "use-context-selector";
+import { Store } from "react-notifications-component";
+import { Toy } from "../types/toy";
+
 function MyToysPage() {
   let navigate = useNavigate();
 
-  const [toyList, setToyList] = useState<Array<Toy>>([]);
-  const [allOffers, setAllOffers] = useState<Array<Toy>>([]);
+  const [selectedOfferId, setSelectedOfferId] = useState<string>();
+  const [selectedToyOffers, setSelectedToyOffers] = useState<Array<Toy>>([]);
 
-  useEffect(() => {
-    getToys();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const toys = useContextSelector(GoodAppContext, (state: any) => state.toys);
+  const offers = useContextSelector(GoodAppContext, (state: any) => state.offers);
 
-  const getToys = async () => {
-    if (auth.currentUser) setToyList(await getToyList(true, auth.currentUser.uid));
+  const countOffers = (items: Offer[], target: string) => {
+    return items.filter((x:any) => x.toyTargeted === target).length;
   };
-
-  useEffect(() => {
-      if (toyList.length > 0) localStorage.setItem('myToys', toyList.length.toString())
-  }, [toyList.length]);
-
-  const getOffers = async (toy: string, targetToys: string[]) => {
-    setAllOffers(await getOfferList(toy, targetToys));
+  
+  const showOffers = async (target: string) => {
+    const filterOffer = offers.filter((x:Offer) => x.toyTargeted === target);
+    const offeredToyIds = filterOffer.map((x:Offer) => x.toyOffered);
+    setSelectedOfferId(target);
+    setSelectedToyOffers(
+      toys
+        .filter((x: Offer) => offeredToyIds.indexOf(x.id) > -1)
+        .map((x: Offer) => { return {...x, toyTargeted: target} })
+    );
   };
 
   const deleteItem = async (id: string) => {
     const movieDoc = doc(db, "toys", id);
-    await deleteDoc(movieDoc);
-    await getToys();
+    await deleteDoc(movieDoc)
+      .then(() => Store.addNotification({
+        title: "Success !",
+        message: "Toy successfully removed from your toy list.",
+        type: "success",
+        insert: "top",
+        container: "top-right",
+        animationIn: ["animated", "fadeIn"],
+        animationOut: ["animated", "fadeOut"],
+        dismiss: {
+          duration: 5000,
+          onScreen: true
+        }
+      }))
+      .catch((e) => 
+        Store.addNotification({
+          title: "Unfortunately this action failed !",
+          message: "Please try again later... " + e.message.toString(),
+          type: "danger",
+          insert: "top",
+          container: "top-right",
+          animationIn: ["animated", "fadeIn"],
+          animationOut: ["animated", "fadeOut"],
+          dismiss: {
+            duration: 5000,
+            onScreen: true
+          }
+        })
+      );
+    // await getToys();
   };
 
   const refuseOffer = async () => {
@@ -47,41 +77,41 @@ function MyToysPage() {
   
   return (
     <>
-      <DashboardContext.Provider value={{
-        userId: auth?.currentUser?.uid,
-        userName: auth?.currentUser?.displayName,
-        photoUrl: auth?.currentUser?.photoURL,
-      }}>
         <h3>All your toys</h3>
   
         <div style={{display: 'flex', flexDirection: 'column'}}>
           <button style={{alignSelf: 'flex-end'}} onClick={() => navigate('/addNew')}>add your toy</button>
-          <button style={{alignSelf: 'flex-start'}} onClick={() => getToys()}>refresh</button>
+          <button style={{alignSelf: 'flex-start'}} onClick={() => alert('not sure if its needed')}>refresh</button>
         </div>
   
         <ul id="toyList">
-          {toyList.length > 0 ? toyList.map((x) => {
+          {toys.length > 0 ? toys.filter((x: Toy) => x.userId === auth.currentUser?.uid).map((x: Offer) => {
             return (
               <div key={x.id}>
-                <Item {...x} offers={x.offers} deleteItem={deleteItem} getOffers={getOffers} />
-                {allOffers ? 
+                <Item {...toys.find((o: Toy) => x.id === o.id)} deleteItem={deleteItem} />
+                <div style={{width: '90%', margin: 'auto', color: 'yellow'}}>
+                  <>
+                    View{' '}
+                    <span style={{ textDecoration: 'underline', cursor: 'pointer' }} 
+                        onClick={() => showOffers(x.id)}>{countOffers(offers, x.id)} offer(s)</span>
+                    ...
+                  </>
+                </div>
+                {selectedToyOffers.length > 0 &&
                   <div style={{display: 'flex', flexDirection: 'row'}}>
-                    {allOffers.map((ao) => {
+                    {selectedToyOffers.map((ao: Toy) => {
                       return (
-                        <div key={ao.id} >
-                          <ItemForOffer {...ao} refuseOffer={refuseOffer} />
+                        <div key={ao.id}>
+                          <ItemForOffer {...ao} refuseOffer={refuseOffer} offerId={selectedOfferId!} />
                         </div>
                       )
                     })}
                   </div>
-                  : 
-                  <span>no offers yet (views)</span>
                 }
               </div>
             )
           }) : <div>you haven't added anything yet</div>}
         </ul>
-      </DashboardContext.Provider>
     </>
   );
 }

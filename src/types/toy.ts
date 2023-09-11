@@ -1,8 +1,7 @@
 
 export interface Toy {
-    title: string;
     id: string;
+    title: string;
     file: string;
     userId: string;
-    offers?: string[];
 }

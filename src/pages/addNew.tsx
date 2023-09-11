@@ -35,7 +35,7 @@ function AddNew() {
                 file: fileUploadName,
                 userId: auth?.currentUser?.uid,
             });
-            navigate('/list');
+            navigate('/myToys');
         } catch (err) {
             console.error(err);
         }

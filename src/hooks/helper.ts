@@ -1,10 +1,9 @@
 import { signInWithPopup, signOut } from "firebase/auth";
-import { collection, collectionGroup, DocumentData, documentId, getDocs, query, where } from "firebase/firestore";
+import { collection, doc, DocumentData, documentId, FieldPath, getDocs, query, updateDoc, where } from "firebase/firestore";
 import { getDownloadURL, ref } from "firebase/storage";
 import { auth, db, facebookProvider, googleProvider, storage } from "../firebase-config";
-import { OfferModel } from "../types/offerModel";
+import { Offer } from "../types/offer";
 import { Toy } from "../types/toy";
-import { ToyOffer } from "../types/toyOffer";
 
 export const logOff = async () => {
     await signOut(auth);
@@ -36,10 +35,10 @@ export const facebookSign = async (callback: any) => {
 
 export const toysCollectionRef = collection(db, "toys");
 
-export const getToyList = async (equals: boolean, uid: string) => {
+export const getToyList = async () => {
     try {
         const toyList: Toy[] = [];
-        const q = query(toysCollectionRef, where("userId", equals ? "==" : "!=", uid))
+        const q = query(toysCollectionRef)
         const querySnapshot = await getDocs(q);
 
         const dataList: DocumentData[] = [];
@@ -51,21 +50,14 @@ export const getToyList = async (equals: boolean, uid: string) => {
         const filesFolderRef = ref(storage, `projectFiles/${d.file}`);
         const url = await getDownloadURL(filesFolderRef);
 
-        const offerCount = query(toyOffersCollectionRef, where("targetToy", "==", d.id));
-        const ocSnapshot = await getDocs(offerCount);
-        const offerList: string[] | undefined = [];
-        ocSnapshot.forEach(async (doc) => {
-            offerList.push(doc.data().toyOffered);
-        });
-
         toyList.push({
             id: d.id,
             userId: d.userId,
             title: d.title,
             file: url,
-            offers: offerList ? offerList : [],
+            // offers: offerList ? offerList : [],
         });
-    }));
+      }));
       return toyList;
     } catch (err) {
       console.error(err);
@@ -74,35 +66,39 @@ export const getToyList = async (equals: boolean, uid: string) => {
 };
 
 export const toyOffersCollectionRef = collection(db, "offers");
-// export const offersCollectionRef = collection(db, "offers", "1", "2");
 
-export const getOfferList = async (toy: string, toyOffers: string[]) => {
+export const getOfferList = async (userId: string) => {
     try {
-        const toyList: ToyOffer[] = [];
+        const offers: Offer[] = [];
 
-        const dataList: Toy[] = [];
-        const toq = query(collection(db, "toys"), where(documentId(), "in", toyOffers));
+        const toq = query(toyOffersCollectionRef, where(new FieldPath('userReceived'), "==", userId));
         const qs = await getDocs(toq);
 
         qs.forEach((doc: any) => {
-            dataList.push({...doc.data(), id: doc.id});
+            if (doc.exists()) offers.push({...doc.data(), id: doc.id});
         });
       
-        await Promise.all(dataList.map(async (d) => {
-            const filesFolderRef = ref(storage, `projectFiles/${d.file}`);
-            const url = await getDownloadURL(filesFolderRef);
-            
-            toyList.push({
+        await Promise.all(offers.map(async (d: Offer) => {
+            offers.push({
                 id: d.id,
-                userId: d.userId,
-                title: d.title,
-                file: url,
-                toyOffered: toy,
+                offerAccepted: d.offerAccepted,
+                offerReceived: d.offerReceived,
+                targetCompleted: d.targetCompleted,
+                toyTargeted: d.toyTargeted,
+                toyOffered: d.toyOffered,
+                userInitiated: d.userInitiated,
+                userReceived: d.userReceived,
             });
         }));
-        return toyList;
+        console.log('there should be offer 2 or 0', offers, userId);
+        return offers;
     } catch (err) {
       console.error(err);
       return [];
     }
+};
+
+export const updateOffer = async (id: string) => {
+    const docToUpdate = doc(db, "offers", id)
+    await updateDoc(docToUpdate, {"offerAccepted": Date.now()});
 };
