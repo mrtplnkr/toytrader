@@ -22,6 +22,7 @@ import { Toy } from "./types/toy";
 import { Offer } from "./types/offer";
 import { GoodAppContext } from "./hooks/context";
 import { getOfferList, getToyList } from "./hooks/helper";
+import HistoryPage from "./pages/history";
 
 function StateProvider({children}: any) {
   const [toys, setToys] = useState<Toy[]>([])
@@ -78,6 +79,14 @@ function App() {
                   element={
                     <RequireAuth>
                       <MyToysPage />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/history"
+                  element={
+                    <RequireAuth>
+                      <HistoryPage />
                     </RequireAuth>
                   }
                 />

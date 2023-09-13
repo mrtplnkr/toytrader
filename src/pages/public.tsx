@@ -1,5 +1,5 @@
 
-import { faGrinWink, faSmile, faSmileWink } from '@fortawesome/free-solid-svg-icons';
+import { faSmileWink } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import logo from '../logo.svg';
 

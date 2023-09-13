@@ -9,7 +9,6 @@ import { GoodAppContext } from "../hooks/context";
 import { useContextSelector } from "use-context-selector";
 import { Store } from "react-notifications-component";
 import { Toy } from "../types/toy";
-import { isPropertySignature } from "typescript";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHandshake, faRemove } from "@fortawesome/free-solid-svg-icons";
 import { updateOffer } from "../hooks/helper";

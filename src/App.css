@@ -122,6 +122,9 @@ html {
   #toyList li {
     width: auto;
   }
+  #toyList li img {
+    width: 90%;
+  }
 }
 
 /* #toyList button {

@@ -18,7 +18,7 @@ button {
 
 .smallOffer {
   height: 5em;
-  width: auto;
+  width: auto !important;
   cursor: pointer;
 }
 

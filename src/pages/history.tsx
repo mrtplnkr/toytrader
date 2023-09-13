@@ -9,7 +9,7 @@ import { GoodAppContext } from "../hooks/context";
 import { useContextSelector } from "use-context-selector";
 import { Toy } from "../types/toy";
 
-function ListPage() {
+function HistoryPage() {
   let navigate = useNavigate();
 
   const toys = useContextSelector(GoodAppContext, (state: any) => state.toys);
@@ -18,15 +18,15 @@ function ListPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const [myWishedItems, setMyWishedItems] = useState<any[]>([]);
+  const [myWishedItems, setMyWishedItems] = useState<any[]>(localStorage.getItem('wishListItems') ? JSON.parse(localStorage.getItem('wishListItems')!) : []);
 
   useEffect(() => {
     localStorage.setItem("wishListItems", JSON.stringify(myWishedItems))
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [myWishedItems?.length]);
 
   const addRemoveWish = (newItem: any) => {
-      if (myWishedItems && myWishedItems.filter(x => x.id === newItem.id).length) {
+      if (myWishedItems && myWishedItems.some(x => x.id === newItem.id)) {
         setMyWishedItems(myWishedItems.filter(x => x.id !== newItem.id));
       } else {
         setMyWishedItems(myWishedItems.concat([newItem]));
@@ -48,7 +48,7 @@ function ListPage() {
           {toys.length > 0 ? toys.filter((x: Toy) => x.userId !== auth.currentUser?.uid).map((x: any) => {
             return (
               <Item key={x.id} {...x} addRemoveWish={addRemoveWish}
-                wished={myWishedItems.filter(w => w.id === x.id).length > 0} /> )
+                wished={myWishedItems.some(w => w.id === x.id)} /> )
           }) :
           <div style={{fontSize: '0.5em'}}>
             <h2>
@@ -65,4 +65,4 @@ function ListPage() {
   );
 }
 
-export default ListPage;
+export default HistoryPage;

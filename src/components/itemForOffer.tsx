@@ -1,29 +1,20 @@
-import { faHandshake, faRemove } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { memo, useState } from "react";
-import { Store } from "react-notifications-component";
-import { updateOffer } from "../hooks/helper";
+import { Timestamp } from "firebase-admin/firestore";
+import { memo } from "react";
 import { Toy } from "../types/toy";
 
 interface ItemProps extends Toy {
     refuseOffer: any;
     setActive: any;
+    offerAccepted: Date;
 }
 
 function ItemForOffer(props: ItemProps) {
+console.log(props);
 
     return (
-        <li style={{flex: 1, border: '1px dashed orange', margin: '0.5em'}}>
-            <div>
-                {/* <button onClick={() => initiateOffer(props.id)}>accept (tick)</button>
-                <button onClick={() => props.refuseOffer(props.id)}>refuse (x)</button> */}
-                <img onClick={() => props.setActive(props.file)} alt={props.title} src={props.file}
-                    className={'smallOffer'} />
-                {/* <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between' }}>
-                    <span style={{flex: 1}}>{props.title}</span>
-                </div> */}
-                {/* <span style={{flex: 1}}>{props.userId}</span> */}
-            </div>
+        <li style={{flex: 1, border: '1px dashed violet', margin: '0.5em'}}>
+            <img onClick={() => props.setActive(props.file)} alt={props.title} src={props.file}
+                className={'smallOffer'} />
         </li>
     );
 }
