@@ -9,6 +9,10 @@ import { GoodAppContext } from "../hooks/context";
 import { useContextSelector } from "use-context-selector";
 import { Store } from "react-notifications-component";
 import { Toy } from "../types/toy";
+import { isPropertySignature } from "typescript";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faHandshake, faRemove } from "@fortawesome/free-solid-svg-icons";
+import { updateOffer } from "../hooks/helper";
 
 function MyToysPage() {
   let navigate = useNavigate();
@@ -74,7 +78,47 @@ function MyToysPage() {
     // where 1 toy
     // and where 2 toy
   };
-  
+
+  const [activeFile, setActiveFile] = useState<string | undefined>(undefined);
+  const [activeOfferId, setActiveOfferId] = useState<string | undefined>(undefined);
+
+  const setActive = (toyFile: string) => {
+    setActiveFile(toyFile);
+    setActiveOfferId(selectedOfferId);
+  }
+      
+  const acceptOffer = async (id: string) => {
+    await updateOffer(id)
+        .then(() => Store.addNotification({
+            title: "Wonderful",
+            message: "this toy is on your way !",
+            type: "success",
+            insert: "top",
+            container: "top-right",
+            animationIn: ["animated", "fadeIn"],
+            animationOut: ["animated", "fadeOut"],
+            dismiss: {
+              duration: 5000,
+              onScreen: true
+            }
+          })
+        )
+        .catch((e) => Store.addNotification({
+            title: "Unfortunately this action failed !",
+            message: "Please try again later... " + e.message.toString(),
+            type: "danger",
+            insert: "top",
+            container: "top-right",
+            animationIn: ["animated", "fadeIn"],
+            animationOut: ["animated", "fadeOut"],
+            dismiss: {
+              duration: 5000,
+              onScreen: true
+            }
+        })
+    );
+  };
+
   return (
     <>
         <h3>All your toys</h3>
@@ -83,6 +127,20 @@ function MyToysPage() {
           <button style={{alignSelf: 'flex-end'}} onClick={() => navigate('/addNew')}>add your toy</button>
           <button style={{alignSelf: 'flex-start'}} onClick={() => alert('not sure if its needed')}>refresh</button>
         </div>
+
+        {activeOfferId && 
+          <div className="largeOffer">
+            <button onClick={() => acceptOffer(activeOfferId!)}
+                className={'buttonFixedLeft'}>
+                    <FontAwesomeIcon icon={faHandshake} />
+            </button>
+            <img alt="being viewed" src={activeFile} />
+            <button onClick={() => setActiveOfferId(undefined)}
+                className={'buttonFixedRight'}>
+                    <FontAwesomeIcon icon={faRemove} />
+            </button>
+          </div>
+        }
   
         <ul id="toyList">
           {toys.length > 0 ? toys.filter((x: Toy) => x.userId === auth.currentUser?.uid).map((x: Toy) => {
@@ -102,7 +160,7 @@ function MyToysPage() {
                     {selectedToyOffers.map((ao: any) => {
                       return (
                         <div key={ao.id}>
-                          <ItemForOffer {...ao} refuseOffer={refuseOffer} offerId={selectedOfferId!} />
+                          <ItemForOffer setActive={setActive} {...ao} refuseOffer={refuseOffer} />
                         </div>
                       )
                     })}

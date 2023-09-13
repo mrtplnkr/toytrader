@@ -1,4 +1,4 @@
-import { faBatteryEmpty, faGear } from "@fortawesome/free-solid-svg-icons";
+import { faAdd, faBatteryEmpty, faCircle, faCirclePlus, faGear, faPlus, faPlusCircle } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useState } from "react";
 import { useEffect } from "react";
@@ -38,7 +38,9 @@ function ListPage() {
         <h3>Search for toys in your area</h3>
 
         <div style={{display: 'flex', flexDirection: 'column'}}>
-          <button style={{alignSelf: 'flex-end'}} onClick={() => navigate('/addNew')}>add your toy</button>
+          <button id="addButton" onClick={() => navigate('/addNew')}>
+            <FontAwesomeIcon color="darkviolet" icon={faCirclePlus} />
+          </button>
           <button style={{alignSelf: 'flex-start'}} onClick={() => alert('not in use')}>refresh</button>
         </div>
 

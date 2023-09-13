@@ -7,59 +7,18 @@ import { Toy } from "../types/toy";
 
 interface ItemProps extends Toy {
     refuseOffer: any;
-    offerId: string;
+    setActive: any;
 }
 
 function ItemForOffer(props: ItemProps) {
-    const [hovered, setHovered] = useState(false);
-    
-    const acceptOffer = async (id: string) => {
-        await updateOffer(id)
-            .then(() => Store.addNotification({
-                title: "Wonderful",
-                message: "this toy is on your way !",
-                type: "success",
-                insert: "top",
-                container: "top-right",
-                animationIn: ["animated", "fadeIn"],
-                animationOut: ["animated", "fadeOut"],
-                dismiss: {
-                  duration: 5000,
-                  onScreen: true
-                }
-              })
-            )
-            .catch((e) => Store.addNotification({
-                title: "Unfortunately this action failed !",
-                message: "Please try again later... " + e.message.toString(),
-                type: "danger",
-                insert: "top",
-                container: "top-right",
-                animationIn: ["animated", "fadeIn"],
-                animationOut: ["animated", "fadeOut"],
-                dismiss: {
-                  duration: 5000,
-                  onScreen: true
-                }
-            })
-        );
-    };
 
     return (
         <li style={{flex: 1, border: '1px dashed orange', margin: '0.5em'}}>
             <div>
                 {/* <button onClick={() => initiateOffer(props.id)}>accept (tick)</button>
                 <button onClick={() => props.refuseOffer(props.id)}>refuse (x)</button> */}
-                <img onClick={() => setHovered(x => !x)} alt={props.title} src={props.file}
-                    className={hovered ? 'largeOffer' : 'smallOffer'} />
-                <button onClick={() => acceptOffer(props.offerId)}
-                    className={hovered ? 'buttonFixedLeft' : ''}>
-                        <FontAwesomeIcon icon={faHandshake} />
-                </button>
-                {hovered && <button onClick={() => setHovered(false)}
-                    className={hovered ? 'buttonFixedRight' : ''}>
-                        <FontAwesomeIcon icon={faRemove} />
-                </button>}
+                <img onClick={() => props.setActive(props.file)} alt={props.title} src={props.file}
+                    className={'smallOffer'} />
                 {/* <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between' }}>
                     <span style={{flex: 1}}>{props.title}</span>
                 </div> */}

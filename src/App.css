@@ -88,15 +88,40 @@ html {
 
 #toyList {
   padding: 0;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+#backButton {
+  align-self: flex-start;
+  background: transparent;
+}
+
+#addButton {
+  background: transparent;
+  align-self: flex-end;
 }
 
 #toyList li {
   padding: 0.5em;
+  width: 10em;
   list-style-type: none;
   display: flex;
   flex-direction: column;
   align-items: center;
   color: white;
+}
+
+@media only screen and (max-width: 600px) {
+  #toyList {
+    max-width: 100%;
+    flex-direction: column;
+    justify-content: center;
+  }
+  #toyList li {
+    width: auto;
+  }
 }
 
 /* #toyList button {
@@ -125,7 +150,7 @@ h3 {
   color: #fdd100;
 }
 
-#intro { background: grey; max-width: 360px; margin: 100px auto 16px; padding: 32px 24px; border-radius: 3px; }
+#intro { background: grey; max-width: 360px; margin: 50px auto 16px; padding: 32px 24px; border-radius: 3px; }
 #intro h2 { font-weight: bold; margin: 0 0 8px; }
 #intro h1 { font-size: 22px; font-weight: 300; color: rgba(0,0,0,0.6); margin: 0 0 16px;}
 #intro p { line-height: 140%; margin: 16px 0 24px; font-size: 14px; }
@@ -137,7 +162,7 @@ h3 {
   #intro { border-top: 16px solid #ffa100; }
 }
 
-#parentIntro { background: grey; max-width: 360px; margin: 100px auto 16px; padding: 32px 24px; border-radius: 3px; }
+#parentIntro { background: grey; max-width: 360px; margin: 50px auto 16px; padding: 32px 24px; border-radius: 3px; }
 #parentIntro h2 { color: #ffa100; font-weight: bold; font-size: 16px; margin: 0 0 8px; }
 #parentIntro h1 { font-size: 22px; font-weight: 300; color: rgba(0,0,0,0.6); margin: 0 0 16px;}
 #parentIntro p { line-height: 140%; font-size: 14px; }
