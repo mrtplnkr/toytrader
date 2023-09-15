@@ -22,6 +22,18 @@ button {
   cursor: pointer;
 }
 
+.leftButton {
+  position: fixed;
+  top: 50%;
+  left: 3em;
+}
+
+.rightButton {
+  position: fixed;
+  top: 50%;
+  right: 3em;
+}
+
 .largeOffer {
   background: lightgrey;
   opacity: 0.9;

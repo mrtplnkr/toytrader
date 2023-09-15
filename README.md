@@ -1,3 +1,8 @@
+# step by step
+1. add toy
+2. find other toys in search page
+3. apply to trade
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).

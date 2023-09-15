@@ -16,7 +16,7 @@ import { updateOffer } from "../hooks/helper";
 function MyToysPage() {
   let navigate = useNavigate();
 
-  const [selectedOfferId, setSelectedOfferId] = useState<string>();
+  const [selectedOffer, setSelectedOffer] = useState<Offer>();
   const [selectedToyOffers, setSelectedToyOffers] = useState<Array<Toy>>([]);
 
   const toys = useContextSelector(GoodAppContext, (state: any) => state.toys);
@@ -29,7 +29,7 @@ function MyToysPage() {
   const showOffers = async (target: string) => {
     const filterOffers = offers.filter((x:Offer) => x.toyTargeted === target);
     const offeredToys = filterOffers.map((x:Offer) => { return x.toyOffered });
-    setSelectedOfferId(filterOffers[0].id);
+    setSelectedOffer(filterOffers[0]);
     setSelectedToyOffers(
       toys
         .filter((x: Toy) => offeredToys.some((a: any) => a === x.id))
@@ -83,9 +83,9 @@ function MyToysPage() {
 
   const setActive = (toyFile: string) => {
     setActiveFile(toyFile);
-    setActiveOfferId(selectedOfferId);
-  }
-      
+    setActiveOfferId(selectedOffer!.id);
+  };
+
   const acceptOffer = async (id: string) => {
     await updateOffer(id)
         .then(() => Store.addNotification({
@@ -129,14 +129,12 @@ function MyToysPage() {
 
         {activeOfferId && 
           <div className="largeOffer">
-            <button onClick={() => acceptOffer(activeOfferId!)}
-                className={'buttonFixedLeft'}>
-                    <FontAwesomeIcon icon={faHandshake} />
+            <button onClick={() => acceptOffer(activeOfferId!)} className={'buttonFixedLeft'}>
+              <FontAwesomeIcon icon={faHandshake} />
             </button>
             <img alt="being viewed" src={activeFile} />
-            <button onClick={() => setActiveOfferId(undefined)}
-                className={'buttonFixedRight'}>
-                    <FontAwesomeIcon icon={faRemove} />
+            <button onClick={() => setActiveOfferId(undefined)} className={'buttonFixedRight'}>
+                <FontAwesomeIcon icon={faRemove} />
             </button>
           </div>
         }
@@ -147,14 +145,16 @@ function MyToysPage() {
               <div key={x.id}>
                 <Item {...toys.find((o: Toy) => x.id === o.id)} deleteItem={deleteItem} />
                 <div style={{width: '90%', margin: 'auto', color: 'yellow'}}>
-                  <>
+                  {countOffers(offers, x.id) ? <>
                     View{' '}
                     <span style={{ textDecoration: 'underline', cursor: 'pointer' }} 
                         onClick={() => showOffers(x.id)}>{countOffers(offers, x.id)} offer(s)</span>
                     ...
                   </>
+                  :
+                  <>no offers..</>}
                 </div>
-                {selectedToyOffers.length > 0 &&
+                {countOffers(offers, x.id) && selectedToyOffers.length > 0 ?
                   <div style={{display: 'flex', flexDirection: 'row'}}>
                     {selectedToyOffers.map((ao: any) => {
                       return (
@@ -164,7 +164,7 @@ function MyToysPage() {
                       )
                     })}
                   </div>
-                }
+                : <hr/> }
               </div>
             )
           }) : <div>you haven't added anything yet</div>}

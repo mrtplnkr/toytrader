@@ -1,18 +1,17 @@
 
 import { useState } from "react";
-import { db, auth, storage } from "../firebase-config";
+import { storage } from "../firebase-config";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
-import { addDoc, collection } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import { v4 } from 'uuid';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBackspace } from "@fortawesome/free-solid-svg-icons";
+import { addNewToy } from "../hooks/helper";
 
 function AddNew() {
     const [title, setTitle] = useState<string>('');
     const [fileUploadName, setFileUpload] = useState('');
     const [url, setUrl] = useState<string | undefined>(undefined);
-    const toyCollectionRef = collection(db, "toys");
     const navigate = useNavigate();
 
     const uploadFile = async (file: any) => {
@@ -32,12 +31,11 @@ function AddNew() {
     
     const onSubmitToy = async () => {
         try {
-            await addDoc(toyCollectionRef, {
-                title,
-                file: fileUploadName,
-                userId: auth?.currentUser?.uid,
-            });
-            navigate('/myToys');
+          await addNewToy(
+            title,
+            fileUploadName
+          );
+          navigate('/myToys');
         } catch (err) {
             console.error(err);
         }

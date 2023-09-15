@@ -1,5 +1,5 @@
 import { signInWithPopup, signOut } from "firebase/auth";
-import { collection, doc, DocumentData, documentId, FieldPath, getDocs, query, updateDoc, where } from "firebase/firestore";
+import { addDoc, collection, doc, DocumentData, documentId, FieldPath, getDocs, query, updateDoc, where } from "firebase/firestore";
 import { getDownloadURL, ref } from "firebase/storage";
 import { auth, db, facebookProvider, googleProvider, storage } from "../firebase-config";
 import { Offer } from "../types/offer";
@@ -34,6 +34,23 @@ export const facebookSign = async (callback: any) => {
 };
 
 export const toysCollectionRef = collection(db, "toys");
+
+export const addNewToy = async (title: string, file: string) => {
+    await addDoc(toysCollectionRef, {
+        title,
+        file: file,
+        userId: auth.currentUser?.uid,
+    });
+}
+
+export const addNewOffer = async (offeredToy: string, toyTargeted: string, userReceived: string) => {
+    await addDoc(toyOffersCollectionRef, {
+        toyTargeted,
+        offeredToy,
+        userInitiated: auth.currentUser?.uid,
+        userReceived
+    });
+}
 
 export const getToyList = async () => {
     try {

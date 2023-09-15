@@ -8,6 +8,9 @@ import Item from "../components/item";
 import { GoodAppContext } from "../hooks/context";
 import { useContextSelector } from "use-context-selector";
 import { Toy } from "../types/toy";
+import ToyDisplay from "../components/toyDisplay";
+import { addNewOffer } from "../hooks/helper";
+import { Store } from "react-notifications-component";
 
 function ListPage() {
   let navigate = useNavigate();
@@ -31,11 +34,57 @@ function ListPage() {
       } else {
         setMyWishedItems(myWishedItems.concat([newItem]));
       }
-  }
+  };
+
+  const [toyDisplayIndex, setToyDisplayIndex] = useState<number | undefined>(undefined);
+
+  const nextToy = (direction: number | undefined) => {
+    setToyDisplayIndex(direction);
+  };
+
+  const proposeOffer = async (toyOffered: string) => {
+    try {
+      if (toyDisplayIndex) await addNewOffer(toyOffered, toys[toyDisplayIndex].id, toys[toyDisplayIndex].userId);
+      Store.addNotification({
+        title: "Success !",
+        message: "Toy successfully offered .",
+        type: "success",
+        insert: "top",
+        container: "top-right",
+        animationIn: ["animated", "fadeIn"],
+        animationOut: ["animated", "fadeOut"],
+        dismiss: {
+          duration: 5000,
+          onScreen: true
+        }
+      });
+      navigate('/history');
+    } catch (e: any) {
+      Store.addNotification({
+        title: "Unfortunately this action failed !",
+        message: "Please try again later... " + e.message.toString(),
+        type: "danger",
+        insert: "top",
+        container: "top-right",
+        animationIn: ["animated", "fadeIn"],
+        animationOut: ["animated", "fadeOut"],
+        dismiss: {
+          duration: 5000,
+          onScreen: true
+        }
+      })
+    }
+  };
 
   return (
     <>
         <h3>Search for toys in your area</h3>
+
+        {
+          toyDisplayIndex !== undefined && 
+            <ToyDisplay yourToys={toys.filter((x: Toy) => x.userId === auth.currentUser?.uid)} 
+              toy={toys[toyDisplayIndex]} nextToy={nextToy} proposeOffer={proposeOffer} />
+        }
 
         <div style={{display: 'flex', flexDirection: 'column'}}>
           <button id="addButton" onClick={() => navigate('/addNew')}>
@@ -47,8 +96,11 @@ function ListPage() {
         <ul id="toyList">
           {toys.length > 0 ? toys.filter((x: Toy) => x.userId !== auth.currentUser?.uid).map((x: any) => {
             return (
-              <Item key={x.id} {...x} addRemoveWish={addRemoveWish}
-                wished={myWishedItems.filter(w => w.id === x.id).length > 0} /> )
+              <div style={{cursor: 'pointer'}} onClick={() => setToyDisplayIndex(toys.indexOf(x))}>
+                <Item key={x.id} {...x} addRemoveWish={addRemoveWish}
+                  wished={myWishedItems.filter(w => w.id === x.id).length > 0} />
+              </div>
+            )
           }) :
           <div style={{fontSize: '0.5em'}}>
             <h2>
