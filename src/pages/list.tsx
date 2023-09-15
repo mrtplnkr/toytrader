@@ -8,7 +8,7 @@ import Item from "../components/item";
 import { GoodAppContext } from "../hooks/context";
 import { useContextSelector } from "use-context-selector";
 import { Toy } from "../types/toy";
-import ToyDisplay from "../components/toyDisplay";
+import ToyDisplay from "./addNewOffer";
 import { addNewOffer } from "../hooks/helper";
 import { Store } from "react-notifications-component";
 

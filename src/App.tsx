@@ -13,7 +13,7 @@ import {
 } from "react-router-dom";
 import './App.css';
 import Auth from './components/auth';
-import AddNew from "./pages/addNew";
+import AddNew from "./pages/addNewToy";
 import { auth } from "./firebase-config";
 import MyToysPage from "./pages/myToys";
 import { ReactNotifications } from "react-notifications-component";
