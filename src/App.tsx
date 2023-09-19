@@ -17,12 +17,13 @@ import AddNew from "./pages/addNewToy";
 import { auth } from "./firebase-config";
 import MyToysPage from "./pages/myToys";
 import { ReactNotifications } from "react-notifications-component";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Toy } from "./types/toy";
 import { Offer } from "./types/offer";
 import { GoodAppContext } from "./hooks/context";
 import { getOfferList, getToyList } from "./hooks/helper";
-import HistoryPage from "./pages/history";
+import HistoryPage from "./pages/inPost";
+import MyOffersPage from "./pages/myOffers";
 
 function StateProvider({children}: any) {
   const [toys, setToys] = useState<Toy[]>([])
@@ -32,15 +33,15 @@ function StateProvider({children}: any) {
     getData();
   }, []);
 
-  const getData = async () => {
+  const getData = useCallback(async() => {
     setToys(await getToyList());
     setOffers(await getOfferList(auth.currentUser?.uid!));
-  }
-
+  }, []);
+  
   return (
-    <GoodAppContext.Provider value={{toys, offers}}>
+    <>{offers && offers.length > 0 ? <GoodAppContext.Provider value={{toys, offers}}>
       {children}
-    </GoodAppContext.Provider>
+    </GoodAppContext.Provider> : ''}</>
   )
 }
 
@@ -79,6 +80,14 @@ function App() {
                   element={
                     <RequireAuth>
                       <MyToysPage />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/myOffers"
+                  element={
+                    <RequireAuth>
+                      <MyOffersPage />
                     </RequireAuth>
                   }
                 />

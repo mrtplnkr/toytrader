@@ -8,8 +8,10 @@ export interface Offer {
     toyTargeted: string;
     toyOffered: string;
 
-    offerReceived: Date;
-    offerAccepted: Date;
-    targetCompleted: Date;
-    // offerCompleted: Date;
+    offerCreated: Date;
+    offerAccepted?: Date;    
+    offerPosted?: Date;
+    targetPosted?: Date;
+    offerReceived?: Date;
+    targetReceived?: Date;
 }

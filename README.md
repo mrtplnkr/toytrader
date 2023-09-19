@@ -1,3 +1,5 @@
+Normalise sharing !
+
 # step by step
 1. add toy
 2. find other toys in search page

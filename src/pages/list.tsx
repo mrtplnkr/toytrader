@@ -96,7 +96,7 @@ function ListPage() {
         <ul id="toyList">
           {toys.length > 0 ? toys.filter((x: Toy) => x.userId !== auth.currentUser?.uid).map((x: any) => {
             return (
-              <div style={{cursor: 'pointer'}} onClick={() => setToyDisplayIndex(toys.indexOf(x))}>
+              <div key={x.id} style={{cursor: 'pointer'}} onClick={() => setToyDisplayIndex(toys.indexOf(x))}>
                 <Item key={x.id} {...x} addRemoveWish={addRemoveWish}
                   wished={myWishedItems.filter(w => w.id === x.id).length > 0} />
               </div>

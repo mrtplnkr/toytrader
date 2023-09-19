@@ -31,7 +31,8 @@ function Auth() {
                   <li onClick={() => alert('click!')}>{auth.currentUser?.displayName}</li>
                   <li style={{textDecoration: 'underline', cursor: 'pointer'}} 
                     onClick={() => navigate('/myToys')}>My Toys ({toys.filter((t:Toy) => t.userId === auth.currentUser?.uid).length})</li>
-                  <li onClick={() => navigate('/history')}>My trades</li>
+                  <li onClick={() => navigate('/myOffers')}>My Offers</li>
+                  {/* <li onClick={() => navigate('/history')}>My trades</li> */}
                   <li onClick={(async () => {
                     try {
                       await logOff();

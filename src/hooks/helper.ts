@@ -1,5 +1,5 @@
 import { signInWithPopup, signOut } from "firebase/auth";
-import { addDoc, collection, doc, DocumentData, documentId, FieldPath, getDocs, query, updateDoc, where } from "firebase/firestore";
+import { addDoc, collection, doc, DocumentData, documentId, FieldPath, getDocs, or, query, Timestamp, updateDoc, where } from "firebase/firestore";
 import { getDownloadURL, ref } from "firebase/storage";
 import { auth, db, facebookProvider, googleProvider, storage } from "../firebase-config";
 import { Offer } from "../types/offer";
@@ -43,10 +43,10 @@ export const addNewToy = async (title: string, file: string) => {
     });
 }
 
-export const addNewOffer = async (offeredToy: string, toyTargeted: string, userReceived: string) => {
+export const addNewOffer = async (toyOffered: string, toyTargeted: string, userReceived: string) => {
     await addDoc(toyOffersCollectionRef, {
         toyTargeted,
-        offeredToy,
+        toyOffered,
         userInitiated: auth.currentUser?.uid,
         userReceived
     });
@@ -88,13 +88,20 @@ export const getOfferList = async (userId: string) => {
     try {
         const offers: Offer[] = [];
 
-        const toq = query(toyOffersCollectionRef, where(new FieldPath('userReceived'), "==", userId));
+        const toq = query(toyOffersCollectionRef, 
+            or(where('userReceived', "==", userId), where('userInitiated', "==", userId)));
         const qs = await getDocs(toq);
 
         qs.forEach((doc: any) => {
-            offers.push({...doc.data(), id: doc.id});
+            offers.push({...doc.data(), id: doc.id,
+                offerCreated:doc.data().offerCreated ?
+                    new Timestamp(doc.data().offerCreated.seconds, doc.data().offerCreated.nanoseconds).toDate() : undefined,
+                offerReceived:doc.data().offerReceived ?
+                    new Timestamp(doc.data().offerReceived.seconds, doc.data().offerReceived.nanoseconds).toDate() : undefined,
+                offerAccepted:doc.data().offerAccepted ?
+                    new Timestamp(doc.data().offerAccepted.seconds, doc.data().offerAccepted.nanoseconds).toDate() : undefined });
         });
-
+        
         return offers;
     } catch (err) {
       console.error(err);

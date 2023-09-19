@@ -10,8 +10,7 @@ import { useContextSelector } from "use-context-selector";
 import { Store } from "react-notifications-component";
 import { Toy } from "../types/toy";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faHandshake, faRemove } from "@fortawesome/free-solid-svg-icons";
-import { updateOffer } from "../hooks/helper";
+import { faClose } from "@fortawesome/free-solid-svg-icons";
 
 function MyToysPage() {
   let navigate = useNavigate();
@@ -28,11 +27,11 @@ function MyToysPage() {
   
   const showOffers = async (target: string) => {
     const filterOffers = offers.filter((x:Offer) => x.toyTargeted === target);
-    const offeredToys = filterOffers.map((x:Offer) => { return x.toyOffered });
+    const toyOffereds = filterOffers.map((x:Offer) => { return x.toyOffered });
     setSelectedOffer(filterOffers[0]);
     setSelectedToyOffers(
       toys
-        .filter((x: Toy) => offeredToys.some((a: any) => a === x.id))
+        .filter((x: Toy) => toyOffereds.some((a: any) => a === x.id))
         .map((x: Toy) => { return { ...x } })
     );
   };
@@ -86,38 +85,6 @@ function MyToysPage() {
     setActiveOfferId(selectedOffer!.id);
   };
 
-  const acceptOffer = async (id: string) => {
-    await updateOffer(id)
-        .then(() => Store.addNotification({
-            title: "Wonderful",
-            message: "this toy is on your way !",
-            type: "success",
-            insert: "top",
-            container: "top-right",
-            animationIn: ["animated", "fadeIn"],
-            animationOut: ["animated", "fadeOut"],
-            dismiss: {
-              duration: 5000,
-              onScreen: true
-            }
-          })
-        )
-        .catch((e) => Store.addNotification({
-            title: "Unfortunately this action failed !",
-            message: "Please try again later... " + e.message.toString(),
-            type: "danger",
-            insert: "top",
-            container: "top-right",
-            animationIn: ["animated", "fadeIn"],
-            animationOut: ["animated", "fadeOut"],
-            dismiss: {
-              duration: 5000,
-              onScreen: true
-            }
-        })
-    );
-  };
-
   return (
     <>
         <h3>All your toys</h3>
@@ -129,12 +96,10 @@ function MyToysPage() {
 
         {activeOfferId && 
           <div className="largeOffer">
-            <button onClick={() => acceptOffer(activeOfferId!)} className={'buttonFixedLeft'}>
-              <FontAwesomeIcon icon={faHandshake} />
-            </button>
-            <img alt="being viewed" src={activeFile} />
-            <button onClick={() => setActiveOfferId(undefined)} className={'buttonFixedRight'}>
-                <FontAwesomeIcon icon={faRemove} />
+            <img alt="my toy offer viewer" src={activeFile} />
+            <button onClick={() => setActiveOfferId(undefined)}
+                style={{border: '1px green dashed', position: 'fixed', right: '1em',top: '1em', zIndex: 1}}>
+                    <FontAwesomeIcon icon={faClose} />
             </button>
           </div>
         }
