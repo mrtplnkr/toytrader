@@ -36,7 +36,7 @@ function Auth() {
                   <li onClick={(async () => {
                     try {
                       await logOff();
-                      navigate('/login');
+                      navigate('/list');
                     } catch (err) {
                       throw new Error('err signing out' + (err as Error).message);
                     }}

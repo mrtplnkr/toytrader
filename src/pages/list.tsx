@@ -16,8 +16,14 @@ function ListPage() {
   let navigate = useNavigate();
 
   const toys = useContextSelector(GoodAppContext, (state: any) => state.toys);
+  const refresh = useContextSelector(GoodAppContext, (state: any) => state.refresh);
 
   useEffect(() => {
+    if (auth.currentUser?.uid)
+      refresh();
+    else {
+      navigate('/login');
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

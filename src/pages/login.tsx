@@ -5,7 +5,7 @@ function LoginPage() {
   const navigate = useNavigate();
 
   const signedInCallback = () => {
-    navigate('/myToys');
+    navigate('/list');
   }
 
   return (

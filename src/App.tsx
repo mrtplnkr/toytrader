@@ -30,8 +30,12 @@ function StateProvider({children}: any) {
   const [offers, setOffers] = useState<Offer[]>([]);
 
   useEffect(() => {
-    getData();
-  }, []);
+    if (auth.currentUser?.uid) getData();
+    else {
+      setToys([]);
+      setOffers([]);
+    }
+  }, [auth.currentUser?.uid]);
 
   const getData = useCallback(async() => {
     setToys(await getToyList());
@@ -39,9 +43,9 @@ function StateProvider({children}: any) {
   }, []);
   
   return (
-    <>{offers && offers.length > 0 ? <GoodAppContext.Provider value={{toys, offers}}>
+    <GoodAppContext.Provider value={{toys, offers, refresh: getData}}>
       {children}
-    </GoodAppContext.Provider> : ''}</>
+    </GoodAppContext.Provider>
   )
 }
 
@@ -126,7 +130,8 @@ function Layout() {
           <Link to="/">Intro</Link>
         </li>
         <li>
-          <Link to="/list">Search for toys</Link>
+          {auth.currentUser?.uid ? <Link to="/list">Search for toys</Link>
+          : <Link to="/login">Login</Link>}
         </li>
       </ul>
 

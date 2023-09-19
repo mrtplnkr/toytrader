@@ -64,7 +64,7 @@
           ].filter(feature => typeof app[feature] === 'function');
           loadEl.textContent = `App Firebase SDK loaded with ${features.join(', ')}`;
         } catch (e) {
-          console.error(e);
+          // console.error(e);
           loadEl.textContent = 'Error loading the Firebase SDK, check the console.';
         }
       });
