@@ -17,8 +17,6 @@ function Auth() {
 
   const toys = useContextSelector(GoodAppContext, (x:any) => x.toys);
 
-  console.log('auth', auth);
-
   return (
     <>
       {

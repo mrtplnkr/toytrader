@@ -17,15 +17,9 @@ function ListPage() {
 
   const toys = useContextSelector(GoodAppContext, (state: any) => state.toys);
   const refresh = useContextSelector(GoodAppContext, (state: any) => state.refresh);
-  const user = useContextSelector(GoodAppContext, (state: any) => state.user);
 
   useEffect(() => {
-    if (auth.currentUser?.uid)
-      refresh();
-    else {
-      navigate('/login');
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    refresh();
   }, []);
 
   const [myWishedItems, setMyWishedItems] = useState<any[]>([]);

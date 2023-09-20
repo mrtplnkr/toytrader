@@ -127,11 +127,6 @@ function App() {
 }
 
 function Layout() {
-  const user = useContextSelector(GoodAppContext, (a:any) => a.user);
-
-  useEffect(() => {
-    console.log('bingo', user);    
-  }, []);
 
   return (
     <div>
@@ -142,8 +137,7 @@ function Layout() {
           <Link to="/">Intro</Link>
         </li>
         <li>
-          {user ? <Link to="/list">Search for toys</Link>
-          : <Link to="/login">Login</Link>}
+          <Link to="/list">Search for toys</Link>
         </li>
       </ul>
 
