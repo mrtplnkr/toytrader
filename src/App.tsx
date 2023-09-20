@@ -21,21 +21,32 @@ import { useCallback, useEffect, useState } from "react";
 import { Toy } from "./types/toy";
 import { Offer } from "./types/offer";
 import { GoodAppContext } from "./hooks/context";
-import { getOfferList, getToyList } from "./hooks/helper";
+import { getOfferList, getToyList, logOff } from "./hooks/helper";
 import HistoryPage from "./pages/inPost";
 import MyOffersPage from "./pages/myOffers";
+import { useContextSelector } from "use-context-selector";
+import { setUserId } from "firebase/analytics";
+import { User } from "firebase/auth";
 
 function StateProvider({children}: any) {
   const [toys, setToys] = useState<Toy[]>([])
   const [offers, setOffers] = useState<Offer[]>([]);
+  const [user, setUser] = useState<User|undefined>(undefined);
 
   useEffect(() => {
-    if (auth.currentUser?.uid) getData();
-    else {
+    if (auth.currentUser?.uid) { 
+      setUser(auth.currentUser);
+      getData();
+    } else {
       setToys([]);
       setOffers([]);
     }
   }, [auth.currentUser?.uid]);
+  
+  const signOut = () => {
+    logOff();
+    setUser(undefined);
+  };
 
   const getData = useCallback(async() => {
     setToys(await getToyList());
@@ -43,7 +54,7 @@ function StateProvider({children}: any) {
   }, []);
   
   return (
-    <GoodAppContext.Provider value={{toys, offers, refresh: getData}}>
+    <GoodAppContext.Provider value={{toys, offers, refresh: getData, user, signOut, setUser}}>
       {children}
     </GoodAppContext.Provider>
   )
@@ -121,6 +132,12 @@ function App() {
 }
 
 function Layout() {
+  const user = useContextSelector(GoodAppContext, (a:any) => a.user);
+
+  useEffect(() => {
+    console.log('bingo', user);    
+  }, []);
+
   return (
     <div>
       <Auth />
@@ -130,7 +147,7 @@ function Layout() {
           <Link to="/">Intro</Link>
         </li>
         <li>
-          {auth.currentUser?.uid ? <Link to="/list">Search for toys</Link>
+          {user ? <Link to="/list">Search for toys</Link>
           : <Link to="/login">Login</Link>}
         </li>
       </ul>

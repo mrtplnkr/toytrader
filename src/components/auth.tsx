@@ -4,11 +4,11 @@ import { useNavigate } from "react-router-dom";
 import { useContextSelector } from "use-context-selector";
 import { auth } from "../firebase-config";
 import { GoodAppContext } from "../hooks/context";
-import { logOff } from "../hooks/helper";
 import { Toy } from "../types/toy";
 
 function Auth() {
-  const navigate = useNavigate();
+  const navigate = useNavigate(); 
+  const signOut = useContextSelector(GoodAppContext, (state: any) => state.signOut);
 
   const [loading] = useState(false);
 
@@ -35,7 +35,7 @@ function Auth() {
                   {/* <li onClick={() => navigate('/history')}>My trades</li> */}
                   <li onClick={(async () => {
                     try {
-                      await logOff();
+                      await signOut();
                       navigate('/list');
                     } catch (err) {
                       throw new Error('err signing out' + (err as Error).message);

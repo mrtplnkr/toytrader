@@ -16,8 +16,8 @@ export const checkStatus = async () => {
 }
 export const googleSign = async (callback: any) => {
     try {
-        await signInWithPopup(auth, googleProvider)
-        callback();
+        const user = await signInWithPopup(auth, googleProvider);
+        callback(user);
     } catch (err) {
         throw new Error('google signIn error' + (err as Error).message);
     }
