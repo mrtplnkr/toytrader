@@ -1,5 +1,6 @@
 //https://toystrader-a494f.firebaseapp.com/__/auth/handler
-import { useState } from "react";
+import { setUserId } from "firebase/analytics";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useContextSelector } from "use-context-selector";
 import { auth } from "../firebase-config";
@@ -15,6 +16,8 @@ function Auth() {
   const [menu, openMenu] = useState(false);
 
   const toys = useContextSelector(GoodAppContext, (x:any) => x.toys);
+
+  console.log('auth', auth);
 
   return (
     <>

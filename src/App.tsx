@@ -21,21 +21,17 @@ import { useCallback, useEffect, useState } from "react";
 import { Toy } from "./types/toy";
 import { Offer } from "./types/offer";
 import { GoodAppContext } from "./hooks/context";
-import { getOfferList, getToyList, logOff } from "./hooks/helper";
+import { checkStatus, getOfferList, getToyList, logOff } from "./hooks/helper";
 import HistoryPage from "./pages/inPost";
 import MyOffersPage from "./pages/myOffers";
 import { useContextSelector } from "use-context-selector";
-import { setUserId } from "firebase/analytics";
-import { User } from "firebase/auth";
 
 function StateProvider({children}: any) {
   const [toys, setToys] = useState<Toy[]>([])
   const [offers, setOffers] = useState<Offer[]>([]);
-  const [user, setUser] = useState<User|undefined>(undefined);
 
   useEffect(() => {
     if (auth.currentUser?.uid) { 
-      setUser(auth.currentUser);
       getData();
     } else {
       setToys([]);
@@ -45,7 +41,6 @@ function StateProvider({children}: any) {
   
   const signOut = () => {
     logOff();
-    setUser(undefined);
   };
 
   const getData = useCallback(async() => {
@@ -54,8 +49,8 @@ function StateProvider({children}: any) {
   }, []);
   
   return (
-    <GoodAppContext.Provider value={{toys, offers, refresh: getData, user, signOut, setUser}}>
-      {children}
+    <GoodAppContext.Provider value={{toys, offers, refresh: getData, signOut}}>
+      {auth ? children : ''}
     </GoodAppContext.Provider>
   )
 }

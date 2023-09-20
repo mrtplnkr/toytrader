@@ -10,7 +10,6 @@ export const logOff = async () => {
 };
 export const checkStatus = async () => {
     return await auth.onAuthStateChanged((e) => {
-        console.log('eee', e);
         return e;
     });
 }
