@@ -21,6 +21,12 @@ enum Status {
 function MyOffersPage() {
     let navigate = useNavigate();
 
+    const refresh = useContextSelector(GoodAppContext, (state: any) => state.refresh);
+
+    useEffect(() => {
+      refresh();
+    }, []);
+  
     const toys = useContextSelector(GoodAppContext, (state: any) => state.toys);
     const offers = useContextSelector(GoodAppContext, (state: any) => state.offers);
 
@@ -56,7 +62,7 @@ function MyOffersPage() {
             });
         });
         setHistory(history);
-    }, []);
+    }, [offers.length]);
 
   return (
     <>

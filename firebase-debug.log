@@ -1,0 +1,38 @@
+[debug] [2023-09-20T09:18:54.263Z] ----------------------------------------------------------------------
+[debug] [2023-09-20T09:18:54.270Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\mrtma\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js deploy
+[debug] [2023-09-20T09:18:54.271Z] CLI Version:   12.5.2
+[debug] [2023-09-20T09:18:54.272Z] Platform:      win32
+[debug] [2023-09-20T09:18:54.273Z] Node Version:  v18.16.1
+[debug] [2023-09-20T09:18:54.275Z] Time:          Wed Sep 20 2023 12:18:54 GMT+0300 (Rytų Europos vasaros laikas)
+[debug] [2023-09-20T09:18:54.276Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2023-09-20T09:18:54.446Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2023-09-20T09:18:54.447Z] > authorizing via signed-in user (martynascepauskas@gmail.com)
+[debug] [2023-09-20T09:18:54.447Z] [iam] checking project toystrader-a494f for permissions ["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get","firebasehosting.sites.update","firebaserules.releases.create","firebaserules.releases.update","firebaserules.rulesets.create"]
+[debug] [2023-09-20T09:18:54.450Z] > refreshing access token with scopes: []
+[debug] [2023-09-20T09:18:54.453Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2023-09-20T09:18:54.453Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2023-09-20T09:18:54.655Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2023-09-20T09:18:54.655Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2023-09-20T09:18:54.670Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/toystrader-a494f:testIamPermissions [none]
+[debug] [2023-09-20T09:18:54.670Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/toystrader-a494f:testIamPermissions x-goog-quota-user=projects/toystrader-a494f
+[debug] [2023-09-20T09:18:54.670Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/toystrader-a494f:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get","firebasehosting.sites.update","firebaserules.releases.create","firebaserules.releases.update","firebaserules.rulesets.create"]}
+[debug] [2023-09-20T09:18:55.532Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/toystrader-a494f:testIamPermissions 200
+[debug] [2023-09-20T09:18:55.532Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/toystrader-a494f:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get","firebasehosting.sites.update","firebaserules.releases.create","firebaserules.releases.update","firebaserules.rulesets.create"]}
+[debug] [2023-09-20T09:18:55.533Z] >>> [apiv2][query] POST https://iam.googleapis.com/v1/projects/toystrader-a494f/serviceAccounts/toystrader-a494f@appspot.gserviceaccount.com:testIamPermissions [none]
+[debug] [2023-09-20T09:18:55.533Z] >>> [apiv2][body] POST https://iam.googleapis.com/v1/projects/toystrader-a494f/serviceAccounts/toystrader-a494f@appspot.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
+[debug] [2023-09-20T09:18:56.357Z] <<< [apiv2][status] POST https://iam.googleapis.com/v1/projects/toystrader-a494f/serviceAccounts/toystrader-a494f@appspot.gserviceaccount.com:testIamPermissions 200
+[debug] [2023-09-20T09:18:56.358Z] <<< [apiv2][body] POST https://iam.googleapis.com/v1/projects/toystrader-a494f/serviceAccounts/toystrader-a494f@appspot.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
+[debug] [2023-09-20T09:18:56.363Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/toystrader-a494f [none]
+[debug] [2023-09-20T09:18:56.770Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/toystrader-a494f 200
+[debug] [2023-09-20T09:18:56.771Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/toystrader-a494f {"projectId":"toystrader-a494f","projectNumber":"267868385149","displayName":"ToysTrader","name":"projects/toystrader-a494f","resources":{"hostingSite":"toystrader-a494f","realtimeDatabaseInstance":"toystrader-a494f-default-rtdb","storageBucket":"toystrader-a494f.appspot.com","locationId":"europe-west"},"state":"ACTIVE","etag":"1_a17593ad-54da-4d57-b6bb-d7b1d77c832c"}
+[info] 
+[info] === Deploying to 'toystrader-a494f'...
+[info] 
+[info] i  deploying storage, firestore, functions, hosting 
+[debug] [2023-09-20T09:18:56.791Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/toystrader-a494f [none]
+[debug] [2023-09-20T09:18:57.175Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/toystrader-a494f 200
+[debug] [2023-09-20T09:18:57.176Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/toystrader-a494f {"projectId":"toystrader-a494f","projectNumber":"267868385149","displayName":"ToysTrader","name":"projects/toystrader-a494f","resources":{"hostingSite":"toystrader-a494f","realtimeDatabaseInstance":"toystrader-a494f-default-rtdb","storageBucket":"toystrader-a494f.appspot.com","locationId":"europe-west"},"state":"ACTIVE","etag":"1_a17593ad-54da-4d57-b6bb-d7b1d77c832c"}
+[info] i  firebase.storage: checking storage.rules for compilation errors... 
+[debug] [2023-09-20T09:18:57.182Z] >>> [apiv2][query] POST https://firebaserules.googleapis.com/v1/projects/toystrader-a494f:test [none]
+[debug] [2023-09-20T09:18:57.182Z] >>> [apiv2][body] POST https://firebaserules.googleapis.com/v1/projects/toystrader-a494f:test [omitted]

@@ -1,5 +1,5 @@
 import { deleteDoc, doc } from "firebase/firestore";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase-config";
 import Item from "../components/item";
@@ -14,6 +14,12 @@ import { faClose } from "@fortawesome/free-solid-svg-icons";
 
 function MyToysPage() {
   let navigate = useNavigate();
+
+  const refresh = useContextSelector(GoodAppContext, (state: any) => state.refresh);
+
+  useEffect(() => {
+    refresh();
+  }, []);
 
   const [selectedOffer, setSelectedOffer] = useState<Offer>();
   const [selectedToyOffers, setSelectedToyOffers] = useState<Array<Toy>>([]);

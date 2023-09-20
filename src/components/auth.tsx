@@ -17,6 +17,15 @@ function Auth() {
 
   const toys = useContextSelector(GoodAppContext, (x:any) => x.toys);
 
+  const [greyUser, setGreyUser] = useState(false);
+
+  useEffect(() => {
+    if (!auth.currentUser) setGreyUser(true);
+    else {
+      setGreyUser(false);
+    }
+  }, [auth.currentUser?.uid])
+
   return (
     <>
       {
@@ -27,7 +36,8 @@ function Auth() {
             {
               auth?.currentUser?.uid &&
               <>
-                <img alt={auth?.currentUser?.displayName??'no name'} src={auth?.currentUser?.photoURL??''} onClick={() => openMenu(s => !s)} />
+                <img alt={auth?.currentUser?.displayName??'no name'} style={{opacity: greyUser ? '0.1' : ''}} 
+                  src={auth?.currentUser?.photoURL??''} onClick={() => openMenu(s => !s)} />
                 {menu && <ul>
                   <li onClick={() => alert('click!')}>{auth.currentUser?.displayName}</li>
                   <li style={{textDecoration: 'underline', cursor: 'pointer'}} 
@@ -36,8 +46,9 @@ function Auth() {
                   {/* <li onClick={() => navigate('/history')}>My trades</li> */}
                   <li onClick={(async () => {
                     try {
+                      openMenu(x => !x)
                       await signOut();
-                      navigate('/list');
+                      navigate('/login');
                     } catch (err) {
                       throw new Error('err signing out' + (err as Error).message);
                     }}

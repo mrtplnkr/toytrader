@@ -21,26 +21,17 @@ import { useCallback, useEffect, useState } from "react";
 import { Toy } from "./types/toy";
 import { Offer } from "./types/offer";
 import { GoodAppContext } from "./hooks/context";
-import { checkStatus, getOfferList, getToyList, logOff } from "./hooks/helper";
+import { getOfferList, getToyList, logOff } from "./hooks/helper";
 import HistoryPage from "./pages/inPost";
 import MyOffersPage from "./pages/myOffers";
-import { useContextSelector } from "use-context-selector";
 
 function StateProvider({children}: any) {
   const [toys, setToys] = useState<Toy[]>([])
   const [offers, setOffers] = useState<Offer[]>([]);
-
-  useEffect(() => {
-    if (auth.currentUser?.uid) { 
-      getData();
-    } else {
-      setToys([]);
-      setOffers([]);
-    }
-  }, [auth.currentUser?.uid]);
   
-  const signOut = () => {
-    logOff();
+  const signOut = async () => {
+    await logOff();
+    setOffers([]);
   };
 
   const getData = useCallback(async() => {
@@ -50,7 +41,7 @@ function StateProvider({children}: any) {
   
   return (
     <GoodAppContext.Provider value={{toys, offers, refresh: getData, signOut}}>
-      {auth ? children : ''}
+      {children}
     </GoodAppContext.Provider>
   )
 }
@@ -60,7 +51,7 @@ function App() {
   function RequireAuth(children: any) {
     let location = useLocation();
     
-    if (!auth) {
+    if (!auth.currentUser?.uid) {
       return <Navigate to="/login" state={{ from: location }} replace />;
     }
   
