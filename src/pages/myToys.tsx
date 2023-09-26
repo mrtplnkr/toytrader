@@ -10,7 +10,8 @@ import { useContextSelector } from "use-context-selector";
 import { Store } from "react-notifications-component";
 import { Toy } from "../types/toy";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faClose } from "@fortawesome/free-solid-svg-icons";
+import { faClose, faHandshake } from "@fortawesome/free-solid-svg-icons";
+import { updateOffer } from "../hooks/helper";
 
 function MyToysPage() {
   let navigate = useNavigate();
@@ -28,11 +29,11 @@ function MyToysPage() {
   const offers = useContextSelector(GoodAppContext, (state: any) => state.offers);
 
   const countOffers = (items: Offer[], target: string) => {
-    return items.filter((x:any) => x.toyTargeted === target).length;
+    return items.filter((x:Offer) => x.toyOffered === target).length;
   };
   
   const showOffers = async (target: string) => {
-    const filterOffers = offers.filter((x:Offer) => x.toyTargeted === target);
+    const filterOffers = offers.filter((x:Offer) => x.toyOffered === target);
     const toyOffereds = filterOffers.map((x:Offer) => { return x.toyOffered });
     setSelectedOffer(filterOffers[0]);
     setSelectedToyOffers(
@@ -71,8 +72,8 @@ function MyToysPage() {
             duration: 5000,
             onScreen: true
           }
-        })
-      );
+      })
+    );
     // await getToys();
   };
 
@@ -91,6 +92,38 @@ function MyToysPage() {
     setActiveOfferId(selectedOffer!.id);
   };
 
+  const acceptOffer = async (id: string) => {
+    await updateOffer(id)
+        .then(() => Store.addNotification({
+            title: "Wonderful",
+            message: "this toy is on your way !",
+            type: "success",
+            insert: "top",
+            container: "top-right",
+            animationIn: ["animated", "fadeIn"],
+            animationOut: ["animated", "fadeOut"],
+            dismiss: {
+              duration: 5000,
+              onScreen: true
+            }
+          })
+        )
+        .catch((e) => Store.addNotification({
+            title: "Unfortunately this action failed !",
+            message: "Please try again later... " + e.message.toString(),
+            type: "danger",
+            insert: "top",
+            container: "top-right",
+            animationIn: ["animated", "fadeIn"],
+            animationOut: ["animated", "fadeOut"],
+            dismiss: {
+              duration: 5000,
+              onScreen: true
+            }
+        })
+    );
+  };
+
   return (
     <>
         <h3>All your toys</h3>
@@ -102,10 +135,12 @@ function MyToysPage() {
 
         {activeOfferId && 
           <div className="largeOffer">
+            <button onClick={() => acceptOffer(activeOfferId!)} className={'buttonFixedLeft'}>
+              <FontAwesomeIcon icon={faHandshake} />
+            </button>
             <img alt="my toy offer viewer" src={activeFile} />
-            <button onClick={() => setActiveOfferId(undefined)}
-                style={{border: '1px green dashed', position: 'fixed', right: '1em',top: '1em', zIndex: 1}}>
-                    <FontAwesomeIcon icon={faClose} />
+            <button onClick={() => setActiveOfferId(undefined)} className={'buttonFixedRight'}>
+              <FontAwesomeIcon icon={faClose} />
             </button>
           </div>
         }

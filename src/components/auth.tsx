@@ -1,5 +1,4 @@
 //https://toystrader-a494f.firebaseapp.com/__/auth/handler
-import { setUserId } from "firebase/analytics";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useContextSelector } from "use-context-selector";
@@ -46,7 +45,7 @@ function Auth() {
                   {/* <li onClick={() => navigate('/history')}>My trades</li> */}
                   <li onClick={(async () => {
                     try {
-                      openMenu(x => !x)
+                      openMenu(x => !x);
                       await signOut();
                       navigate('/login');
                     } catch (err) {

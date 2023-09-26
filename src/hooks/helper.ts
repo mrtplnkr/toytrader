@@ -27,7 +27,7 @@ export const facebookSign = async (callback: any) => {
         await signInWithPopup(auth, facebookProvider);
         callback();
     } catch (err) {
-        throw new Error('facebook signIn error' + (err as Error).message);
+        console.log('facebook signIn error' + (err as Error).message);
     }
     return true;
 };
@@ -47,7 +47,8 @@ export const addNewOffer = async (toyOffered: string, toyTargeted: string, userR
         toyTargeted,
         toyOffered,
         userInitiated: auth.currentUser?.uid,
-        userReceived
+        userReceived,
+        offerCreated: Date.now(),
     });
 }
 
@@ -100,7 +101,8 @@ export const getOfferList = async (userId: string) => {
                 offerAccepted:doc.data().offerAccepted ?
                     new Timestamp(doc.data().offerAccepted.seconds, doc.data().offerAccepted.nanoseconds).toDate() : undefined });
         });
-        
+
+        console.log('offers received', offers);
         return offers;
     } catch (err) {
       console.error(err);

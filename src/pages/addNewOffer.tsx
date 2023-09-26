@@ -15,7 +15,7 @@ function ToyDisplay(props: Props) {//TODO: change to NewOffer
     const [showYourToys, setShowYourToys] = useState<boolean>(false);
 
     const [selectedToy, setSelectedToy] = useState<string | undefined>();
-    
+
     return (
         <div className="largeOffer">
             <button onClick={() => setShowYourToys(x => !x)} className={showYourToys ? "animateBorder" : ''}
