@@ -114,3 +114,8 @@ export const updateOffer = async (id: string) => {
     const docToUpdate = doc(db, "offers", id)
     await updateDoc(docToUpdate, {"offerAccepted": Date.now()});
 };
+
+export const isAuthLoading = () => {
+    if (auth.currentUser) return false;
+    else return true;
+}

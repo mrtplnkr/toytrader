@@ -21,9 +21,12 @@ import { useCallback, useEffect, useState } from "react";
 import { Toy } from "./types/toy";
 import { Offer } from "./types/offer";
 import { GoodAppContext } from "./hooks/context";
-import { getOfferList, getToyList, logOff } from "./hooks/helper";
+import { getOfferList, getToyList, isAuthLoading, logOff } from "./hooks/helper";
 import HistoryPage from "./pages/inPost";
 import MyOffersPage from "./pages/myOffers";
+import { TIMEOUT } from "dns";
+import { setUserId } from "firebase/analytics";
+import { User } from "firebase/auth";
 
 function StateProvider({children}: any) {
   const [toys, setToys] = useState<Toy[]>([])
@@ -50,12 +53,26 @@ function App() {
 
   function RequireAuth(children: any) {
     let location = useLocation();
-    
-    if (!auth.currentUser?.uid) {
-      return <Navigate to="/login" state={{ from: location }} replace />;
+
+    const [user, setUser] = useState<User | null | undefined>(undefined);
+
+    useEffect(() => {
+      checkStatus();
+    }, []);
+
+    const checkStatus = async () => {
+      await auth.onAuthStateChanged((e: User | null) => {
+        setUser(e);
+      });
     }
-  
-    return children.children;
+
+    return <>
+      { user !== undefined ?
+        <>{ user ? children.children : <Navigate to="/login" state={{ from: location }} replace /> }</>
+        : 
+        <>loading...</>
+      }
+    </>;
   }
   
   return (

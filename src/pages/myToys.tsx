@@ -165,7 +165,7 @@ function MyToysPage() {
                     {selectedToyOffers.map((ao: any) => {
                       return (
                         <div key={ao.id}>
-                          <ItemForOffer setActive={setActive} {...ao} refuseOffer={refuseOffer} />
+                          <ItemForOffer setActive={setActive} {...ao} />
                         </div>
                       )
                     })}

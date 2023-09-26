@@ -1,8 +1,6 @@
-import { memo } from "react";
 import { Toy } from "../types/toy";
 
 interface ItemProps extends Toy {
-    refuseOffer: any;
     setActive: any;
 }
 
@@ -16,4 +14,4 @@ function ItemForOffer(props: ItemProps) {
     );
 }
 
-export default memo(ItemForOffer);
+export default ItemForOffer;
