@@ -5,6 +5,7 @@ import { useContextSelector } from "use-context-selector";
 import { auth } from "../firebase-config";
 import { GoodAppContext } from "../hooks/context";
 import { Toy } from "../types/toy";
+import appConfig from "../../package.json";
 
 function Auth() {
   const navigate = useNavigate(); 
@@ -52,6 +53,7 @@ function Auth() {
                       throw new Error('err signing out' + (err as Error).message);
                     }}
                   )}>Sign out</li>
+                  <li>{appConfig.version}</li>
                 </ul>}
               </>
             }
