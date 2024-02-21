@@ -34,11 +34,11 @@ function MyToysPage() {
   
   const showOffers = async (target: string) => {
     const filterOffers = offers.filter((x:Offer) => x.toyOffered === target);
-    const toyOffereds = filterOffers.map((x:Offer) => { return x.toyOffered });
+    const toyOffers = filterOffers.map((x:Offer) => x.toyTargeted);
     setSelectedOffer(filterOffers[0]);
     setSelectedToyOffers(
       toys
-        .filter((x: Toy) => toyOffereds.some((a: any) => a === x.id))
+        .filter((x: Toy) => toyOffers.some((a: any) => a === x.id))
         .map((x: Toy) => { return { ...x } })
     );
   };
@@ -152,25 +152,26 @@ function MyToysPage() {
                 <Item {...toys.find((o: Toy) => x.id === o.id)} deleteItem={deleteItem} />
                 <div style={{width: '90%', margin: 'auto', color: 'yellow'}}>
                   {countOffers(offers, x.id) ? <>
-                    View{' '}
-                    <span style={{ textDecoration: 'underline', cursor: 'pointer' }} 
-                        onClick={() => showOffers(x.id)}>{countOffers(offers, x.id)} offer(s)</span>
-                    ...
+                    <div>
+                      View{' '}
+                      <span style={{ textDecoration: 'underline', cursor: 'pointer' }} 
+                          onClick={() => showOffers(x.id)}>{countOffers(offers, x.id)} offer(s)</span>
+                      ...
+                    </div>
+                    {console.log('qew', selectedToyOffers)}
+                    <div>
+                      {selectedToyOffers.map((ao: any) => {
+                        return (
+                          <div key={ao.id}>
+                            <ItemForOffer setActive={setActive} {...ao} />
+                          </div>
+                        )
+                      })}
+                    </div>
                   </>
                   :
                   <>no offers..</>}
                 </div>
-                {countOffers(offers, x.id) && selectedToyOffers.length > 0 ?
-                  <div style={{display: 'flex', flexDirection: 'row'}}>
-                    {selectedToyOffers.map((ao: any) => {
-                      return (
-                        <div key={ao.id}>
-                          <ItemForOffer setActive={setActive} {...ao} />
-                        </div>
-                      )
-                    })}
-                  </div>
-                : <hr/> }
               </div>
             )
           }) : <div>you haven't added anything yet</div>}
