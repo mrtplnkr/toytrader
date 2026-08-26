@@ -16,9 +16,8 @@
     "@types/react": "^18.2.17",
     "@types/react-dom": "^18.2.7",
     "firebase": "^10.1.0",
-    "firebase-admin": "^11.10.1",
-    "firebase-functions": "^4.4.1",
     "lint": "^0.8.19",
+    "qrcode.react": "^4.2.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-notifications-component": "^4.0.1",
@@ -33,6 +32,7 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
+    "test:e2e": "playwright test",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
@@ -54,6 +54,8 @@
     ]
   },
   "devDependencies": {
-    "@types/uuid": "^9.0.2"
+    "@playwright/test": "^1.62.1",
+    "@types/uuid": "^9.0.2",
+    "firebase-admin": "^14.3.0"
   }
 }

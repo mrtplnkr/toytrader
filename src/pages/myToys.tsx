@@ -1,17 +1,13 @@
 import { deleteDoc, doc } from "firebase/firestore";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase-config";
 import Item from "../components/item";
-import ItemForOffer from "../components/itemForOffer";
 import { Offer } from "../types/offer";
 import { GoodAppContext } from "../hooks/context";
 import { useContextSelector } from "use-context-selector";
 import { Store } from "react-notifications-component";
 import { Toy } from "../types/toy";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faClose, faHandshake } from "@fortawesome/free-solid-svg-icons";
-import { updateOffer } from "../hooks/helper";
 
 function MyToysPage() {
   let navigate = useNavigate();
@@ -22,27 +18,13 @@ function MyToysPage() {
     refresh();
   }, []);
 
-  const [selectedOffer, setSelectedOffer] = useState<Offer>();
-  const [selectedToyOffers, setSelectedToyOffers] = useState<Array<Toy>>([]);
-
   const toys = useContextSelector(GoodAppContext, (state: any) => state.toys);
   const offers = useContextSelector(GoodAppContext, (state: any) => state.offers);
 
   const countOffers = (items: Offer[], target: string) => {
     return items.filter((x:Offer) => x.toyOffered === target).length;
   };
-  
-  const showOffers = async (target: string) => {
-    const filterOffers = offers.filter((x:Offer) => x.toyOffered === target);
-    const toyOffers = filterOffers.map((x:Offer) => x.toyTargeted);
-    setSelectedOffer(filterOffers[0]);
-    setSelectedToyOffers(
-      toys
-        .filter((x: Toy) => toyOffers.some((a: any) => a === x.id))
-        .map((x: Toy) => { return { ...x } })
-    );
-  };
-  
+
   const deleteItem = async (id: string) => {
     const movieDoc = doc(db, "toys", id);
     await deleteDoc(movieDoc)
@@ -59,7 +41,7 @@ function MyToysPage() {
           onScreen: true
         }
       }))
-      .catch((e) => 
+      .catch((e) =>
         Store.addNotification({
           title: "Unfortunately this action failed !",
           message: "Please try again later... " + e.message.toString(),
@@ -74,103 +56,32 @@ function MyToysPage() {
           }
       })
     );
-    // await getToys();
-  };
-
-  const refuseOffer = async () => {
-    alert('not implemented');
-    // await updateDoc(offersCollectionRef, );
-    // where 1 toy
-    // and where 2 toy
-  };
-
-  const [activeFile, setActiveFile] = useState<string | undefined>(undefined);
-  const [activeOfferId, setActiveOfferId] = useState<string | undefined>(undefined);
-
-  const setActive = (toyFile: string) => {
-    setActiveFile(toyFile);
-    setActiveOfferId(selectedOffer!.id);
-  };
-
-  const acceptOffer = async (id: string) => {
-    await updateOffer(id)
-        .then(() => Store.addNotification({
-            title: "Wonderful",
-            message: "this toy is on your way !",
-            type: "success",
-            insert: "top",
-            container: "top-right",
-            animationIn: ["animated", "fadeIn"],
-            animationOut: ["animated", "fadeOut"],
-            dismiss: {
-              duration: 5000,
-              onScreen: true
-            }
-          })
-        )
-        .catch((e) => Store.addNotification({
-            title: "Unfortunately this action failed !",
-            message: "Please try again later... " + e.message.toString(),
-            type: "danger",
-            insert: "top",
-            container: "top-right",
-            animationIn: ["animated", "fadeIn"],
-            animationOut: ["animated", "fadeOut"],
-            dismiss: {
-              duration: 5000,
-              onScreen: true
-            }
-        })
-    );
   };
 
   return (
     <>
         <h3>All your toys</h3>
-  
-        <div style={{display: 'flex', flexDirection: 'column'}}>
-          <button style={{alignSelf: 'flex-end'}} onClick={() => navigate('/addNew')}>add your toy</button>
-          <button style={{alignSelf: 'flex-start'}} onClick={() => alert('not sure if its needed')}>refresh</button>
+
+        <div style={{display: 'flex', justifyContent: 'space-between', margin: '0 0 1.5em'}}>
+          <button onClick={() => alert('not sure if its needed')}>refresh</button>
+          <button className="btn-primary" onClick={() => navigate('/addNew')}>add your toy</button>
         </div>
 
-        {activeOfferId && 
-          <div className="largeOffer">
-            <button onClick={() => acceptOffer(activeOfferId!)} className={'buttonFixedLeft'}>
-              <FontAwesomeIcon icon={faHandshake} />
-            </button>
-            <img alt="my toy offer viewer" src={activeFile} />
-            <button onClick={() => setActiveOfferId(undefined)} className={'buttonFixedRight'}>
-              <FontAwesomeIcon icon={faClose} />
-            </button>
-          </div>
-        }
-  
         <ul id="toyList">
           {toys.length > 0 ? toys.filter((x: Toy) => x.userId === auth.currentUser?.uid).map((x: Toy) => {
             return (
               <div key={x.id}>
                 <Item {...toys.find((o: Toy) => x.id === o.id)} deleteItem={deleteItem} />
-                <div style={{width: '90%', margin: 'auto', color: 'yellow'}}>
-                  {countOffers(offers, x.id) ? <>
+                <div style={{fontSize: '0.9em', color: 'var(--color-text-dim)'}}>
+                  {countOffers(offers, x.id) ?
                     <div>
-                      View{' '}
-                      <span style={{ textDecoration: 'underline', cursor: 'pointer' }} 
-                          onClick={() => showOffers(x.id)}>{countOffers(offers, x.id)} offer(s)</span>
-                      ...
+                      You have{' '}
+                      <span style={{ color: 'var(--color-primary)', textDecoration: 'underline', cursor: 'pointer' }}
+                          onClick={() => navigate('/myOffers')}>{countOffers(offers, x.id)} offer(s)</span>
+                      {' '}on this toy - accept or decline them from My Offers.
                     </div>
-                    {console.log('qew', selectedToyOffers)}
-                    <div>
-                      {selectedToyOffers.map((ao: any) => {
-                        return (
-                          <div key={ao.id}>
-                            <ItemForOffer setActive={setActive} {...ao} />
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </>
                   :
-                  <>no offers..</>}
+                    <>no offers..</>}
                 </div>
               </div>
             )

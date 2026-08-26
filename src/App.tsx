@@ -24,6 +24,7 @@ import { GoodAppContext } from "./hooks/context";
 import { getOfferList, getToyList, isAuthLoading, logOff } from "./hooks/helper";
 import HistoryPage from "./pages/inPost";
 import MyOffersPage from "./pages/myOffers";
+import ShipmentResultPage from "./pages/shipmentResult";
 import { TIMEOUT } from "dns";
 import { setUserId } from "firebase/analytics";
 import { User } from "firebase/auth";
@@ -110,6 +111,14 @@ function App() {
                   }
                 />
                 <Route
+                  path="/shipment/result"
+                  element={
+                    <RequireAuth>
+                      <ShipmentResultPage />
+                    </RequireAuth>
+                  }
+                />
+                <Route
                   path="/history"
                   element={
                     <RequireAuth>
@@ -138,18 +147,24 @@ function Layout() {
 
   return (
     <div>
-      <Auth />
+      <div className="navBar">
+        <Link className="brand" to="/">ToyTrader</Link>
 
-      <ul className="navigation">
-        <li>
-          <Link to="/">Intro</Link>
-        </li>
-        <li>
-          <Link to="/list">Search for toys</Link>
-        </li>
-      </ul>
+        <ul className="navigation">
+          <li>
+            <Link to="/">Intro</Link>
+          </li>
+          <li>
+            <Link to="/list">Search for toys</Link>
+          </li>
+        </ul>
 
-      <Outlet />
+        <Auth />
+      </div>
+
+      <main>
+        <Outlet />
+      </main>
     </div>
   );
 }

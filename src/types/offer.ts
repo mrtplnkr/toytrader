@@ -16,4 +16,16 @@ export interface Offer {
 
     targetPosted?: Date;
     targetReceived?: Date;
+
+    offerShipmentPaid?: Date;
+    offerShipmentStripeSessionId?: string;
+    offerShipmentBarcode?: string;
+    offerShipmentQrIssuedAt?: Date;
+    offerShipmentError?: string;
+
+    targetShipmentPaid?: Date;
+    targetShipmentStripeSessionId?: string;
+    targetShipmentBarcode?: string;
+    targetShipmentQrIssuedAt?: Date;
+    targetShipmentError?: string;
 }

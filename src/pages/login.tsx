@@ -10,12 +10,12 @@ function LoginPage() {
   };
 
   return (
-    <>
-      <h1>Login page</h1>
+    <div className="card" style={{maxWidth: '360px', margin: '3em auto', padding: '2em', display: 'flex', flexDirection: 'column', gap: '1em'}}>
+      <h1 style={{margin: 0}}>Login</h1>
 
-      <button onClick={() => googleSign(signedInCallback)}>Google login</button>
-      <button onClick={() => facebookSign(signedInCallback)}>Facebook login</button>
-    </>
+      <button className="btn-primary" onClick={() => googleSign(signedInCallback)}>Google login</button>
+      <button className="btn-primary" onClick={() => facebookSign(signedInCallback)}>Facebook login</button>
+    </div>
   );
 }
 

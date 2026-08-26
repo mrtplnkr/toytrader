@@ -1,5 +1,31 @@
+:root {
+  --color-bg: #14161f;
+  --color-surface: #1e2130;
+  --color-surface-raised: #262a3d;
+  --color-border: #343850;
+  --color-text: #f1f2f6;
+  --color-text-dim: #9a9db3;
+  --color-primary: #7c5cff;
+  --color-primary-hover: #9179ff;
+  --color-danger: #ff5c7a;
+  --color-danger-hover: #ff7a92;
+  --color-success: #33d69f;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  --space-1: 0.5em;
+  --space-2: 1em;
+  --space-3: 1.5em;
+}
+
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
+  background-color: var(--color-bg);
+  color: var(--color-text);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
@@ -12,14 +38,86 @@ code {
     monospace;
 }
 
+h1, h2, h3 {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+a {
+  color: var(--color-primary);
+}
+
 button {
   cursor: pointer;
+  font: inherit;
+  color: var(--color-text);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 0.6em 1.2em;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.05s ease;
+}
+
+button:hover:not(:disabled) {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+button[type="submit"],
+.btn-primary {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: white;
+  font-weight: 600;
+}
+
+button[type="submit"]:hover:not(:disabled),
+.btn-primary:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+}
+
+.btn-danger {
+  background: transparent;
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: var(--color-danger);
+  border-color: var(--color-danger);
+  color: white;
+}
+
+input[type="text"],
+input[type="file"] {
+  font: inherit;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 0.6em 0.8em;
+}
+
+input[type="text"]:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
 }
 
 .smallOffer {
   height: 5em;
   width: auto !important;
   cursor: pointer;
+  border-radius: var(--radius-sm);
 }
 
 .leftButton {
@@ -35,14 +133,14 @@ button {
 }
 
 .largeOffer {
-  background: lightgrey;
-  opacity: 0.9;
+  background: rgba(15, 17, 26, 0.96);
   position: fixed;
   top: 0;
-  left: 0;  
+  left: 0;
   padding: 0 !important;
   height: 100% !important;
   width: 100% !important;
+  z-index: 10;
 }
 
 .largeOffer img {
@@ -51,13 +149,23 @@ button {
 }
 
 .buttonFixedLeft {
-  background: green;
+  background: var(--color-success);
+  border-color: var(--color-success);
+  color: #08281f;
   position: fixed;
-  height: 5em;
-  margin: 5em;
+  height: 4em;
+  width: 4em;
+  border-radius: 50%;
+  margin: 3em;
   bottom: 0;
   left: 0;
   z-index: 1;
+  box-shadow: var(--shadow);
+}
+
+.buttonFixedLeft:hover:not(:disabled) {
+  background: var(--color-success);
+  filter: brightness(1.1);
 }
 
 .buttonFixedLeft:disabled {
@@ -65,20 +173,48 @@ button {
 }
 
 .animateBorder {
-  box-shadow: 0px 0px 0px 3px #81fc51;
-  transition: box-shadow 3s linear;
+  box-shadow: 0px 0px 0px 3px var(--color-primary);
+  transition: box-shadow 0.3s ease;
+}
+
+.statusLines {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+}
+
+.statusLines li {
+  padding: 0.15em 0;
 }
 
 .statusLines li:last-child {
-  text-decoration: underline;
+  color: var(--color-text-dim);
 }
 
 .buttonFixedRight {
-  background: red;
+  background: var(--color-danger);
+  border-color: var(--color-danger);
+  color: #2c0b12;
   position: fixed;
-  height: 5em;
-  margin: 5em;
+  height: 4em;
+  width: 4em;
+  border-radius: 50%;
+  margin: 3em;
   bottom: 0;
   right: 0;
   z-index: 1;
+  box-shadow: var(--shadow);
+}
+
+.buttonFixedRight:hover:not(:disabled) {
+  background: var(--color-danger);
+  filter: brightness(1.1);
+}
+
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
 }

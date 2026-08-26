@@ -1,7 +1,8 @@
 import { signInWithPopup, signOut } from "firebase/auth";
-import { addDoc, collection, doc, DocumentData, documentId, FieldPath, getDocs, or, query, Timestamp, updateDoc, where } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, DocumentData, documentId, FieldPath, getDocs, or, query, Timestamp, updateDoc, where } from "firebase/firestore";
 import { getDownloadURL, ref } from "firebase/storage";
-import { auth, db, facebookProvider, googleProvider, storage } from "../firebase-config";
+import { httpsCallable } from "firebase/functions";
+import { auth, db, facebookProvider, googleProvider, functions, storage } from "../firebase-config";
 import { Offer } from "../types/offer";
 import { Toy } from "../types/toy";
 
@@ -92,14 +93,23 @@ export const getOfferList = async (userId: string) => {
             or(where('userReceived', "==", userId), where('userInitiated', "==", userId)));
         const qs = await getDocs(toq);
 
+        const toDate = (data: DocumentData, field: string) =>
+            data[field] ? new Timestamp(data[field].seconds, data[field].nanoseconds).toDate() : undefined;
+
         qs.forEach((doc: any) => {
-            offers.push({...doc.data(), id: doc.id,
-                offerCreated:doc.data().offerCreated ?
-                    new Timestamp(doc.data().offerCreated.seconds, doc.data().offerCreated.nanoseconds).toDate() : undefined,
-                offerReceived:doc.data().offerReceived ?
-                    new Timestamp(doc.data().offerReceived.seconds, doc.data().offerReceived.nanoseconds).toDate() : undefined,
-                offerAccepted:doc.data().offerAccepted ?
-                    new Timestamp(doc.data().offerAccepted.seconds, doc.data().offerAccepted.nanoseconds).toDate() : undefined });
+            const data = doc.data();
+            offers.push({...data, id: doc.id,
+                offerCreated: toDate(data, 'offerCreated'),
+                offerAccepted: toDate(data, 'offerAccepted'),
+                offerPosted: toDate(data, 'offerPosted'),
+                offerReceived: toDate(data, 'offerReceived'),
+                targetPosted: toDate(data, 'targetPosted'),
+                targetReceived: toDate(data, 'targetReceived'),
+                offerShipmentPaid: toDate(data, 'offerShipmentPaid'),
+                offerShipmentQrIssuedAt: toDate(data, 'offerShipmentQrIssuedAt'),
+                targetShipmentPaid: toDate(data, 'targetShipmentPaid'),
+                targetShipmentQrIssuedAt: toDate(data, 'targetShipmentQrIssuedAt'),
+            });
         });
 
         console.log('offers received', offers);
@@ -113,6 +123,22 @@ export const getOfferList = async (userId: string) => {
 export const updateOffer = async (id: string) => {
     const docToUpdate = doc(db, "offers", id)
     await updateDoc(docToUpdate, {"offerAccepted": Date.now()});
+};
+
+export const declineOffer = async (id: string) => {
+    await deleteDoc(doc(db, "offers", id));
+};
+
+export type ShipmentSide = "offer" | "target";
+
+const startShipmentCheckoutCallable = httpsCallable<
+    { offerId: string, side: ShipmentSide },
+    { checkoutUrl: string }
+>(functions, "startShipmentCheckout");
+
+export const startShipmentCheckout = async (offerId: string, side: ShipmentSide) => {
+    const result = await startShipmentCheckoutCallable({ offerId, side });
+    return result.data;
 };
 
 export const isAuthLoading = () => {

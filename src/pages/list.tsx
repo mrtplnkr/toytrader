@@ -45,7 +45,7 @@ function ListPage() {
 
   const proposeOffer = async (toyOffered: string) => {
     try {
-      if (toyDisplayIndex) await addNewOffer(toyOffered, toys[toyDisplayIndex].id, toys[toyDisplayIndex].userId);
+      if (toyDisplayIndex !== undefined) await addNewOffer(toyOffered, toys[toyDisplayIndex].id, toys[toyDisplayIndex].userId);
       Store.addNotification({
         title: "Success !",
         message: "Toy successfully offered .",
