@@ -66,6 +66,9 @@ function ShipmentResultPage() {
                         Please contact support and mention offer {offerId}.</p>
                 : barcode ?
                     <>
+                        <p>Your €5 shipping payment was received. Take your toy to any Omniva parcel
+                            machine and scan this code at the terminal to print your label and drop
+                            it off - no printer needed.</p>
                         <QRCodeSVG value={barcode} size={256} />
                         <p>{barcode}</p>
                     </>
