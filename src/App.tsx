@@ -21,12 +21,10 @@ import { useCallback, useEffect, useState } from "react";
 import { Toy } from "./types/toy";
 import { Offer } from "./types/offer";
 import { GoodAppContext } from "./hooks/context";
-import { getOfferList, getToyList, isAuthLoading, logOff } from "./hooks/helper";
+import { getOfferList, getToyList, logOff } from "./hooks/helper";
 import HistoryPage from "./pages/inPost";
 import MyOffersPage from "./pages/myOffers";
 import ShipmentResultPage from "./pages/shipmentResult";
-import { TIMEOUT } from "dns";
-import { setUserId } from "firebase/analytics";
 import { User } from "firebase/auth";
 
 function StateProvider({children}: any) {

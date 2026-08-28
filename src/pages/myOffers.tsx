@@ -31,7 +31,7 @@ function MyOffersPage() {
 
     useEffect(() => {
       refresh();
-    }, []);
+    }, [refresh]);
 
     const toys = useContextSelector(GoodAppContext, (state: any) => state.toys);
     const offers = useContextSelector(GoodAppContext, (state: any) => state.offers);
@@ -84,7 +84,7 @@ function MyOffersPage() {
             });
         });
         setHistory(history);
-    }, [offers.length]);
+    }, [offers, toys]);
 
     const notifyError = (err: Error) => {
         Store.addNotification({

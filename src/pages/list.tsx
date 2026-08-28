@@ -20,7 +20,7 @@ function ListPage() {
 
   useEffect(() => {
     refresh();
-  }, []);
+  }, [refresh]);
 
   const [myWishedItems, setMyWishedItems] = useState<any[]>([]);
 

@@ -1,5 +1,5 @@
 import { signInWithPopup, signOut } from "firebase/auth";
-import { addDoc, collection, deleteDoc, doc, DocumentData, documentId, FieldPath, getDocs, or, query, Timestamp, updateDoc, where } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, DocumentData, getDocs, or, query, Timestamp, updateDoc, where } from "firebase/firestore";
 import { getDownloadURL, ref } from "firebase/storage";
 import { httpsCallable } from "firebase/functions";
 import { auth, db, facebookProvider, googleProvider, functions, storage } from "../firebase-config";

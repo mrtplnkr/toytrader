@@ -24,6 +24,7 @@ function Auth() {
     else {
       setGreyUser(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auth.currentUser?.uid])
 
   return (

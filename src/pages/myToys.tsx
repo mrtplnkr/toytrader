@@ -16,7 +16,7 @@ function MyToysPage() {
 
   useEffect(() => {
     refresh();
-  }, []);
+  }, [refresh]);
 
   const toys = useContextSelector(GoodAppContext, (state: any) => state.toys);
   const offers = useContextSelector(GoodAppContext, (state: any) => state.offers);
