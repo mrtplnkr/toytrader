@@ -50,13 +50,15 @@ test("two users trade toys and the accepting side receives shipping instructions
   // would once payment succeeds, via the Admin SDK against the emulator.
   let capturedOfferId: string | undefined;
   let capturedSide: string | undefined;
+  let capturedParcelMachineId: string | undefined;
 
   await alice.route("**/startShipmentCheckout", async (route) => {
     const body = route.request().postDataJSON();
     capturedOfferId = body.data.offerId;
     capturedSide = body.data.side;
+    capturedParcelMachineId = body.data.parcelMachineId;
 
-    await markShipmentPaid(capturedOfferId!, capturedSide as "offer" | "target", TEST_BARCODE);
+    await markShipmentPaid(capturedOfferId!, capturedSide as "offer" | "target", TEST_BARCODE, capturedParcelMachineId!);
 
     await route.fulfill({
       status: 200,
@@ -68,6 +70,13 @@ test("two users trade toys and the accepting side receives shipping instructions
       }),
     });
   });
+
+  // The pay button is disabled until a parcel machine is chosen (the stub
+  // Omniva client's listParcelMachines fixture, served through the real
+  // Functions emulator - no mocking needed for this call).
+  const parcelMachineSelect = alice.locator("select");
+  await expect(parcelMachineSelect.locator("option").nth(1)).toBeAttached();
+  await parcelMachineSelect.selectOption({ index: 1 });
 
   await alice.getByRole("button", { name: /Pay & Get QR Code/ }).click();
   await alice.waitForURL("**/shipment/result*");

@@ -5,7 +5,8 @@ import {getApps, initializeApp} from "firebase-admin/app";
 import {getFirestore, FieldValue} from "firebase-admin/firestore";
 import type Stripe from "stripe";
 import {getStripe, stripeSecretKey, stripeWebhookSecret} from "./stripe";
-import {getOmnivaClient, ShipmentSide} from "./omniva";
+import {getOmnivaClient, omnivaUsername, omnivaPassword, ShipmentSide} from "./omniva";
+import {isValidParcelMachineId} from "./omnivaParcelMachines";
 
 if (getApps().length === 0) {
   initializeApp();
@@ -22,6 +23,7 @@ const appBaseUrl = defineString("APP_BASE_URL", {default: "http://localhost:3000
 interface StartShipmentCheckoutRequest {
   offerId: string;
   side: ShipmentSide;
+  parcelMachineId: string;
 }
 
 /**
@@ -32,16 +34,23 @@ interface StartShipmentCheckoutRequest {
  * rules alone can't validate "is this the right side of the trade".
  */
 export const startShipmentCheckout = onCall<StartShipmentCheckoutRequest>(
-  {region: REGION, secrets: [stripeSecretKey]},
+  {region: REGION, secrets: [stripeSecretKey, omnivaUsername, omnivaPassword]},
   async (request) => {
     const uid = request.auth?.uid;
     if (!uid) {
       throw new HttpsError("unauthenticated", "Must be signed in.");
     }
 
-    const {offerId, side} = request.data ?? {};
-    if (!offerId || (side !== "offer" && side !== "target")) {
-      throw new HttpsError("invalid-argument", "offerId and side ('offer'|'target') are required.");
+    const {offerId, side, parcelMachineId} = request.data ?? {};
+    if (!offerId || (side !== "offer" && side !== "target") || !parcelMachineId) {
+      throw new HttpsError(
+        "invalid-argument",
+        "offerId, side ('offer'|'target'), and parcelMachineId are required."
+      );
+    }
+
+    if (!(await isValidParcelMachineId(parcelMachineId))) {
+      throw new HttpsError("invalid-argument", "Unknown parcel machine.");
     }
 
     const db = getFirestore();
@@ -82,7 +91,7 @@ export const startShipmentCheckout = onCall<StartShipmentCheckoutRequest>(
         },
         quantity: 1,
       }],
-      metadata: {offerId, side, uid},
+      metadata: {offerId, side, uid, parcelMachineId},
       success_url:
         `${baseUrl}/shipment/result?offerId=${offerId}&side=${side}&status=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/shipment/result?offerId=${offerId}&side=${side}&status=cancel`,
@@ -104,7 +113,7 @@ export const startShipmentCheckout = onCall<StartShipmentCheckoutRequest>(
  * client is never allowed to set these fields directly - see firestore.rules.
  */
 export const stripeWebhook = onRequest(
-  {region: REGION, secrets: [stripeSecretKey, stripeWebhookSecret]},
+  {region: REGION, secrets: [stripeSecretKey, stripeWebhookSecret, omnivaUsername, omnivaPassword]},
   async (req, res) => {
     const stripe = getStripe();
     const signature = req.headers["stripe-signature"];
@@ -130,8 +139,9 @@ export const stripeWebhook = onRequest(
     const session = event.data.object as Stripe.Checkout.Session;
     const offerId = session.metadata?.offerId;
     const side = session.metadata?.side as ShipmentSide | undefined;
+    const parcelMachineId = session.metadata?.parcelMachineId;
 
-    if (!offerId || (side !== "offer" && side !== "target")) {
+    if (!offerId || (side !== "offer" && side !== "target") || !parcelMachineId) {
       logger.error("Missing/invalid metadata on checkout session", session.id);
       res.status(200).send("ignored - missing metadata");
       return;
@@ -151,6 +161,9 @@ export const stripeWebhook = onRequest(
     const barcodeField = `${side}ShipmentBarcode`;
     const qrIssuedField = `${side}ShipmentQrIssuedAt`;
     const errorField = `${side}ShipmentError`;
+    const terminalIdField = `${side}ShipmentTerminalId`;
+    const statusField = `${side}ShipmentStatus`;
+    const statusUpdatedField = `${side}ShipmentStatusUpdatedAt`;
 
     if (offer[paidField]) {
       // Stripe can redeliver webhook events - already processed, no-op.
@@ -159,12 +172,15 @@ export const stripeWebhook = onRequest(
     }
 
     try {
-      const result = await getOmnivaClient().createShipment({offerId, side});
+      const result = await getOmnivaClient().createShipment({offerId, side, destinationTerminalId: parcelMachineId});
       await offerRef.update({
         [paidField]: FieldValue.serverTimestamp(),
         [barcodeField]: result.barcode,
         [qrIssuedField]: FieldValue.serverTimestamp(),
         [errorField]: FieldValue.delete(),
+        [terminalIdField]: parcelMachineId,
+        [statusField]: "REGISTERED",
+        [statusUpdatedField]: FieldValue.serverTimestamp(),
       });
     } catch (err) {
       // Payment already captured at this point - surface the failure on the

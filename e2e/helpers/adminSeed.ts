@@ -27,11 +27,19 @@ export type ShipmentSide = "offer" | "target";
  * (see e2e/toy-swap.spec.ts) - this fills in what the webhook would have
  * done once that mocked "payment" completes.
  */
-export async function markShipmentPaid(offerId: string, side: ShipmentSide, barcode: string) {
+export async function markShipmentPaid(
+  offerId: string,
+  side: ShipmentSide,
+  barcode: string,
+  parcelMachineId: string
+) {
   const db = getFirestore();
   await db.collection("offers").doc(offerId).update({
     [`${side}ShipmentPaid`]: FieldValue.serverTimestamp(),
     [`${side}ShipmentBarcode`]: barcode,
     [`${side}ShipmentQrIssuedAt`]: FieldValue.serverTimestamp(),
+    [`${side}ShipmentTerminalId`]: parcelMachineId,
+    [`${side}ShipmentStatus`]: "REGISTERED",
+    [`${side}ShipmentStatusUpdatedAt`]: FieldValue.serverTimestamp(),
   });
 }

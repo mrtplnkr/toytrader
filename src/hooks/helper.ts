@@ -107,8 +107,10 @@ export const getOfferList = async (userId: string) => {
                 targetReceived: toDate(data, 'targetReceived'),
                 offerShipmentPaid: toDate(data, 'offerShipmentPaid'),
                 offerShipmentQrIssuedAt: toDate(data, 'offerShipmentQrIssuedAt'),
+                offerShipmentStatusUpdatedAt: toDate(data, 'offerShipmentStatusUpdatedAt'),
                 targetShipmentPaid: toDate(data, 'targetShipmentPaid'),
                 targetShipmentQrIssuedAt: toDate(data, 'targetShipmentQrIssuedAt'),
+                targetShipmentStatusUpdatedAt: toDate(data, 'targetShipmentStatusUpdatedAt'),
             });
         });
 
@@ -132,13 +134,31 @@ export const declineOffer = async (id: string) => {
 export type ShipmentSide = "offer" | "target";
 
 const startShipmentCheckoutCallable = httpsCallable<
-    { offerId: string, side: ShipmentSide },
+    { offerId: string, side: ShipmentSide, parcelMachineId: string },
     { checkoutUrl: string }
 >(functions, "startShipmentCheckout");
 
-export const startShipmentCheckout = async (offerId: string, side: ShipmentSide) => {
-    const result = await startShipmentCheckoutCallable({ offerId, side });
+export const startShipmentCheckout = async (offerId: string, side: ShipmentSide, parcelMachineId: string) => {
+    const result = await startShipmentCheckoutCallable({ offerId, side, parcelMachineId });
     return result.data;
+};
+
+export interface ParcelMachine {
+    id: string;
+    name: string;
+    address: string;
+    countryCode: string;
+    type: string;
+}
+
+const listParcelMachinesCallable = httpsCallable<
+    Record<string, never>,
+    { machines: ParcelMachine[], fetchedAt: string }
+>(functions, "listParcelMachines");
+
+export const listParcelMachines = async () => {
+    const result = await listParcelMachinesCallable({});
+    return result.data.machines;
 };
 
 export const isAuthLoading = () => {

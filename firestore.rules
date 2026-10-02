@@ -7,10 +7,19 @@ service cloud.firestore {
         !request.resource.data.diff(resource.data).affectedKeys().hasAny([
           'offerShipmentPaid', 'offerShipmentStripeSessionId', 'offerShipmentBarcode',
           'offerShipmentQrIssuedAt', 'offerShipmentError',
+          'offerShipmentTerminalId', 'offerShipmentStatus', 'offerShipmentStatusUpdatedAt',
           'targetShipmentPaid', 'targetShipmentStripeSessionId', 'targetShipmentBarcode',
-          'targetShipmentQrIssuedAt', 'targetShipmentError'
+          'targetShipmentQrIssuedAt', 'targetShipmentError',
+          'targetShipmentTerminalId', 'targetShipmentStatus', 'targetShipmentStatusUpdatedAt'
         ]);
       allow delete: if request.auth.uid != null;
+    }
+    match /mail/{docId} {
+      allow read, write: if false;
+    }
+    match /omnivaCache/{docId} {
+      allow read: if request.auth.uid != null;
+      allow write: if false;
     }
  		match /{collectionName}/{doc}{
       allow read : if request.auth.uid != null;

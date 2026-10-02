@@ -22,10 +22,16 @@ export interface Offer {
     offerShipmentBarcode?: string;
     offerShipmentQrIssuedAt?: Date;
     offerShipmentError?: string;
+    offerShipmentTerminalId?: string;
+    offerShipmentStatus?: string;
+    offerShipmentStatusUpdatedAt?: Date;
 
     targetShipmentPaid?: Date;
     targetShipmentStripeSessionId?: string;
     targetShipmentBarcode?: string;
     targetShipmentQrIssuedAt?: Date;
     targetShipmentError?: string;
+    targetShipmentTerminalId?: string;
+    targetShipmentStatus?: string;
+    targetShipmentStatusUpdatedAt?: Date;
 }

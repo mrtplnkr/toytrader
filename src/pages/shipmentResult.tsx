@@ -29,6 +29,8 @@ function ShipmentResultPage() {
         (side === 'offer' ? offer.offerShipmentBarcode : offer.targetShipmentBarcode) : undefined;
     const shipmentError = offer && side ?
         (side === 'offer' ? offer.offerShipmentError : offer.targetShipmentError) : undefined;
+    const shipmentStatus = offer && side ?
+        (side === 'offer' ? offer.offerShipmentStatus : offer.targetShipmentStatus) : undefined;
 
     useEffect(() => {
         if (status !== 'success' || barcode) {
@@ -71,6 +73,7 @@ function ShipmentResultPage() {
                             it off - no printer needed.</p>
                         <QRCodeSVG value={barcode} size={256} />
                         <p>{barcode}</p>
+                        <p>Current status: {shipmentStatus ?? 'awaiting first scan'}</p>
                     </>
                 : polling ?
                     <p>Payment received - generating your shipping label...</p>

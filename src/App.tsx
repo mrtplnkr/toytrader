@@ -17,11 +17,12 @@ import AddNew from "./pages/addNewToy";
 import { auth } from "./firebase-config";
 import MyToysPage from "./pages/myToys";
 import { ReactNotifications } from "react-notifications-component";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Toy } from "./types/toy";
 import { Offer } from "./types/offer";
 import { GoodAppContext } from "./hooks/context";
 import { getOfferList, getToyList, logOff } from "./hooks/helper";
+import { diffAndNotifyShipmentStatus } from "./hooks/shipmentNotifications";
 import HistoryPage from "./pages/inPost";
 import MyOffersPage from "./pages/myOffers";
 import ShipmentResultPage from "./pages/shipmentResult";
@@ -30,7 +31,8 @@ import { User } from "firebase/auth";
 function StateProvider({children}: any) {
   const [toys, setToys] = useState<Toy[]>([])
   const [offers, setOffers] = useState<Offer[]>([]);
-  
+  const prevOffersRef = useRef<Offer[]>([]);
+
   const signOut = async () => {
     await logOff();
     setOffers([]);
@@ -38,9 +40,24 @@ function StateProvider({children}: any) {
 
   const getData = useCallback(async() => {
     setToys(await getToyList());
-    setOffers(await getOfferList(auth.currentUser?.uid!));
+    const uid = auth.currentUser?.uid;
+    const newOffers = await getOfferList(uid!);
+    if (uid && prevOffersRef.current.length > 0) {
+      diffAndNotifyShipmentStatus(uid, prevOffersRef.current, newOffers);
+    }
+    prevOffersRef.current = newOffers;
+    setOffers(newOffers);
   }, []);
-  
+
+  useEffect(() => {
+    const interval = setInterval(getData, 60_000);
+    window.addEventListener("focus", getData);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("focus", getData);
+    };
+  }, [getData]);
+
   return (
     <GoodAppContext.Provider value={{toys, offers, refresh: getData, signOut}}>
       {children}

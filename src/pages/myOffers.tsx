@@ -7,6 +7,7 @@ import { GoodAppContext } from "../hooks/context";
 import { useContextSelector } from "use-context-selector";
 import { Toy } from "../types/toy";
 import { ShipmentSide, declineOffer, startShipmentCheckout, updateOffer } from "../hooks/helper";
+import ParcelMachinePicker from "../components/parcelMachinePicker";
 
 const newToy = 'https://images.thewest.com.au/publication/C-7139668/f9b8852d964a8de53d6089791d3e176fbb732976-16x9-x0y723w3000h1688.jpg';
 interface HistoryItem {
@@ -18,6 +19,7 @@ interface HistoryItem {
     isMyTurnToPay: boolean;
     isMyTurnToRespond: boolean;
     myShipmentBarcode?: string;
+    myShipmentStatus?: string;
 }
 
 enum Status {
@@ -39,6 +41,7 @@ function MyOffersPage() {
     const [history, setHistory] = useState<HistoryItem[]>([]);
     const [payingId, setPayingId] = useState<string | undefined>();
     const [respondingId, setRespondingId] = useState<string | undefined>();
+    const [selectedMachineByOfferId, setSelectedMachineByOfferId] = useState<Record<string, string>>({});
 
     useEffect(() => {
         let history:HistoryItem[] = [];
@@ -53,11 +56,13 @@ function MyOffersPage() {
             const myPosted = mySide === 'offer' ? o.offerPosted : o.targetPosted;
             const myShipmentPaid = mySide === 'offer' ? o.offerShipmentPaid : o.targetShipmentPaid;
             const myShipmentBarcode = mySide === 'offer' ? o.offerShipmentBarcode : o.targetShipmentBarcode;
+            const myShipmentStatus = mySide === 'offer' ? o.offerShipmentStatus : o.targetShipmentStatus;
 
             history.push({
                 id: o.id,
                 mySide,
                 myShipmentBarcode,
+                myShipmentStatus,
                 isMyTurnToPay: !!o.offerAccepted && !myPosted && !myShipmentPaid,
                 isMyTurnToRespond: isReceiver && !o.offerAccepted,
                 toyIOffered: toys.find((x:Toy) => x.id === o.toyOffered),
@@ -79,6 +84,9 @@ function MyOffersPage() {
                         `<li>the requested <a href="${newToy}" target="_blank">toy</a> was ${Status[Status.posted]}${o.targetReceived ? ` and received on ${(o.targetReceived as Date).toDateString()}` : ''}</li>`
                         :
                         `<li>the requested toy hasn't been sent yet</li>`}
+                    ${myShipmentStatus ?
+                        `<li>your shipment status: ${myShipmentStatus}</li>`
+                        : ''}
                     `,
                 toyTargeted: toys.find((x:Toy) => x.id === o.toyTargeted),
             });
@@ -123,10 +131,10 @@ function MyOffersPage() {
         }
     };
 
-    const payForShipment = async (offerId: string, side: ShipmentSide) => {
+    const payForShipment = async (offerId: string, side: ShipmentSide, parcelMachineId: string) => {
         try {
             setPayingId(offerId);
-            const { checkoutUrl } = await startShipmentCheckout(offerId, side);
+            const { checkoutUrl } = await startShipmentCheckout(offerId, side, parcelMachineId);
             window.location.href = checkoutUrl;
         } catch (err) {
             setPayingId(undefined);
@@ -173,9 +181,19 @@ function MyOffersPage() {
                         View QR Code
                     </button>
                 : x.isMyTurnToPay ?
-                    <button className="btn-primary" disabled={payingId === x.id} onClick={() => payForShipment(x.id, x.mySide)}>
-                        {payingId === x.id ? 'redirecting to payment...' : 'Pay & Get QR Code (5 EUR)'}
-                    </button>
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '0.5em', alignItems: 'center'}}>
+                        <ParcelMachinePicker
+                            value={selectedMachineByOfferId[x.id]}
+                            onChange={(id) => setSelectedMachineByOfferId((prev) => ({...prev, [x.id]: id}))}
+                        />
+                        <button
+                            className="btn-primary"
+                            disabled={payingId === x.id || !selectedMachineByOfferId[x.id]}
+                            onClick={() => payForShipment(x.id, x.mySide, selectedMachineByOfferId[x.id])}
+                        >
+                            {payingId === x.id ? 'redirecting to payment...' : 'Pay & Get QR Code (5 EUR)'}
+                        </button>
+                    </div>
                 : null}
             </div>
         )}
