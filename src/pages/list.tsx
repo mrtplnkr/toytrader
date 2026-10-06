@@ -8,6 +8,7 @@ import Item from "../components/item";
 import { GoodAppContext } from "../hooks/context";
 import { useContextSelector } from "use-context-selector";
 import { Toy } from "../types/toy";
+import { Offer } from "../types/offer";
 import ToyDisplay from "./addNewOffer";
 import { addNewOffer } from "../hooks/helper";
 import { Store } from "react-notifications-component";
@@ -16,6 +17,7 @@ function ListPage() {
   let navigate = useNavigate();
 
   const toys = useContextSelector(GoodAppContext, (state: any) => state.toys);
+  const offers = useContextSelector(GoodAppContext, (state: any) => state.offers);
   const refresh = useContextSelector(GoodAppContext, (state: any) => state.refresh);
 
   useEffect(() => {
@@ -43,7 +45,31 @@ function ListPage() {
     setToyDisplayIndex(direction);
   };
 
+  // A toy already tied up in another not-yet-fully-completed trade (either as
+  // what's being offered or what's being requested) shouldn't be offered
+  // again - it can only physically go to one trade.
+  const isToyCommittedElsewhere = (toyId: string) =>
+    offers.some((o: Offer) =>
+      (o.toyOffered === toyId || o.toyTargeted === toyId) &&
+      !(o.offerReceived && o.targetReceived));
+
   const proposeOffer = async (toyOffered: string) => {
+    if (isToyCommittedElsewhere(toyOffered)) {
+      Store.addNotification({
+        title: "Can't offer this toy",
+        message: "It's already part of another active trade.",
+        type: "danger",
+        insert: "top",
+        container: "top-right",
+        animationIn: ["animated", "fadeIn"],
+        animationOut: ["animated", "fadeOut"],
+        dismiss: {
+          duration: 5000,
+          onScreen: true
+        }
+      });
+      return;
+    }
     try {
       if (toyDisplayIndex !== undefined) await addNewOffer(toyOffered, toys[toyDisplayIndex].id, toys[toyDisplayIndex].userId);
       Store.addNotification({

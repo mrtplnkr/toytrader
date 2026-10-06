@@ -22,10 +22,27 @@ function MyToysPage() {
   const offers = useContextSelector(GoodAppContext, (state: any) => state.offers);
 
   const countOffers = (items: Offer[], target: string) => {
-    return items.filter((x:Offer) => x.toyOffered === target).length;
+    return items.filter((x:Offer) => x.toyOffered === target || x.toyTargeted === target).length;
   };
 
   const deleteItem = async (id: string) => {
+    if (countOffers(offers, id)) {
+      Store.addNotification({
+        title: "Can't remove this toy",
+        message: "It's referenced by an active offer - decline or cancel that offer first.",
+        type: "danger",
+        insert: "top",
+        container: "top-right",
+        animationIn: ["animated", "fadeIn"],
+        animationOut: ["animated", "fadeOut"],
+        dismiss: {
+          duration: 5000,
+          onScreen: true
+        }
+      });
+      return;
+    }
+
     const movieDoc = doc(db, "toys", id);
     await deleteDoc(movieDoc)
       .then(() => Store.addNotification({

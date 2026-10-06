@@ -173,6 +173,19 @@ export const startShipmentCheckout = async (
     return result.data;
 };
 
+const recheckShipmentPaymentCallable = httpsCallable<
+    { offerId: string, side: ShipmentSide },
+    { paid: boolean }
+>(functions, "recheckShipmentPayment");
+
+// Recovery path if the Stripe webhook never processed a successful payment -
+// looks up the real Stripe session status and reconciles Firestore. Never
+// creates a new charge.
+export const recheckShipmentPayment = async (offerId: string, side: ShipmentSide) => {
+    const result = await recheckShipmentPaymentCallable({ offerId, side });
+    return result.data;
+};
+
 export interface ParcelMachine {
     id: string;
     name: string;

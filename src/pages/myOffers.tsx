@@ -62,6 +62,14 @@ function MyOffersPage() {
             const isReceiver = o.userReceived === uid;
             if (!isInitiator && !isReceiver) return;
 
+            // Defensive: a referenced toy can go missing (e.g. deleted before
+            // the delete-time guard in myToys.tsx existed, or any other stale
+            // reference) - skip rather than crash the whole page on everyone's
+            // offer list.
+            const toyIOffered = toys.find((x: Toy) => x.id === o.toyOffered);
+            const toyTargeted = toys.find((x: Toy) => x.id === o.toyTargeted);
+            if (!toyIOffered || !toyTargeted) return;
+
             const mySide: ShipmentSide = isInitiator ? 'offer' : 'target';
             const otherSide: ShipmentSide = mySide === 'offer' ? 'target' : 'offer';
             const myPosted = mySide === 'offer' ? o.offerPosted : o.targetPosted;
@@ -86,14 +94,16 @@ function MyOffersPage() {
                 // Posting is gated on the other side having paid too - payment
                 // itself stays independent (harmless, no item moves yet), but
                 // nobody should physically drop off their toy until both sides
-                // are financially committed to the trade.
-                canMarkPosted: !!myShipmentBarcode && !myPosted && !!otherSideShipmentPaid,
-                awaitingOtherPayment: !!myShipmentBarcode && !myPosted && !otherSideShipmentPaid,
+                // are financially committed to the trade. A RETURNED shipment
+                // counts as "not posted" again so there's a way to re-attempt
+                // it, instead of being stuck forever once myPosted is set.
+                canMarkPosted: !!myShipmentBarcode && (!myPosted || myShipmentStatus === 'RETURNED') && !!otherSideShipmentPaid,
+                awaitingOtherPayment: !!myShipmentBarcode && (!myPosted || myShipmentStatus === 'RETURNED') && !otherSideShipmentPaid,
                 canMarkReceived: !!otherSidePosted && !otherSideReceived,
                 // Cancellable any time before either toy has physically shipped -
                 // once posted, the parcel's in Omniva's hands and can't be recalled.
                 canCancel: !o.offerPosted && !o.targetPosted,
-                toyIOffered: toys.find((x:Toy) => x.id === o.toyOffered),
+                toyIOffered,
                 status: `<li>${isInitiator ?
                             `you offered your <a href="${newToy}" target="_target">toy</a>` :
                             `you received an offer for your <a href="${newToy}" target="_target">toy</a>`}
@@ -116,7 +126,7 @@ function MyOffersPage() {
                         `<li>your shipment status: ${myShipmentStatus}</li>`
                         : ''}
                     `,
-                toyTargeted: toys.find((x:Toy) => x.id === o.toyTargeted),
+                toyTargeted,
             });
         });
         setHistory(history);
@@ -270,9 +280,15 @@ function MyOffersPage() {
                             <button onClick={() => navigate(`/shipment/result?offerId=${x.id}&side=${x.mySide}&status=success`)}>
                                 View QR Code
                             </button>}
+                        {x.myShipmentStatus === 'RETURNED' &&
+                            <p style={{fontSize: '0.8em', color: '#ff6b6b', margin: 0}}>
+                                Your shipment was returned by Omniva - please drop it off again and mark it posted once more.
+                            </p>}
                         {x.canMarkPosted &&
                             <button className="btn-primary" disabled={markingId === x.id} onClick={() => markAsPosted(x.id, x.mySide)}>
-                                {markingId === x.id ? 'saving...' : "Mark my toy as dropped off"}
+                                {markingId === x.id ? 'saving...'
+                                    : x.myShipmentStatus === 'RETURNED' ? "Mark my toy as dropped off again"
+                                    : "Mark my toy as dropped off"}
                             </button>}
                         {x.awaitingOtherPayment &&
                             <p style={{fontSize: '0.8em', color: 'var(--color-text-dim)', margin: 0}}>
