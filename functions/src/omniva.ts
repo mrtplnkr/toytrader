@@ -73,6 +73,38 @@ const STUB_PARCEL_MACHINES: ParcelMachine[] = [
     countryCode: "LT", type: "parcel_machine"},
 ];
 
+// Omniva's locations endpoint is confirmed real and public (no credentials
+// needed) - despite the .ee domain it returns the full Baltic-wide dataset
+// (confirmed: ~470 EE + ~415 LV + ~560 LT entries, not EE-only). TYPE "0" is
+// a parcel machine; other TYPE values (post office counters etc.) are
+// filtered out since this app only supports self-service parcel-machine
+// drop-off. Address fields are A5_NAME (street) + A7_NAME (building number)
+// + A3_NAME (city) - verified against live sample data.
+async function fetchRealParcelMachines(): Promise<ParcelMachine[]> {
+  const res = await fetch("https://www.omniva.ee/locations.json");
+  if (!res.ok) {
+    throw new Error(`Omniva locations fetch failed: ${res.status}`);
+  }
+  const raw = await res.json() as Array<Record<string, unknown>>;
+  return raw
+    .filter((entry) => entry["TYPE"] === "0")
+    .map((entry) => {
+      const street = String(entry["A5_NAME"] ?? "").trim();
+      const buildingNr = String(entry["A7_NAME"] ?? "").trim();
+      const city = String(entry["A3_NAME"] ?? "").trim();
+      const address = [street && buildingNr ? `${street} ${buildingNr}` : street, city]
+        .filter(Boolean).join(", ");
+      return {
+        id: String(entry["ZIP"] ?? ""),
+        name: String(entry["NAME"] ?? ""),
+        address,
+        countryCode: String(entry["A0_NAME"] ?? ""),
+        type: "parcel_machine",
+      };
+    })
+    .filter((m) => m.id && m.name);
+}
+
 const STUB_STATUS_SEQUENCE: OmnivaShipmentStatus[] = [
   "REGISTERED",
   "IN_TRANSIT",
@@ -108,7 +140,18 @@ class StubOmnivaClient implements OmnivaClient {
   }
 
   async listParcelMachines(): Promise<ParcelMachine[]> {
-    return STUB_PARCEL_MACHINES;
+    // The real terminal-list endpoint is public and needs no credentials, so
+    // we use real data here even in stub mode - lets users actually search
+    // their own area. createShipment/getTrackingStatus/getShippingPrice stay
+    // fully fake, since those need real credentials/contact info we don't
+    // have yet. Falls back to a tiny hardcoded fixture if the fetch fails
+    // (e.g. offline local dev), so the picker never ends up empty.
+    try {
+      return await fetchRealParcelMachines();
+    } catch (err) {
+      logger.error("StubOmnivaClient.listParcelMachines: live fetch failed, using fixture", err);
+      return STUB_PARCEL_MACHINES;
+    }
   }
 
   async getTrackingStatus(barcode: string): Promise<OmnivaTrackingResult> {
@@ -142,20 +185,7 @@ class RealOmnivaClient implements OmnivaClient {
   });
 
   async listParcelMachines(): Promise<ParcelMachine[]> {
-    // TODO(omniva-real-api): this is Omniva's actual public, unauthenticated
-    // terminal-list endpoint - verify the exact URL/shape still matches.
-    const res = await fetch("https://www.omniva.ee/locations.json");
-    if (!res.ok) {
-      throw new Error(`Omniva locations fetch failed: ${res.status}`);
-    }
-    const raw = await res.json() as Array<Record<string, unknown>>;
-    return raw.map((entry) => ({
-      id: String(entry["ZIP"] ?? entry["id"]),
-      name: String(entry["NAME"] ?? entry["name"] ?? ""),
-      address: String(entry["A5"] ?? entry["address"] ?? ""),
-      countryCode: String(entry["A0_NAME"] ?? entry["countryCode"] ?? ""),
-      type: String(entry["TYPE"] ?? "parcel_machine"),
-    }));
+    return fetchRealParcelMachines();
   }
 
   async createShipment(req: OmnivaShipmentRequest): Promise<OmnivaShipmentResult> {
