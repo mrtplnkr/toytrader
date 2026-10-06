@@ -51,14 +51,22 @@ test("two users trade toys and the accepting side receives shipping instructions
   let capturedOfferId: string | undefined;
   let capturedSide: string | undefined;
   let capturedParcelMachineId: string | undefined;
+  let capturedToySize: string | undefined;
 
   await alice.route("**/startShipmentCheckout", async (route) => {
     const body = route.request().postDataJSON();
     capturedOfferId = body.data.offerId;
     capturedSide = body.data.side;
     capturedParcelMachineId = body.data.parcelMachineId;
+    capturedToySize = body.data.toySize;
 
-    await markShipmentPaid(capturedOfferId!, capturedSide as "offer" | "target", TEST_BARCODE, capturedParcelMachineId!);
+    await markShipmentPaid(
+      capturedOfferId!,
+      capturedSide as "offer" | "target",
+      TEST_BARCODE,
+      capturedParcelMachineId!,
+      capturedToySize!
+    );
 
     await route.fulfill({
       status: 200,
@@ -73,8 +81,10 @@ test("two users trade toys and the accepting side receives shipping instructions
 
   // The pay button is disabled until a parcel machine is chosen (the stub
   // Omniva client's listParcelMachines fixture, served through the real
-  // Functions emulator - no mocking needed for this call).
-  const parcelMachineSelect = alice.locator("select");
+  // Functions emulator - no mocking needed for this call). The page also
+  // renders a second <select> for toy size (defaults to "S"), so scope to
+  // the first one specifically.
+  const parcelMachineSelect = alice.locator("select").first();
   await expect(parcelMachineSelect.locator("option").nth(1)).toBeAttached();
   await parcelMachineSelect.selectOption({ index: 1 });
 

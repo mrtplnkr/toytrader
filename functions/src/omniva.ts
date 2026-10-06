@@ -23,6 +23,7 @@ export interface OmnivaShipmentRequest {
   offerId: string;
   side: ShipmentSide;
   destinationTerminalId: string;
+  toySize: string;
 }
 
 export interface OmnivaShipmentResult {

@@ -3,7 +3,7 @@ import { ParcelMachine, listParcelMachines } from "../hooks/helper";
 
 interface Props {
     value: string | undefined;
-    onChange: (id: string) => void;
+    onChange: (machine: ParcelMachine) => void;
 }
 
 function ParcelMachinePicker({ value, onChange }: Props) {
@@ -25,7 +25,13 @@ function ParcelMachinePicker({ value, onChange }: Props) {
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
             />
-            <select value={value ?? ''} onChange={(e) => onChange(e.target.value)}>
+            <select
+                value={value ?? ''}
+                onChange={(e) => {
+                    const machine = machines.find((m) => m.id === e.target.value);
+                    if (machine) onChange(machine);
+                }}
+            >
                 <option value="" disabled>Choose a parcel machine</option>
                 {filtered.map((m) => (
                     <option key={m.id} value={m.id}>{m.name} — {m.address}</option>

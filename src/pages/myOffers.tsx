@@ -6,8 +6,9 @@ import { Offer } from "../types/offer";
 import { GoodAppContext } from "../hooks/context";
 import { useContextSelector } from "use-context-selector";
 import { Toy } from "../types/toy";
-import { ShipmentSide, declineOffer, startShipmentCheckout, updateOffer } from "../hooks/helper";
+import { ParcelMachine, ShipmentSide, declineOffer, startShipmentCheckout, updateOffer } from "../hooks/helper";
 import ParcelMachinePicker from "../components/parcelMachinePicker";
+import { DEFAULT_TOY_SIZE, OMNIVA_PRICE_LIST_URL, TOY_SIZES, ToySize } from "../constants/omnivaPricing";
 
 const newToy = 'https://images.thewest.com.au/publication/C-7139668/f9b8852d964a8de53d6089791d3e176fbb732976-16x9-x0y723w3000h1688.jpg';
 interface HistoryItem {
@@ -41,7 +42,8 @@ function MyOffersPage() {
     const [history, setHistory] = useState<HistoryItem[]>([]);
     const [payingId, setPayingId] = useState<string | undefined>();
     const [respondingId, setRespondingId] = useState<string | undefined>();
-    const [selectedMachineByOfferId, setSelectedMachineByOfferId] = useState<Record<string, string>>({});
+    const [selectedMachineByOfferId, setSelectedMachineByOfferId] = useState<Record<string, ParcelMachine>>({});
+    const [selectedSizeByOfferId, setSelectedSizeByOfferId] = useState<Record<string, ToySize>>({});
 
     useEffect(() => {
         let history:HistoryItem[] = [];
@@ -131,10 +133,10 @@ function MyOffersPage() {
         }
     };
 
-    const payForShipment = async (offerId: string, side: ShipmentSide, parcelMachineId: string) => {
+    const payForShipment = async (offerId: string, side: ShipmentSide, parcelMachineId: string, toySize: ToySize) => {
         try {
             setPayingId(offerId);
-            const { checkoutUrl } = await startShipmentCheckout(offerId, side, parcelMachineId);
+            const { checkoutUrl } = await startShipmentCheckout(offerId, side, parcelMachineId, toySize);
             window.location.href = checkoutUrl;
         } catch (err) {
             setPayingId(undefined);
@@ -183,13 +185,41 @@ function MyOffersPage() {
                 : x.isMyTurnToPay ?
                     <div style={{display: 'flex', flexDirection: 'column', gap: '0.5em', alignItems: 'center'}}>
                         <ParcelMachinePicker
-                            value={selectedMachineByOfferId[x.id]}
-                            onChange={(id) => setSelectedMachineByOfferId((prev) => ({...prev, [x.id]: id}))}
+                            value={selectedMachineByOfferId[x.id]?.id}
+                            onChange={(machine) => setSelectedMachineByOfferId((prev) => ({...prev, [x.id]: machine}))}
                         />
+                        <label style={{display: 'flex', alignItems: 'center', gap: '0.5em', fontSize: '0.9em'}}>
+                            Toy size:
+                            <select
+                                value={selectedSizeByOfferId[x.id] ?? DEFAULT_TOY_SIZE}
+                                onChange={(e) => setSelectedSizeByOfferId((prev) => ({...prev, [x.id]: e.target.value as ToySize}))}
+                            >
+                                {TOY_SIZES.map((size) => <option key={size} value={size}>{size}</option>)}
+                            </select>
+                        </label>
+                        {selectedMachineByOfferId[x.id] &&
+                            <a
+                                href={OMNIVA_PRICE_LIST_URL[selectedMachineByOfferId[x.id].countryCode]}
+                                target="_blank"
+                                rel="noreferrer"
+                                style={{fontSize: '0.85em'}}
+                            >
+                                Check exact Omniva shipping price for {selectedMachineByOfferId[x.id].countryCode}
+                            </a>
+                        }
+                        <p style={{fontSize: '0.8em', color: 'var(--color-text-dim)', margin: 0}}>
+                            Our 1 EUR fee covers the QR label only - Omniva's own parcel delivery price
+                            (based on toy size) is paid separately, check the link above.
+                        </p>
                         <button
                             className="btn-primary"
                             disabled={payingId === x.id || !selectedMachineByOfferId[x.id]}
-                            onClick={() => payForShipment(x.id, x.mySide, selectedMachineByOfferId[x.id])}
+                            onClick={() => payForShipment(
+                                x.id,
+                                x.mySide,
+                                selectedMachineByOfferId[x.id].id,
+                                selectedSizeByOfferId[x.id] ?? DEFAULT_TOY_SIZE
+                            )}
                         >
                             {payingId === x.id ? 'redirecting to payment...' : 'Pay & Get QR Code (1 EUR)'}
                         </button>

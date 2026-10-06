@@ -7,10 +7,10 @@ service cloud.firestore {
         !request.resource.data.diff(resource.data).affectedKeys().hasAny([
           'offerShipmentPaid', 'offerShipmentStripeSessionId', 'offerShipmentBarcode',
           'offerShipmentQrIssuedAt', 'offerShipmentError',
-          'offerShipmentTerminalId', 'offerShipmentStatus', 'offerShipmentStatusUpdatedAt',
+          'offerShipmentTerminalId', 'offerShipmentToySize', 'offerShipmentStatus', 'offerShipmentStatusUpdatedAt',
           'targetShipmentPaid', 'targetShipmentStripeSessionId', 'targetShipmentBarcode',
           'targetShipmentQrIssuedAt', 'targetShipmentError',
-          'targetShipmentTerminalId', 'targetShipmentStatus', 'targetShipmentStatusUpdatedAt'
+          'targetShipmentTerminalId', 'targetShipmentToySize', 'targetShipmentStatus', 'targetShipmentStatusUpdatedAt'
         ]);
       allow delete: if request.auth.uid != null;
     }

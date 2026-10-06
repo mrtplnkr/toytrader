@@ -31,7 +31,8 @@ export async function markShipmentPaid(
   offerId: string,
   side: ShipmentSide,
   barcode: string,
-  parcelMachineId: string
+  parcelMachineId: string,
+  toySize: string
 ) {
   const db = getFirestore();
   await db.collection("offers").doc(offerId).update({
@@ -39,6 +40,7 @@ export async function markShipmentPaid(
     [`${side}ShipmentBarcode`]: barcode,
     [`${side}ShipmentQrIssuedAt`]: FieldValue.serverTimestamp(),
     [`${side}ShipmentTerminalId`]: parcelMachineId,
+    [`${side}ShipmentToySize`]: toySize,
     [`${side}ShipmentStatus`]: "REGISTERED",
     [`${side}ShipmentStatusUpdatedAt`]: FieldValue.serverTimestamp(),
   });

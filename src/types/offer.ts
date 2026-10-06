@@ -23,6 +23,7 @@ export interface Offer {
     offerShipmentQrIssuedAt?: Date;
     offerShipmentError?: string;
     offerShipmentTerminalId?: string;
+    offerShipmentToySize?: string;
     offerShipmentStatus?: string;
     offerShipmentStatusUpdatedAt?: Date;
 
@@ -32,6 +33,7 @@ export interface Offer {
     targetShipmentQrIssuedAt?: Date;
     targetShipmentError?: string;
     targetShipmentTerminalId?: string;
+    targetShipmentToySize?: string;
     targetShipmentStatus?: string;
     targetShipmentStatusUpdatedAt?: Date;
 }

@@ -134,12 +134,17 @@ export const declineOffer = async (id: string) => {
 export type ShipmentSide = "offer" | "target";
 
 const startShipmentCheckoutCallable = httpsCallable<
-    { offerId: string, side: ShipmentSide, parcelMachineId: string },
+    { offerId: string, side: ShipmentSide, parcelMachineId: string, toySize: string },
     { checkoutUrl: string }
 >(functions, "startShipmentCheckout");
 
-export const startShipmentCheckout = async (offerId: string, side: ShipmentSide, parcelMachineId: string) => {
-    const result = await startShipmentCheckoutCallable({ offerId, side, parcelMachineId });
+export const startShipmentCheckout = async (
+    offerId: string,
+    side: ShipmentSide,
+    parcelMachineId: string,
+    toySize: string
+) => {
+    const result = await startShipmentCheckoutCallable({ offerId, side, parcelMachineId, toySize });
     return result.data;
 };
 

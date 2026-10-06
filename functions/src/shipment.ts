@@ -24,6 +24,7 @@ interface StartShipmentCheckoutRequest {
   offerId: string;
   side: ShipmentSide;
   parcelMachineId: string;
+  toySize: string;
 }
 
 /**
@@ -41,11 +42,11 @@ export const startShipmentCheckout = onCall<StartShipmentCheckoutRequest>(
       throw new HttpsError("unauthenticated", "Must be signed in.");
     }
 
-    const {offerId, side, parcelMachineId} = request.data ?? {};
-    if (!offerId || (side !== "offer" && side !== "target") || !parcelMachineId) {
+    const {offerId, side, parcelMachineId, toySize} = request.data ?? {};
+    if (!offerId || (side !== "offer" && side !== "target") || !parcelMachineId || !toySize) {
       throw new HttpsError(
         "invalid-argument",
-        "offerId, side ('offer'|'target'), and parcelMachineId are required."
+        "offerId, side ('offer'|'target'), parcelMachineId, and toySize are required."
       );
     }
 
@@ -91,7 +92,7 @@ export const startShipmentCheckout = onCall<StartShipmentCheckoutRequest>(
         },
         quantity: 1,
       }],
-      metadata: {offerId, side, uid, parcelMachineId},
+      metadata: {offerId, side, uid, parcelMachineId, toySize},
       success_url:
         `${baseUrl}/shipment/result?offerId=${offerId}&side=${side}&status=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/shipment/result?offerId=${offerId}&side=${side}&status=cancel`,
@@ -140,8 +141,9 @@ export const stripeWebhook = onRequest(
     const offerId = session.metadata?.offerId;
     const side = session.metadata?.side as ShipmentSide | undefined;
     const parcelMachineId = session.metadata?.parcelMachineId;
+    const toySize = session.metadata?.toySize;
 
-    if (!offerId || (side !== "offer" && side !== "target") || !parcelMachineId) {
+    if (!offerId || (side !== "offer" && side !== "target") || !parcelMachineId || !toySize) {
       logger.error("Missing/invalid metadata on checkout session", session.id);
       res.status(200).send("ignored - missing metadata");
       return;
@@ -162,6 +164,7 @@ export const stripeWebhook = onRequest(
     const qrIssuedField = `${side}ShipmentQrIssuedAt`;
     const errorField = `${side}ShipmentError`;
     const terminalIdField = `${side}ShipmentTerminalId`;
+    const sizeField = `${side}ShipmentToySize`;
     const statusField = `${side}ShipmentStatus`;
     const statusUpdatedField = `${side}ShipmentStatusUpdatedAt`;
 
@@ -172,13 +175,16 @@ export const stripeWebhook = onRequest(
     }
 
     try {
-      const result = await getOmnivaClient().createShipment({offerId, side, destinationTerminalId: parcelMachineId});
+      const result = await getOmnivaClient().createShipment({
+        offerId, side, destinationTerminalId: parcelMachineId, toySize,
+      });
       await offerRef.update({
         [paidField]: FieldValue.serverTimestamp(),
         [barcodeField]: result.barcode,
         [qrIssuedField]: FieldValue.serverTimestamp(),
         [errorField]: FieldValue.delete(),
         [terminalIdField]: parcelMachineId,
+        [sizeField]: toySize,
         [statusField]: "REGISTERED",
         [statusUpdatedField]: FieldValue.serverTimestamp(),
       });
