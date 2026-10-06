@@ -13,6 +13,9 @@ if (getApps().length === 0) {
 }
 
 const REGION = "europe-west1";
+// Redeploy marker (no functional change) - forces firebase-tools to reprocess
+// this function so its public-invoker IAM binding gets reapplied, after it
+// was apparently left unset from a deploy that raced an IAM API enablement.
 const SHIPMENT_PRICE_EUR_CENTS = 100;
 
 // Base URL of the deployed frontend, used to build Stripe's success/cancel

@@ -8,6 +8,7 @@ if (getApps().length === 0) {
 }
 
 const REGION = "europe-west1";
+// Redeploy marker (no functional change) - see shipment.ts for why.
 // Terminal list is large (~1000+ entries) and semi-static - a day-long TTL
 // avoids hammering Omniva while keeping the list reasonably fresh.
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
