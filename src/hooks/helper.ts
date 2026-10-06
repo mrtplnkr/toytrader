@@ -191,6 +191,21 @@ export const listParcelMachines = async () => {
     return result.data.machines;
 };
 
+export interface ShippingPrice {
+    priceCents: number;
+    currency: string;
+}
+
+const getShippingPriceCallable = httpsCallable<
+    { parcelMachineId: string, toySize: string },
+    ShippingPrice
+>(functions, "getShippingPrice");
+
+export const getShippingPrice = async (parcelMachineId: string, toySize: string) => {
+    const result = await getShippingPriceCallable({ parcelMachineId, toySize });
+    return result.data;
+};
+
 export const isAuthLoading = () => {
     if (auth.currentUser) return false;
     else return true;

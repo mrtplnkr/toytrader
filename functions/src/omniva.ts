@@ -35,10 +35,21 @@ export interface OmnivaTrackingResult {
   status: OmnivaShipmentStatus;
 }
 
+export interface OmnivaShippingPriceRequest {
+  destinationTerminalId: string;
+  toySize: string;
+}
+
+export interface OmnivaShippingPriceResult {
+  priceCents: number;
+  currency: string;
+}
+
 export interface OmnivaClient {
   createShipment(req: OmnivaShipmentRequest): Promise<OmnivaShipmentResult>;
   listParcelMachines(): Promise<ParcelMachine[]>;
   getTrackingStatus(barcode: string): Promise<OmnivaTrackingResult>;
+  getShippingPrice(req: OmnivaShippingPriceRequest): Promise<OmnivaShippingPriceResult>;
 }
 
 // Not real credentials yet - declared so every function that may call
@@ -69,6 +80,19 @@ const STUB_STATUS_SEQUENCE: OmnivaShipmentStatus[] = [
   "DELIVERED",
 ];
 
+// Not real Omniva prices - deterministic placeholders for local testing only.
+// Loosely based on publicly-observed Baltic parcel-machine-to-parcel-machine
+// pricing at the time this was written, but Omniva has no stable public price
+// table (see OMNIVA_PRICE_LIST_URL on the frontend) and these will drift out
+// of date. Never present this as an authoritative price - always point users
+// at Omniva's own site too.
+const STUB_PRICE_CENTS_BY_SIZE: Record<string, number> = {
+  S: 309,
+  M: 409,
+  L: 509,
+  XL: 699,
+};
+
 /**
  * No real Omniva credentials/API docs exist yet. Returns deterministic fake
  * data with no network calls, so the full parcel-machine-pick -> pay ->
@@ -92,6 +116,12 @@ class StubOmnivaClient implements OmnivaClient {
     this.trackingCallCounts.set(barcode, callCount + 1);
     const index = Math.min(callCount, STUB_STATUS_SEQUENCE.length - 1);
     return {status: STUB_STATUS_SEQUENCE[index]};
+  }
+
+  async getShippingPrice(req: OmnivaShippingPriceRequest): Promise<OmnivaShippingPriceResult> {
+    logger.info("StubOmnivaClient.getShippingPrice", req);
+    const priceCents = STUB_PRICE_CENTS_BY_SIZE[req.toySize] ?? STUB_PRICE_CENTS_BY_SIZE.S;
+    return {priceCents, currency: "EUR"};
   }
 }
 
@@ -150,6 +180,18 @@ class RealOmnivaClient implements OmnivaClient {
       "RealOmnivaClient.getTrackingStatus is not implemented - tracking API " +
       `shape unverified. (base url configured: ${this.trackingApiBaseUrl.value()}, ` +
       `barcode: ${barcode})`
+    );
+  }
+
+  async getShippingPrice(req: OmnivaShippingPriceRequest): Promise<OmnivaShippingPriceResult> {
+    // TODO(omniva-real-api): Omniva exposes no documented price-quote
+    // endpoint we've confirmed - their own site uses an internal calculator,
+    // not a public API. Do not fabricate a price here; this must stay
+    // unimplemented until a real quote endpoint is confirmed.
+    throw new Error(
+      "RealOmnivaClient.getShippingPrice is not implemented - no confirmed " +
+      `Omniva price-quote endpoint exists yet. (terminal: ${req.destinationTerminalId}, ` +
+      `size: ${req.toySize})`
     );
   }
 }

@@ -6,7 +6,7 @@ import { Offer } from "../types/offer";
 import { GoodAppContext } from "../hooks/context";
 import { useContextSelector } from "use-context-selector";
 import { Toy } from "../types/toy";
-import { ParcelMachine, ShipmentSide, declineOffer, markToyPosted, markToyReceived, startShipmentCheckout, updateOffer } from "../hooks/helper";
+import { ParcelMachine, ShipmentSide, ShippingPrice, declineOffer, getShippingPrice, markToyPosted, markToyReceived, startShipmentCheckout, updateOffer } from "../hooks/helper";
 import ParcelMachinePicker from "../components/parcelMachinePicker";
 import { DEFAULT_TOY_SIZE, OMNIVA_PRICE_LIST_URL, TOY_SIZES, ToySize } from "../constants/omnivaPricing";
 
@@ -51,6 +51,7 @@ function MyOffersPage() {
     const [markingId, setMarkingId] = useState<string | undefined>();
     const [selectedMachineByOfferId, setSelectedMachineByOfferId] = useState<Record<string, ParcelMachine>>({});
     const [selectedSizeByOfferId, setSelectedSizeByOfferId] = useState<Record<string, ToySize>>({});
+    const [quoteByOfferId, setQuoteByOfferId] = useState<Record<string, ShippingPrice | 'loading' | 'error'>>({});
 
     useEffect(() => {
         let history:HistoryItem[] = [];
@@ -197,6 +198,27 @@ function MyOffersPage() {
         }
     };
 
+    const fetchQuote = async (offerId: string, parcelMachineId: string, toySize: ToySize) => {
+        setQuoteByOfferId((prev) => ({...prev, [offerId]: 'loading'}));
+        try {
+            const price = await getShippingPrice(parcelMachineId, toySize);
+            setQuoteByOfferId((prev) => ({...prev, [offerId]: price}));
+        } catch (err) {
+            setQuoteByOfferId((prev) => ({...prev, [offerId]: 'error'}));
+        }
+    };
+
+    const onMachineChange = (offerId: string, machine: ParcelMachine) => {
+        setSelectedMachineByOfferId((prev) => ({...prev, [offerId]: machine}));
+        fetchQuote(offerId, machine.id, selectedSizeByOfferId[offerId] ?? DEFAULT_TOY_SIZE);
+    };
+
+    const onSizeChange = (offerId: string, size: ToySize) => {
+        setSelectedSizeByOfferId((prev) => ({...prev, [offerId]: size}));
+        const machine = selectedMachineByOfferId[offerId];
+        if (machine) fetchQuote(offerId, machine.id, size);
+    };
+
     const payForShipment = async (offerId: string, side: ShipmentSide, parcelMachineId: string, toySize: ToySize) => {
         try {
             setPayingId(offerId);
@@ -264,26 +286,36 @@ function MyOffersPage() {
                             <div style={{display: 'flex', flexDirection: 'column', gap: '0.5em', alignItems: 'center'}}>
                                 <ParcelMachinePicker
                                     value={selectedMachineByOfferId[x.id]?.id}
-                                    onChange={(machine) => setSelectedMachineByOfferId((prev) => ({...prev, [x.id]: machine}))}
+                                    onChange={(machine) => onMachineChange(x.id, machine)}
                                 />
                                 <label style={{display: 'flex', alignItems: 'center', gap: '0.5em', fontSize: '0.9em'}}>
                                     Toy size:
                                     <select
                                         value={selectedSizeByOfferId[x.id] ?? DEFAULT_TOY_SIZE}
-                                        onChange={(e) => setSelectedSizeByOfferId((prev) => ({...prev, [x.id]: e.target.value as ToySize}))}
+                                        onChange={(e) => onSizeChange(x.id, e.target.value as ToySize)}
                                     >
                                         {TOY_SIZES.map((size) => <option key={size} value={size}>{size}</option>)}
                                     </select>
                                 </label>
                                 {selectedMachineByOfferId[x.id] &&
-                                    <a
-                                        href={OMNIVA_PRICE_LIST_URL[selectedMachineByOfferId[x.id].countryCode]}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        style={{fontSize: '0.85em'}}
-                                    >
-                                        Check exact Omniva shipping price for {selectedMachineByOfferId[x.id].countryCode}
-                                    </a>
+                                    <>
+                                        {quoteByOfferId[x.id] === 'loading' ?
+                                            <p style={{fontSize: '0.85em', margin: 0}}>Fetching Omniva price estimate...</p>
+                                        : quoteByOfferId[x.id] && quoteByOfferId[x.id] !== 'error' ?
+                                            <p style={{fontSize: '0.85em', margin: 0}}>
+                                                Estimated Omniva price: €{((quoteByOfferId[x.id] as ShippingPrice).priceCents / 100).toFixed(2)}
+                                                {' '}(estimate only - not an official quote)
+                                            </p>
+                                        : null}
+                                        <a
+                                            href={OMNIVA_PRICE_LIST_URL[selectedMachineByOfferId[x.id].countryCode]}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            style={{fontSize: '0.85em'}}
+                                        >
+                                            Check exact Omniva shipping price for {selectedMachineByOfferId[x.id].countryCode}
+                                        </a>
+                                    </>
                                 }
                                 <p style={{fontSize: '0.8em', color: 'var(--color-text-dim)', margin: 0}}>
                                     Our 1 EUR fee covers the QR label only - Omniva's own parcel delivery price
