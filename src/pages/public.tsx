@@ -1,5 +1,5 @@
 
-import { faSmileWink } from '@fortawesome/free-solid-svg-icons';
+import { faFaceSmileBeam, faSmileWink } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import logo from '../logo.svg';
 
@@ -42,7 +42,8 @@ function PublicPage() {
           <p style={{color: 'var(--color-success)', fontSize: '1.2em'}}>don't you have enough plastic at home ? <FontAwesomeIcon icon={faSmileWink} /></p>
           <p style={{fontSize: '1.5em'}}>help your youngsters to showcase their unwanted toys instead of discarding them..</p>
           <p style={{color: 'var(--color-primary)', fontSize: '1.3em'}}>someone would still appreciate them as new !</p>
-          <p style={{fontSize: '1.6em'}}>so go ahead, let them share !</p>
+          <p style={{fontSize: '1.6em'}}>so go ahead, let them trade with each other!</p>
+          <p style={{fontSize: '1.3em'}}>they might as well learn new skills for life <FontAwesomeIcon icon={faFaceSmileBeam} /></p>
         </div>
 
         <a

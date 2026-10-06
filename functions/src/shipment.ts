@@ -13,7 +13,7 @@ if (getApps().length === 0) {
 }
 
 const REGION = "europe-west1";
-const SHIPMENT_PRICE_EUR_CENTS = 500;
+const SHIPMENT_PRICE_EUR_CENTS = 100;
 
 // Base URL of the deployed frontend, used to build Stripe's success/cancel
 // redirect URLs. Override with `firebase functions:config` / a deployed

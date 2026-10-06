@@ -1,5 +1,13 @@
 {
   "projects": {
     "default": "toystrader-a494f"
+  },
+  "targets": {},
+  "etags": {
+    "toystrader-a494f": {
+      "extensionInstances": {
+        "firestore-send-email": "4c0dec2a6ef1d9e8b469969342e39e5d52784f00119afd7544cb1ffef87e0a07"
+      }
+    }
   }
 }

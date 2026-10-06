@@ -191,7 +191,7 @@ function MyOffersPage() {
                             disabled={payingId === x.id || !selectedMachineByOfferId[x.id]}
                             onClick={() => payForShipment(x.id, x.mySide, selectedMachineByOfferId[x.id])}
                         >
-                            {payingId === x.id ? 'redirecting to payment...' : 'Pay & Get QR Code (5 EUR)'}
+                            {payingId === x.id ? 'redirecting to payment...' : 'Pay & Get QR Code (1 EUR)'}
                         </button>
                     </div>
                 : null}

@@ -31,3 +31,13 @@ yarn-error.log*
 # Firebase emulators
 *-debug.log
 .firebase/
+
+# Visual Studio local workspace cache - regenerated per machine, actively
+# written to while the IDE is open, must never be tracked.
+.vs/
+
+# Firebase Extensions local config - holds live SMTP/secret values in
+# plaintext (ext:install/ext:configure write the real value here, not just
+# a Secret Manager reference), so it must never be committed.
+extensions/*.env
+extensions/*.secret.local
