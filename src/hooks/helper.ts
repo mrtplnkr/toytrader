@@ -1,4 +1,4 @@
-import { signInWithPopup, signOut } from "firebase/auth";
+import { FacebookAuthProvider, signInWithPopup, signOut, updateProfile } from "firebase/auth";
 import { addDoc, collection, deleteDoc, doc, DocumentData, getDocs, or, query, Timestamp, updateDoc, where } from "firebase/firestore";
 import { getDownloadURL, ref } from "firebase/storage";
 import { httpsCallable } from "firebase/functions";
@@ -25,8 +25,18 @@ export const googleSign = async (callback: any) => {
 };
 export const facebookSign = async (callback: any) => {
     try {
-        await signInWithPopup(auth, facebookProvider);
-        callback();
+        const result = await signInWithPopup(auth, facebookProvider);
+        // Firebase doesn't reliably populate photoURL for Facebook sign-in -
+        // Facebook's Graph API requires the OAuth access token to fetch the
+        // profile picture, which Firebase doesn't do automatically. Fetch it
+        // ourselves using the token from this sign-in and persist it.
+        const credential = FacebookAuthProvider.credentialFromResult(result);
+        if (credential?.accessToken) {
+            await updateProfile(result.user, {
+                photoURL: `https://graph.facebook.com/me/picture?type=large&access_token=${credential.accessToken}`,
+            });
+        }
+        callback(result.user);
     } catch (err) {
         console.log('facebook signIn error' + (err as Error).message);
     }

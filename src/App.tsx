@@ -14,6 +14,7 @@ import {
 import './App.css';
 import Auth from './components/auth';
 import AddNew from "./pages/addNewToy";
+import ProfilePage from "./pages/profile";
 import { auth } from "./firebase-config";
 import MyToysPage from "./pages/myToys";
 import { ReactNotifications } from "react-notifications-component";
@@ -146,6 +147,14 @@ function App() {
                   element={
                     <RequireAuth>
                       <AddNew />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/profile"
+                  element={
+                    <RequireAuth>
+                      <ProfilePage />
                     </RequireAuth>
                   }
                 />

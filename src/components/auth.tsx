@@ -40,7 +40,8 @@ function Auth() {
                 <img alt={auth?.currentUser?.displayName??'no name'} style={{opacity: greyUser ? '0.1' : ''}} 
                   src={auth?.currentUser?.photoURL??''} onClick={() => openMenu(s => !s)} />
                 {menu && <ul>
-                  <li onClick={() => alert('click!')}>{auth.currentUser?.displayName}</li>
+                  <li style={{textDecoration: 'underline', cursor: 'pointer'}}
+                    onClick={() => { openMenu(x => !x); navigate('/profile'); }}>{auth.currentUser?.displayName}</li>
                   <li style={{textDecoration: 'underline', cursor: 'pointer'}} 
                     onClick={() => navigate('/myToys')}>My Toys ({toys.filter((t:Toy) => t.userId === auth.currentUser?.uid).length})</li>
                   <li onClick={() => navigate('/myOffers')}>My Offers</li>
