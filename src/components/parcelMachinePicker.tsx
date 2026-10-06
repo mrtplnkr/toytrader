@@ -9,14 +9,23 @@ interface Props {
 function ParcelMachinePicker({ value, onChange }: Props) {
     const [machines, setMachines] = useState<ParcelMachine[]>([]);
     const [filter, setFilter] = useState('');
+    const [debouncedFilter, setDebouncedFilter] = useState('');
     const [open, setOpen] = useState(false);
 
     useEffect(() => {
         listParcelMachines().then(setMachines).catch(() => setMachines([]));
     }, []);
 
+    // Debounce the filter so the list only recomputes/re-renders once typing
+    // pauses, rather than on every keystroke - the input itself (`filter`)
+    // still updates instantly, only the matching below lags by up to 1s.
+    useEffect(() => {
+        const timeout = setTimeout(() => setDebouncedFilter(filter), 1000);
+        return () => clearTimeout(timeout);
+    }, [filter]);
+
     const filtered = machines.filter((m) =>
-        `${m.name} ${m.address}`.toLowerCase().includes(filter.toLowerCase()));
+        `${m.name} ${m.address}`.toLowerCase().includes(debouncedFilter.toLowerCase()));
 
     const selected = machines.find((m) => m.id === value);
 
