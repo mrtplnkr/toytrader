@@ -12,7 +12,8 @@ interface Props {
 
 function ToyDisplay(props: Props) {//TODO: change to NewOffer
 
-    const [showYourToys, setShowYourToys] = useState<boolean>(false);
+    const [showYourToys, setShowYourToys] = useState<boolean>(true);
+    const [triedWithoutSelection, setTriedWithoutSelection] = useState<boolean>(false);
 
     const [selectedToy, setSelectedToy] = useState<string | undefined>();
 
@@ -24,13 +25,17 @@ function ToyDisplay(props: Props) {//TODO: change to NewOffer
             </button>
             <div style={{ height: !showYourToys ? '1px' : '90%', transition: '2s',
                 position: 'fixed', left: '1em', top: '1em', width: '120px', overflowY: 'scroll'}}>
+                {showYourToys &&
+                    <p style={{fontSize: '0.75em', margin: '0 0 0.5em', color: triedWithoutSelection ? '#ff6b6b' : undefined}}>
+                        {triedWithoutSelection ? '👇 pick a toy first!' : '👇 pick your toy to offer'}
+                    </p>}
                 <div style={{position: 'relative', display: 'block'}}>
                 {
-                    props.yourToys.map((x:Toy) => 
+                    props.yourToys.map((x:Toy) =>
                     <div key={x.id} style={{position: 'relative'}}>
-                        <img onClick={() => setSelectedToy(x.id)}
+                        <img onClick={() => { setSelectedToy(x.id); setTriedWithoutSelection(false); }}
                             alt={x.title} style={{width:'100px', marginTop: '1em', cursor: 'pointer'}} src={x.file} />
-                            {selectedToy === x.id && 
+                            {selectedToy === x.id &&
                         <FontAwesomeIcon style={{top: '17px', right: '2px', position: 'absolute'}}
                             color='#81fc51' icon={faFlagCheckered} />}
                     </div>)
@@ -40,10 +45,12 @@ function ToyDisplay(props: Props) {//TODO: change to NewOffer
             <button onClick={() => {
                 if (selectedToy) props.proposeOffer(selectedToy)
                 else {
-                    alert('please select your toy from the menu above')
+                    setTriedWithoutSelection(true);
                     setShowYourToys(true);
                 } }}
-                className={'buttonFixedLeft'} style={{cursor: selectedToy ? 'pointer' : 'not-allowed'}}>
+                className={`buttonFixedLeft${selectedToy ? '' : ' animateBorder'}`}
+                title={selectedToy ? 'Propose this trade' : 'Select your toy above first'}
+                style={{cursor: selectedToy ? 'pointer' : 'not-allowed', opacity: selectedToy ? 1 : 0.6}}>
                     <FontAwesomeIcon icon={faHandshake} />
             </button>
             <button className="leftButton" onClick={() => props.nextToy(-1)} />
