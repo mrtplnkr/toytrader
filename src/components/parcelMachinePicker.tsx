@@ -9,6 +9,7 @@ interface Props {
 function ParcelMachinePicker({ value, onChange }: Props) {
     const [machines, setMachines] = useState<ParcelMachine[]>([]);
     const [filter, setFilter] = useState('');
+    const [open, setOpen] = useState(false);
 
     useEffect(() => {
         listParcelMachines().then(setMachines).catch(() => setMachines([]));
@@ -17,26 +18,50 @@ function ParcelMachinePicker({ value, onChange }: Props) {
     const filtered = machines.filter((m) =>
         `${m.name} ${m.address}`.toLowerCase().includes(filter.toLowerCase()));
 
+    const selected = machines.find((m) => m.id === value);
+
+    const selectMachine = (machine: ParcelMachine) => {
+        onChange(machine);
+        setFilter('');
+        setOpen(false);
+    };
+
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4em', width: '100%', maxWidth: '360px' }}>
+        <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: '0.4em', width: '100%', maxWidth: '360px' }}>
             <input
                 type="text"
                 placeholder="Search parcel machine by name or address..."
                 value={filter}
-                onChange={(e) => setFilter(e.target.value)}
+                onChange={(e) => { setFilter(e.target.value); setOpen(true); }}
+                onFocus={() => setOpen(true)}
+                // Delay so a click on a list item registers before the blur closes it.
+                onBlur={() => setTimeout(() => setOpen(false), 150)}
             />
-            <select
-                value={value ?? ''}
-                onChange={(e) => {
-                    const machine = machines.find((m) => m.id === e.target.value);
-                    if (machine) onChange(machine);
-                }}
-            >
-                <option value="" disabled>Choose a parcel machine</option>
-                {filtered.map((m) => (
-                    <option key={m.id} value={m.id}>{m.name} — {m.address}</option>
-                ))}
-            </select>
+            {selected && !open &&
+                <p style={{fontSize: '0.85em', color: 'var(--color-primary)', margin: 0}}>
+                    Selected: {selected.name} — {selected.address}
+                </p>}
+            {open &&
+                <ul style={{
+                    position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 2,
+                    background: 'white', color: 'black', border: '1px solid #ccc', borderRadius: '4px',
+                    maxHeight: '220px', overflowY: 'auto', listStyle: 'none', margin: 0, padding: '0.25em 0',
+                }}>
+                    {filtered.length > 0 ? filtered.map((m) => (
+                        <li
+                            key={m.id}
+                            style={{padding: '0.4em 0.6em', cursor: 'pointer'}}
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => selectMachine(m)}
+                        >
+                            {m.name} — {m.address}
+                        </li>
+                    )) : (
+                        <li style={{padding: '0.4em 0.6em', color: 'var(--color-text-dim)'}}>
+                            {machines.length === 0 ? 'Loading parcel machines...' : 'No matches'}
+                        </li>
+                    )}
+                </ul>}
         </div>
     );
 }

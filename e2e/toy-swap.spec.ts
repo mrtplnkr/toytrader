@@ -81,12 +81,15 @@ test("two users trade toys and the accepting side receives shipping instructions
 
   // The pay button is disabled until a parcel machine is chosen (the stub
   // Omniva client's listParcelMachines fixture, served through the real
-  // Functions emulator - no mocking needed for this call). The page also
-  // renders a second <select> for toy size (defaults to "S"), so scope to
-  // the first one specifically.
-  const parcelMachineSelect = alice.locator("select").first();
-  await expect(parcelMachineSelect.locator("option").nth(1)).toBeAttached();
-  await parcelMachineSelect.selectOption({ index: 1 });
+  // Functions emulator - no mocking needed for this call). The picker is a
+  // search input backed by a custom (non-native-<select>) results list, so
+  // focusing it with an empty filter shows every stub machine - click the
+  // first one. Toy size stays at its default ("S").
+  const parcelMachineInput = alice.getByPlaceholder("Search parcel machine by name or address...");
+  await parcelMachineInput.click();
+  const firstMachineOption = alice.locator("ul li").first();
+  await expect(firstMachineOption).toBeVisible();
+  await firstMachineOption.click();
 
   await alice.getByRole("button", { name: /Pay & Get QR Code/ }).click();
   await alice.waitForURL("**/shipment/result*");
