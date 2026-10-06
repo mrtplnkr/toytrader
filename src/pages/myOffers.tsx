@@ -18,10 +18,13 @@ interface HistoryItem {
     toyTargeted: Toy;
     mySide: ShipmentSide;
     otherSide: ShipmentSide;
+    isAccepted: boolean;
     isMyTurnToPay: boolean;
     isMyTurnToRespond: boolean;
     canMarkPosted: boolean;
     canMarkReceived: boolean;
+    canCancel: boolean;
+    awaitingOtherPayment: boolean;
     myShipmentBarcode?: string;
     myShipmentStatus?: string;
 }
@@ -68,6 +71,7 @@ function MyOffersPage() {
             // its shipper marks it posted, I mark it received.
             const otherSidePosted = otherSide === 'offer' ? o.offerPosted : o.targetPosted;
             const otherSideReceived = otherSide === 'offer' ? o.offerReceived : o.targetReceived;
+            const otherSideShipmentPaid = otherSide === 'offer' ? o.offerShipmentPaid : o.targetShipmentPaid;
 
             history.push({
                 id: o.id,
@@ -75,10 +79,19 @@ function MyOffersPage() {
                 otherSide,
                 myShipmentBarcode,
                 myShipmentStatus,
+                isAccepted: !!o.offerAccepted,
                 isMyTurnToPay: !!o.offerAccepted && !myPosted && !myShipmentPaid,
                 isMyTurnToRespond: isReceiver && !o.offerAccepted,
-                canMarkPosted: !!myShipmentBarcode && !myPosted,
+                // Posting is gated on the other side having paid too - payment
+                // itself stays independent (harmless, no item moves yet), but
+                // nobody should physically drop off their toy until both sides
+                // are financially committed to the trade.
+                canMarkPosted: !!myShipmentBarcode && !myPosted && !!otherSideShipmentPaid,
+                awaitingOtherPayment: !!myShipmentBarcode && !myPosted && !otherSideShipmentPaid,
                 canMarkReceived: !!otherSidePosted && !otherSideReceived,
+                // Cancellable any time before either toy has physically shipped -
+                // once posted, the parcel's in Omniva's hands and can't be recalled.
+                canCancel: !o.offerPosted && !o.targetPosted,
                 toyIOffered: toys.find((x:Toy) => x.id === o.toyOffered),
                 status: `<li>${isInitiator ?
                             `you offered your <a href="${newToy}" target="_target">toy</a>` :
@@ -134,6 +147,21 @@ function MyOffersPage() {
     };
 
     const declineThisOffer = async (offerId: string) => {
+        try {
+            setRespondingId(offerId);
+            await declineOffer(offerId);
+            await refresh();
+        } catch (err) {
+            notifyError(err as Error);
+        } finally {
+            setRespondingId(undefined);
+        }
+    };
+
+    const cancelThisOffer = async (offerId: string) => {
+        if (!window.confirm('Cancel this trade? This cannot be undone, and any shipping fee already paid is non-refundable.')) {
+            return;
+        }
         try {
             setRespondingId(offerId);
             await declineOffer(offerId);
@@ -224,6 +252,10 @@ function MyOffersPage() {
                             <button className="btn-primary" disabled={markingId === x.id} onClick={() => markAsPosted(x.id, x.mySide)}>
                                 {markingId === x.id ? 'saving...' : "Mark my toy as dropped off"}
                             </button>}
+                        {x.awaitingOtherPayment &&
+                            <p style={{fontSize: '0.8em', color: 'var(--color-text-dim)', margin: 0}}>
+                                Hold off dropping your toy off - waiting for the other side to pay for their shipment too.
+                            </p>}
                         {x.canMarkReceived &&
                             <button className="btn-primary" disabled={markingId === x.id} onClick={() => markAsReceived(x.id, x.otherSide)}>
                                 {markingId === x.id ? 'saving...' : "Mark the other toy as received"}
@@ -270,6 +302,15 @@ function MyOffersPage() {
                                     {payingId === x.id ? 'redirecting to payment...' : 'Pay & Get QR Code (1 EUR)'}
                                 </button>
                             </div>
+                        }
+                        {x.canCancel ?
+                            <button className="btn-danger" disabled={respondingId === x.id} onClick={() => cancelThisOffer(x.id)}>
+                                {respondingId === x.id ? 'cancelling...' : 'Cancel this trade'}
+                            </button>
+                        : x.isAccepted &&
+                            <p style={{fontSize: '0.8em', color: 'var(--color-text-dim)', margin: 0}}>
+                                This trade can no longer be cancelled - a toy is already on its way.
+                            </p>
                         }
                     </div>
                 }
