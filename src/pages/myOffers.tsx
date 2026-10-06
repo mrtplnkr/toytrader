@@ -156,7 +156,7 @@ function MyOffersPage() {
         <h3>All offers made by you</h3>
 
         <div style={{display: 'flex', justifyContent: 'space-between', margin: '0 0 1.5em'}}>
-          <button onClick={() => alert('not sure if its needed')}>refresh</button>
+          <button onClick={() => refresh()}>refresh</button>
           <button className="btn-primary" onClick={() => navigate('/addNew')}>add your toy</button>
         </div>
 

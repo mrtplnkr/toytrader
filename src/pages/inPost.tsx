@@ -13,6 +13,7 @@ function HistoryPage() {
   let navigate = useNavigate();
 
   const toys = useContextSelector(GoodAppContext, (state: any) => state.toys);
+  const refresh = useContextSelector(GoodAppContext, (state: any) => state.refresh);
 
   useEffect(() => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -41,7 +42,7 @@ function HistoryPage() {
           <button id="addButton" onClick={() => navigate('/addNew')}>
             <FontAwesomeIcon color="darkviolet" icon={faCirclePlus} />
           </button>
-          <button style={{alignSelf: 'flex-start'}} onClick={() => alert('not in use')}>refresh</button>
+          <button style={{alignSelf: 'flex-start'}} onClick={() => refresh()}>refresh</button>
         </div>
 
         <ul id="toyList">

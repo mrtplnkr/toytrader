@@ -91,7 +91,7 @@ function ListPage() {
           <button id="addButton" onClick={() => navigate('/addNew')}>
             <FontAwesomeIcon color="darkviolet" icon={faCirclePlus} />
           </button>
-          <button style={{alignSelf: 'flex-start'}} onClick={() => alert('not in use')}>refresh</button>
+          <button style={{alignSelf: 'flex-start'}} onClick={() => refresh()}>refresh</button>
         </div>
 
         <ul id="toyList">
