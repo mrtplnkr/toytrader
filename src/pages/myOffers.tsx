@@ -6,7 +6,7 @@ import { Offer } from "../types/offer";
 import { GoodAppContext } from "../hooks/context";
 import { useContextSelector } from "use-context-selector";
 import { Toy } from "../types/toy";
-import { ParcelMachine, ShipmentSide, declineOffer, startShipmentCheckout, updateOffer } from "../hooks/helper";
+import { ParcelMachine, ShipmentSide, declineOffer, markToyPosted, markToyReceived, startShipmentCheckout, updateOffer } from "../hooks/helper";
 import ParcelMachinePicker from "../components/parcelMachinePicker";
 import { DEFAULT_TOY_SIZE, OMNIVA_PRICE_LIST_URL, TOY_SIZES, ToySize } from "../constants/omnivaPricing";
 
@@ -17,8 +17,11 @@ interface HistoryItem {
     status: string;
     toyTargeted: Toy;
     mySide: ShipmentSide;
+    otherSide: ShipmentSide;
     isMyTurnToPay: boolean;
     isMyTurnToRespond: boolean;
+    canMarkPosted: boolean;
+    canMarkReceived: boolean;
     myShipmentBarcode?: string;
     myShipmentStatus?: string;
 }
@@ -42,6 +45,7 @@ function MyOffersPage() {
     const [history, setHistory] = useState<HistoryItem[]>([]);
     const [payingId, setPayingId] = useState<string | undefined>();
     const [respondingId, setRespondingId] = useState<string | undefined>();
+    const [markingId, setMarkingId] = useState<string | undefined>();
     const [selectedMachineByOfferId, setSelectedMachineByOfferId] = useState<Record<string, ParcelMachine>>({});
     const [selectedSizeByOfferId, setSelectedSizeByOfferId] = useState<Record<string, ToySize>>({});
 
@@ -55,18 +59,26 @@ function MyOffersPage() {
             if (!isInitiator && !isReceiver) return;
 
             const mySide: ShipmentSide = isInitiator ? 'offer' : 'target';
+            const otherSide: ShipmentSide = mySide === 'offer' ? 'target' : 'offer';
             const myPosted = mySide === 'offer' ? o.offerPosted : o.targetPosted;
             const myShipmentPaid = mySide === 'offer' ? o.offerShipmentPaid : o.targetShipmentPaid;
             const myShipmentBarcode = mySide === 'offer' ? o.offerShipmentBarcode : o.targetShipmentBarcode;
             const myShipmentStatus = mySide === 'offer' ? o.offerShipmentStatus : o.targetShipmentStatus;
+            // The toy I'm waiting to receive is the *other* side's toy -
+            // its shipper marks it posted, I mark it received.
+            const otherSidePosted = otherSide === 'offer' ? o.offerPosted : o.targetPosted;
+            const otherSideReceived = otherSide === 'offer' ? o.offerReceived : o.targetReceived;
 
             history.push({
                 id: o.id,
                 mySide,
+                otherSide,
                 myShipmentBarcode,
                 myShipmentStatus,
                 isMyTurnToPay: !!o.offerAccepted && !myPosted && !myShipmentPaid,
                 isMyTurnToRespond: isReceiver && !o.offerAccepted,
+                canMarkPosted: !!myShipmentBarcode && !myPosted,
+                canMarkReceived: !!otherSidePosted && !otherSideReceived,
                 toyIOffered: toys.find((x:Toy) => x.id === o.toyOffered),
                 status: `<li>${isInitiator ?
                             `you offered your <a href="${newToy}" target="_target">toy</a>` :
@@ -133,6 +145,30 @@ function MyOffersPage() {
         }
     };
 
+    const markAsPosted = async (offerId: string, side: ShipmentSide) => {
+        try {
+            setMarkingId(offerId);
+            await markToyPosted(offerId, side);
+            await refresh();
+        } catch (err) {
+            notifyError(err as Error);
+        } finally {
+            setMarkingId(undefined);
+        }
+    };
+
+    const markAsReceived = async (offerId: string, side: ShipmentSide) => {
+        try {
+            setMarkingId(offerId);
+            await markToyReceived(offerId, side);
+            await refresh();
+        } catch (err) {
+            notifyError(err as Error);
+        } finally {
+            setMarkingId(undefined);
+        }
+    };
+
     const payForShipment = async (offerId: string, side: ShipmentSide, parcelMachineId: string, toySize: ToySize) => {
         try {
             setPayingId(offerId);
@@ -178,53 +214,65 @@ function MyOffersPage() {
                             Decline
                         </button>
                     </div>
-                : x.myShipmentBarcode ?
-                    <button onClick={() => navigate(`/shipment/result?offerId=${x.id}&side=${x.mySide}&status=success`)}>
-                        View QR Code
-                    </button>
-                : x.isMyTurnToPay ?
+                :
                     <div style={{display: 'flex', flexDirection: 'column', gap: '0.5em', alignItems: 'center'}}>
-                        <ParcelMachinePicker
-                            value={selectedMachineByOfferId[x.id]?.id}
-                            onChange={(machine) => setSelectedMachineByOfferId((prev) => ({...prev, [x.id]: machine}))}
-                        />
-                        <label style={{display: 'flex', alignItems: 'center', gap: '0.5em', fontSize: '0.9em'}}>
-                            Toy size:
-                            <select
-                                value={selectedSizeByOfferId[x.id] ?? DEFAULT_TOY_SIZE}
-                                onChange={(e) => setSelectedSizeByOfferId((prev) => ({...prev, [x.id]: e.target.value as ToySize}))}
-                            >
-                                {TOY_SIZES.map((size) => <option key={size} value={size}>{size}</option>)}
-                            </select>
-                        </label>
-                        {selectedMachineByOfferId[x.id] &&
-                            <a
-                                href={OMNIVA_PRICE_LIST_URL[selectedMachineByOfferId[x.id].countryCode]}
-                                target="_blank"
-                                rel="noreferrer"
-                                style={{fontSize: '0.85em'}}
-                            >
-                                Check exact Omniva shipping price for {selectedMachineByOfferId[x.id].countryCode}
-                            </a>
+                        {x.myShipmentBarcode &&
+                            <button onClick={() => navigate(`/shipment/result?offerId=${x.id}&side=${x.mySide}&status=success`)}>
+                                View QR Code
+                            </button>}
+                        {x.canMarkPosted &&
+                            <button className="btn-primary" disabled={markingId === x.id} onClick={() => markAsPosted(x.id, x.mySide)}>
+                                {markingId === x.id ? 'saving...' : "Mark my toy as dropped off"}
+                            </button>}
+                        {x.canMarkReceived &&
+                            <button className="btn-primary" disabled={markingId === x.id} onClick={() => markAsReceived(x.id, x.otherSide)}>
+                                {markingId === x.id ? 'saving...' : "Mark the other toy as received"}
+                            </button>}
+                        {x.isMyTurnToPay &&
+                            <div style={{display: 'flex', flexDirection: 'column', gap: '0.5em', alignItems: 'center'}}>
+                                <ParcelMachinePicker
+                                    value={selectedMachineByOfferId[x.id]?.id}
+                                    onChange={(machine) => setSelectedMachineByOfferId((prev) => ({...prev, [x.id]: machine}))}
+                                />
+                                <label style={{display: 'flex', alignItems: 'center', gap: '0.5em', fontSize: '0.9em'}}>
+                                    Toy size:
+                                    <select
+                                        value={selectedSizeByOfferId[x.id] ?? DEFAULT_TOY_SIZE}
+                                        onChange={(e) => setSelectedSizeByOfferId((prev) => ({...prev, [x.id]: e.target.value as ToySize}))}
+                                    >
+                                        {TOY_SIZES.map((size) => <option key={size} value={size}>{size}</option>)}
+                                    </select>
+                                </label>
+                                {selectedMachineByOfferId[x.id] &&
+                                    <a
+                                        href={OMNIVA_PRICE_LIST_URL[selectedMachineByOfferId[x.id].countryCode]}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        style={{fontSize: '0.85em'}}
+                                    >
+                                        Check exact Omniva shipping price for {selectedMachineByOfferId[x.id].countryCode}
+                                    </a>
+                                }
+                                <p style={{fontSize: '0.8em', color: 'var(--color-text-dim)', margin: 0}}>
+                                    Our 1 EUR fee covers the QR label only - Omniva's own parcel delivery price
+                                    (based on toy size) is paid separately, check the link above.
+                                </p>
+                                <button
+                                    className="btn-primary"
+                                    disabled={payingId === x.id || !selectedMachineByOfferId[x.id]}
+                                    onClick={() => payForShipment(
+                                        x.id,
+                                        x.mySide,
+                                        selectedMachineByOfferId[x.id].id,
+                                        selectedSizeByOfferId[x.id] ?? DEFAULT_TOY_SIZE
+                                    )}
+                                >
+                                    {payingId === x.id ? 'redirecting to payment...' : 'Pay & Get QR Code (1 EUR)'}
+                                </button>
+                            </div>
                         }
-                        <p style={{fontSize: '0.8em', color: 'var(--color-text-dim)', margin: 0}}>
-                            Our 1 EUR fee covers the QR label only - Omniva's own parcel delivery price
-                            (based on toy size) is paid separately, check the link above.
-                        </p>
-                        <button
-                            className="btn-primary"
-                            disabled={payingId === x.id || !selectedMachineByOfferId[x.id]}
-                            onClick={() => payForShipment(
-                                x.id,
-                                x.mySide,
-                                selectedMachineByOfferId[x.id].id,
-                                selectedSizeByOfferId[x.id] ?? DEFAULT_TOY_SIZE
-                            )}
-                        >
-                            {payingId === x.id ? 'redirecting to payment...' : 'Pay & Get QR Code (1 EUR)'}
-                        </button>
                     </div>
-                : null}
+                }
             </div>
         )}
 
