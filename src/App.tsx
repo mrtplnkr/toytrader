@@ -40,10 +40,18 @@ function StateProvider({children}: any) {
   };
 
   const getData = useCallback(async() => {
-    setToys(await getToyList());
+    // Guard against running while signed out - the 60s interval and the
+    // window "focus" listener below both fire unconditionally, and an
+    // OAuth popup opening/closing (e.g. Facebook sign-in) triggers focus
+    // events on this window multiple times before auth.currentUser is set,
+    // which was hammering Firestore with doomed, erroring calls during the
+    // exact window the sign-in popup is trying to complete.
     const uid = auth.currentUser?.uid;
-    const newOffers = await getOfferList(uid!);
-    if (uid && prevOffersRef.current.length > 0) {
+    if (!uid) return;
+
+    setToys(await getToyList());
+    const newOffers = await getOfferList(uid);
+    if (prevOffersRef.current.length > 0) {
       diffAndNotifyShipmentStatus(uid, prevOffersRef.current, newOffers);
     }
     prevOffersRef.current = newOffers;
