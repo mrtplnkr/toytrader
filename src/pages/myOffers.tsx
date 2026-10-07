@@ -81,6 +81,7 @@ function MyOffersPage() {
             const otherSidePosted = otherSide === 'offer' ? o.offerPosted : o.targetPosted;
             const otherSideReceived = otherSide === 'offer' ? o.offerReceived : o.targetReceived;
             const otherSideShipmentPaid = otherSide === 'offer' ? o.offerShipmentPaid : o.targetShipmentPaid;
+            const otherSideShipmentStatus = otherSide === 'offer' ? o.offerShipmentStatus : o.targetShipmentStatus;
 
             history.push({
                 id: o.id,
@@ -125,6 +126,11 @@ function MyOffersPage() {
                     ${myShipmentStatus ?
                         `<li>your shipment status: ${myShipmentStatus}</li>`
                         : ''}
+                    ${otherSideShipmentStatus ?
+                        `<li>the other user's shipment status: ${otherSideShipmentStatus}</li>`
+                        : otherSideShipmentPaid ?
+                        ''
+                        : `<li>the other user hasn't registered with Omniva yet</li>`}
                     `,
                 toyTargeted,
             });
