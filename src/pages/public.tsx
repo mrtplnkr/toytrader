@@ -15,7 +15,7 @@ function PublicPage() {
       <>
         <h1 className="App-header">Toy Trader App</h1>
 
-        <img src={logo} className="App-logo" alt="logo" />
+        <img src={logo} className="App-logo" alt="ToyTrader logo" />
         
         <div id="intro">
           <h3>
