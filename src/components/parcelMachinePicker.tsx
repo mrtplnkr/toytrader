@@ -51,7 +51,7 @@ function ParcelMachinePicker({ value, onChange }: Props) {
                     Selected: {selected.name} — {selected.address}
                 </p>}
             {open &&
-                <ul style={{
+                <ul className="parcelMachineResults" style={{
                     position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 2,
                     background: 'white', color: 'black', border: '1px solid #ccc', borderRadius: '4px',
                     maxHeight: '220px', overflowY: 'auto', listStyle: 'none', margin: 0, padding: '0.25em 0',

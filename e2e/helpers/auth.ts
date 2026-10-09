@@ -19,11 +19,17 @@ export async function signInWithFakeGoogle(page: Page, user: TestUser) {
     page.click("text=Google login"),
   ]);
 
+  // The emulator's fake-IDP widget renders its controls via its own JS after
+  // the initial document loads - domcontentloaded alone doesn't guarantee
+  // #add-account-button exists yet. Wait for it explicitly rather than
+  // relying on click()'s default actionability timeout to cover a possibly
+  // slow-starting popup under load.
   await popup.waitForLoadState("domcontentloaded");
+  await popup.locator("#add-account-button").waitFor({ state: "visible", timeout: 20_000 });
   await popup.click("#add-account-button");
   await popup.fill("#email-input", user.email);
   await popup.fill("#display-name-input", user.displayName);
   await popup.click("#sign-in");
 
-  await page.waitForURL("**/list");
+  await page.waitForURL("**/list", { timeout: 20_000 });
 }

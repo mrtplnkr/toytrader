@@ -13,7 +13,7 @@ async function registerOmnivaBarcode(page: Page, barcode: string) {
   // empty filter shows every result, click the first one.
   const parcelMachineInput = page.getByPlaceholder("Search parcel machine by name or address...");
   await parcelMachineInput.click();
-  const firstMachineOption = page.locator("ul li").first();
+  const firstMachineOption = page.locator("ul.parcelMachineResults li").first();
   await expect(firstMachineOption).toBeVisible();
   await firstMachineOption.click();
 
@@ -69,15 +69,21 @@ test("two users trade toys: register with Omniva, ship, receive, and pay the ser
   // Posting is gated on BOTH sides having registered with Omniva (mutual
   // real-world commitment). Alice's own refresh() only ran when she
   // submitted her barcode - she needs a fresh pull to see Bob's barcode too.
+  //
+  // Bob is the initiator here (he's the one who clicked the handshake
+  // button with his own toy), so Alice is the *receiver* - her own shipment
+  // is toyTargeted (her robot), which the status list labels "the requested
+  // toy" regardless of who's viewing it (that text is the same for both
+  // sides, not relative to "my"/"other").
   await alice.getByRole("button", { name: "refresh" }).click();
   await alice.getByRole("button", { name: "Mark my toy as dropped off" }).click();
-  await expect(alice.getByText(/the offered.*toy was posted/)).toBeVisible();
+  await expect(alice.getByText(/the requested.*toy was posted/)).toBeVisible();
 
   // Bob confirms he received the toy Alice shipped - this is what makes
   // Alice's side of the trade "successful" and unlocks her service fee.
   await bob.getByRole("button", { name: "refresh" }).click();
   await bob.getByRole("button", { name: "Mark the other toy as received" }).click();
-  await expect(bob.getByText(/the offered.*toy was posted.*received on/)).toBeVisible();
+  await expect(bob.getByText(/the requested.*toy was posted.*received on/)).toBeVisible();
 
   await alice.getByRole("button", { name: "refresh" }).click();
 

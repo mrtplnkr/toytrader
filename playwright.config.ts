@@ -3,7 +3,10 @@ import { CRA_PORT, EMULATOR_HOSTS } from "./e2e/helpers/constants";
 
 export default defineConfig({
   testDir: "./e2e",
-  timeout: 30_000,
+  // Two full sign-ins, two Omniva barcode registrations (each with a 1s
+  // debounced search), and a full post -> receive -> pay round trip push
+  // well past a 30s budget - see toy-swap.spec.ts.
+  timeout: 90_000,
   expect: { timeout: 10_000 },
   fullyParallel: false,
   retries: process.env.CI ? 1 : 0,
