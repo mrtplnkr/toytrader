@@ -19,18 +19,6 @@ export type OmnivaShipmentStatus =
   | "RETURNED"
   | "UNKNOWN";
 
-export interface OmnivaShipmentRequest {
-  offerId: string;
-  side: ShipmentSide;
-  destinationTerminalId: string;
-  toySize: string;
-}
-
-export interface OmnivaShipmentResult {
-  barcode: string;
-  labelUrl?: string;
-}
-
 export interface OmnivaTrackingResult {
   status: OmnivaShipmentStatus;
 }
@@ -45,8 +33,17 @@ export interface OmnivaShippingPriceResult {
   currency: string;
 }
 
+// No business/API shipment-creation capability - Omniva only grants
+// programmatic shipment registration to contracted business customers, and
+// this app doesn't have (or want to require) a business contract. Users
+// register their own shipment directly on Omniva's consumer site/app (as a
+// private individual, no contract needed) and paste the resulting barcode
+// into the app themselves - see submitOmnivaBarcode in helper.ts on the
+// frontend. This client only covers what's still genuinely useful without
+// a business account: the public terminal list, a best-effort price
+// estimate, and (once implemented) tracking-by-barcode, which is commonly
+// a public/no-contract-needed lookup even where creation isn't.
 export interface OmnivaClient {
-  createShipment(req: OmnivaShipmentRequest): Promise<OmnivaShipmentResult>;
   listParcelMachines(): Promise<ParcelMachine[]>;
   getTrackingStatus(barcode: string): Promise<OmnivaTrackingResult>;
   getShippingPrice(req: OmnivaShippingPriceRequest): Promise<OmnivaShippingPriceResult>;
@@ -57,6 +54,9 @@ export interface OmnivaClient {
 // even while OMNIVA_MODE still defaults to "stub".
 export const omnivaUsername = defineSecret("OMNIVA_USERNAME");
 export const omnivaPassword = defineSecret("OMNIVA_PASSWORD");
+
+export const omnivaMode = defineString("OMNIVA_MODE", {default: "stub"});
+export const isRealOmnivaMode = (): boolean => omnivaMode.value() === "real";
 
 const STUB_PARCEL_MACHINES: ParcelMachine[] = [
   {id: "88894", name: "Tallinn Ülemiste Selver", address: "Suur-Sõjamäe 4, Tallinn",
@@ -105,13 +105,6 @@ async function fetchRealParcelMachines(): Promise<ParcelMachine[]> {
     .filter((m) => m.id && m.name);
 }
 
-const STUB_STATUS_SEQUENCE: OmnivaShipmentStatus[] = [
-  "REGISTERED",
-  "IN_TRANSIT",
-  "ARRIVED_AT_TERMINAL",
-  "DELIVERED",
-];
-
 // Not real Omniva prices - deterministic placeholders for local testing only.
 // Loosely based on publicly-observed Baltic parcel-machine-to-parcel-machine
 // pricing at the time this was written, but Omniva has no stable public price
@@ -127,25 +120,20 @@ const STUB_PRICE_CENTS_BY_SIZE: Record<string, number> = {
 
 /**
  * No real Omniva credentials/API docs exist yet. Returns deterministic fake
- * data with no network calls, so the full parcel-machine-pick -> pay ->
- * barcode -> status-tracking -> notification pipeline is testable end-to-end
- * against the Firebase emulators before Omniva is actually wired up.
+ * data with no network calls for price estimates, but real terminal-list
+ * data (that endpoint is public). getTrackingStatus intentionally does NOT
+ * fabricate status progression here - barcodes are now real, user-entered
+ * values (see submitOmnivaBarcode), and inventing fake "IN_TRANSIT"/
+ * "DELIVERED" progress for a real parcel would be actively misleading, not
+ * just a harmless test fixture. syncOmnivaShipmentStatuses skips calling
+ * this entirely while not in real mode - see isRealOmnivaMode().
  */
 class StubOmnivaClient implements OmnivaClient {
-  private readonly trackingCallCounts = new Map<string, number>();
-
-  async createShipment(req: OmnivaShipmentRequest): Promise<OmnivaShipmentResult> {
-    logger.info("StubOmnivaClient.createShipment", req);
-    return {barcode: `STUB-${req.offerId}-${req.side}-${Date.now()}`};
-  }
-
   async listParcelMachines(): Promise<ParcelMachine[]> {
     // The real terminal-list endpoint is public and needs no credentials, so
     // we use real data here even in stub mode - lets users actually search
-    // their own area. createShipment/getTrackingStatus/getShippingPrice stay
-    // fully fake, since those need real credentials/contact info we don't
-    // have yet. Falls back to a tiny hardcoded fixture if the fetch fails
-    // (e.g. offline local dev), so the picker never ends up empty.
+    // their own area. Falls back to a tiny hardcoded fixture if the fetch
+    // fails (e.g. offline local dev), so the picker never ends up empty.
     try {
       return await fetchRealParcelMachines();
     } catch (err) {
@@ -154,11 +142,11 @@ class StubOmnivaClient implements OmnivaClient {
     }
   }
 
-  async getTrackingStatus(barcode: string): Promise<OmnivaTrackingResult> {
-    const callCount = this.trackingCallCounts.get(barcode) ?? 0;
-    this.trackingCallCounts.set(barcode, callCount + 1);
-    const index = Math.min(callCount, STUB_STATUS_SEQUENCE.length - 1);
-    return {status: STUB_STATUS_SEQUENCE[index]};
+  async getTrackingStatus(): Promise<OmnivaTrackingResult> {
+    throw new Error(
+      "StubOmnivaClient.getTrackingStatus should never be called - " +
+      "syncOmnivaShipmentStatuses must check isRealOmnivaMode() first."
+    );
   }
 
   async getShippingPrice(req: OmnivaShippingPriceRequest): Promise<OmnivaShippingPriceResult> {
@@ -176,10 +164,6 @@ class StubOmnivaClient implements OmnivaClient {
  * OMNIVA_MODE=real in any deployed/shared environment until then.
  */
 class RealOmnivaClient implements OmnivaClient {
-  private readonly apiBaseUrl = defineString("OMNIVA_API_BASE_URL", {
-    default: "https://edixml.test.post.ee/epmx/services",
-  });
-
   private readonly trackingApiBaseUrl = defineString("OMNIVA_TRACKING_API_BASE_URL", {
     default: "https://tracking.omniva.ee/api",
   });
@@ -188,24 +172,12 @@ class RealOmnivaClient implements OmnivaClient {
     return fetchRealParcelMachines();
   }
 
-  async createShipment(req: OmnivaShipmentRequest): Promise<OmnivaShipmentResult> {
-    // TODO(omniva-real-api): real shipment registration requires recipient
-    // name/phone/address, which this app does not currently collect anywhere
-    // - that's a product decision to make (collect it at pay time, on first
-    // login, etc.) before this can actually register a real label. Do not
-    // fabricate placeholder contact data here.
-    throw new Error(
-      "RealOmnivaClient.createShipment is not implemented - recipient contact " +
-      "details are not yet collected anywhere in the app, and the request/" +
-      "response shape below is unverified against real Omniva docs. " +
-      `(base url configured: ${this.apiBaseUrl.value()}, ` +
-      `terminal: ${req.destinationTerminalId})`
-    );
-  }
-
   async getTrackingStatus(barcode: string): Promise<OmnivaTrackingResult> {
     // TODO(omniva-real-api): endpoint, auth, and status-code mapping below
-    // are unverified guesses pending real Omniva tracking API docs.
+    // are unverified guesses pending real Omniva tracking API docs. Worth
+    // checking whether tracking-by-barcode is public/no-contract-needed even
+    // though shipment creation requires a business contract - trackers
+    // commonly are, since that's a customer-facing feature.
     throw new Error(
       "RealOmnivaClient.getTrackingStatus is not implemented - tracking API " +
       `shape unverified. (base url configured: ${this.trackingApiBaseUrl.value()}, ` +
@@ -226,13 +198,11 @@ class RealOmnivaClient implements OmnivaClient {
   }
 }
 
-const omnivaMode = defineString("OMNIVA_MODE", {default: "stub"});
-
 let cachedClient: OmnivaClient | undefined;
 
 export const getOmnivaClient = (): OmnivaClient => {
   if (!cachedClient) {
-    cachedClient = omnivaMode.value() === "real" ?
+    cachedClient = isRealOmnivaMode() ?
       new RealOmnivaClient() :
       new StubOmnivaClient();
   }

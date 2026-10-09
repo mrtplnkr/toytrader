@@ -3,14 +3,15 @@ service cloud.firestore {
     match /offers/{offerId} {
       allow read: if request.auth.uid != null;
       allow create: if request.auth.uid != null;
+      // Only the service-fee payment fields stay server-only (verified via
+      // Stripe webhook/recheck). Barcode/terminal/size/status are now
+      // self-reported by the user who manually registered their own
+      // shipment on Omniva's site - same trust model as offerAccepted/
+      // offerPosted/offerReceived, which have always been client-writable.
       allow update: if request.auth.uid != null &&
         !request.resource.data.diff(resource.data).affectedKeys().hasAny([
-          'offerShipmentPaid', 'offerShipmentStripeSessionId', 'offerShipmentBarcode',
-          'offerShipmentQrIssuedAt', 'offerShipmentError',
-          'offerShipmentTerminalId', 'offerShipmentToySize', 'offerShipmentStatus', 'offerShipmentStatusUpdatedAt',
-          'targetShipmentPaid', 'targetShipmentStripeSessionId', 'targetShipmentBarcode',
-          'targetShipmentQrIssuedAt', 'targetShipmentError',
-          'targetShipmentTerminalId', 'targetShipmentToySize', 'targetShipmentStatus', 'targetShipmentStatusUpdatedAt'
+          'offerShipmentPaid', 'offerShipmentStripeSessionId',
+          'targetShipmentPaid', 'targetShipmentStripeSessionId'
         ]);
       allow delete: if request.auth.uid != null;
     }

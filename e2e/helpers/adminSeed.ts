@@ -20,28 +20,18 @@ export type ShipmentSide = "offer" | "target";
 
 /**
  * Simulates what the real stripeWebhook Cloud Function does once Stripe
- * confirms payment (functions/src/shipment.ts): writes the shipment-paid
- * and barcode fields via the Admin SDK, which bypasses firestore.rules
- * exactly like the real webhook does. The e2e suite has no real Stripe test
- * keys, so checkout-session creation is mocked at the network layer instead
- * (see e2e/toy-swap.spec.ts) - this fills in what the webhook would have
- * done once that mocked "payment" completes.
+ * confirms the service fee payment (functions/src/shipment.ts): marks the
+ * shipment-paid field via the Admin SDK, bypassing firestore.rules exactly
+ * like the real webhook does. The e2e suite has no real Stripe test keys,
+ * so checkout-session creation is mocked at the network layer instead (see
+ * e2e/toy-swap.spec.ts) - this fills in what the webhook would have done
+ * once that mocked "payment" completes. Omniva barcodes are now entered by
+ * the user directly through the UI (self-reported, client-writable), not
+ * seeded here.
  */
-export async function markShipmentPaid(
-  offerId: string,
-  side: ShipmentSide,
-  barcode: string,
-  parcelMachineId: string,
-  toySize: string
-) {
+export async function markShipmentPaid(offerId: string, side: ShipmentSide) {
   const db = getFirestore();
   await db.collection("offers").doc(offerId).update({
     [`${side}ShipmentPaid`]: FieldValue.serverTimestamp(),
-    [`${side}ShipmentBarcode`]: barcode,
-    [`${side}ShipmentQrIssuedAt`]: FieldValue.serverTimestamp(),
-    [`${side}ShipmentTerminalId`]: parcelMachineId,
-    [`${side}ShipmentToySize`]: toySize,
-    [`${side}ShipmentStatus`]: "REGISTERED",
-    [`${side}ShipmentStatusUpdatedAt`]: FieldValue.serverTimestamp(),
   });
 }

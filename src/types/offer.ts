@@ -17,11 +17,16 @@ export interface Offer {
     targetPosted?: Date;
     targetReceived?: Date;
 
+    // Our own 1 EUR service fee - charged per side, only once that side's
+    // shipment is confirmed received by the other party.
     offerShipmentPaid?: Date;
     offerShipmentStripeSessionId?: string;
+
+    // Self-reported: the user registers their own shipment directly on
+    // Omniva's site (no business contract needed for that) and enters the
+    // resulting barcode here themselves - this app never calls Omniva's API
+    // to create a shipment.
     offerShipmentBarcode?: string;
-    offerShipmentQrIssuedAt?: Date;
-    offerShipmentError?: string;
     offerShipmentTerminalId?: string;
     offerShipmentToySize?: string;
     offerShipmentStatus?: string;
@@ -30,8 +35,6 @@ export interface Offer {
     targetShipmentPaid?: Date;
     targetShipmentStripeSessionId?: string;
     targetShipmentBarcode?: string;
-    targetShipmentQrIssuedAt?: Date;
-    targetShipmentError?: string;
     targetShipmentTerminalId?: string;
     targetShipmentToySize?: string;
     targetShipmentStatus?: string;

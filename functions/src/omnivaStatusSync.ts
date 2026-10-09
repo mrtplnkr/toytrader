@@ -3,7 +3,7 @@ import * as logger from "firebase-functions/logger";
 import {getApps, initializeApp} from "firebase-admin/app";
 import {getFirestore, FieldValue} from "firebase-admin/firestore";
 import {getAuth} from "firebase-admin/auth";
-import {getOmnivaClient, omnivaUsername, omnivaPassword, OmnivaShipmentStatus} from "./omniva";
+import {getOmnivaClient, isRealOmnivaMode, omnivaUsername, omnivaPassword, OmnivaShipmentStatus} from "./omniva";
 
 if (getApps().length === 0) {
   initializeApp();
@@ -38,6 +38,16 @@ const STATUS_LABELS: Record<OmnivaShipmentStatus, string> = {
 export const syncOmnivaShipmentStatuses = onSchedule(
   {region: REGION, schedule: "every 30 minutes", secrets: [omnivaUsername, omnivaPassword]},
   async () => {
+    // Barcodes are now real, user-entered values (see submitOmnivaBarcode on
+    // the frontend) - without real tracking implemented, there's nothing
+    // genuine to report, and the old stub behavior of auto-advancing fake
+    // statuses would misrepresent progress on a real parcel. Skip entirely
+    // until RealOmnivaClient.getTrackingStatus is actually implemented.
+    if (!isRealOmnivaMode()) {
+      logger.info("syncOmnivaShipmentStatuses: skipped, OMNIVA_MODE is not 'real'");
+      return;
+    }
+
     const db = getFirestore();
     const omniva = getOmnivaClient();
 

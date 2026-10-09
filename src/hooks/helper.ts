@@ -127,10 +127,8 @@ export const getOfferList = async (userId: string) => {
                 targetPosted: toDate(data, 'targetPosted'),
                 targetReceived: toDate(data, 'targetReceived'),
                 offerShipmentPaid: toDate(data, 'offerShipmentPaid'),
-                offerShipmentQrIssuedAt: toDate(data, 'offerShipmentQrIssuedAt'),
                 offerShipmentStatusUpdatedAt: toDate(data, 'offerShipmentStatusUpdatedAt'),
                 targetShipmentPaid: toDate(data, 'targetShipmentPaid'),
-                targetShipmentQrIssuedAt: toDate(data, 'targetShipmentQrIssuedAt'),
                 targetShipmentStatusUpdatedAt: toDate(data, 'targetShipmentStatusUpdatedAt'),
             });
         });
@@ -169,18 +167,35 @@ export const markToyReceived = async (id: string, side: ShipmentSide) => {
 };
 
 const startShipmentCheckoutCallable = httpsCallable<
-    { offerId: string, side: ShipmentSide, parcelMachineId: string, toySize: string },
+    { offerId: string, side: ShipmentSide },
     { checkoutUrl: string }
 >(functions, "startShipmentCheckout");
 
-export const startShipmentCheckout = async (
-    offerId: string,
-    side: ShipmentSide,
-    parcelMachineId: string,
-    toySize: string
-) => {
-    const result = await startShipmentCheckoutCallable({ offerId, side, parcelMachineId, toySize });
+// Charges ToyTrader's own 1 EUR service fee - only callable once the
+// backend confirms this side's shipment was received by the other party.
+export const startShipmentCheckout = async (offerId: string, side: ShipmentSide) => {
+    const result = await startShipmentCheckoutCallable({ offerId, side });
     return result.data;
+};
+
+// Self-reported: the user registers their own shipment directly on Omniva's
+// site (no business contract needed there) and enters the resulting barcode
+// here themselves - same trust model as markToyPosted/markToyReceived.
+export const submitOmnivaBarcode = async (
+    id: string,
+    side: ShipmentSide,
+    barcode: string,
+    terminalId?: string,
+    toySize?: string
+) => {
+    const docToUpdate = doc(db, "offers", id);
+    await updateDoc(docToUpdate, {
+        [`${side}ShipmentBarcode`]: barcode,
+        [`${side}ShipmentTerminalId`]: terminalId ?? null,
+        [`${side}ShipmentToySize`]: toySize ?? null,
+        [`${side}ShipmentStatus`]: "REGISTERED",
+        [`${side}ShipmentStatusUpdatedAt`]: Date.now(),
+    });
 };
 
 const recheckShipmentPaymentCallable = httpsCallable<
