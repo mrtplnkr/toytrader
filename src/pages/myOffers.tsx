@@ -132,12 +132,12 @@ function MyOffersPage() {
                         `<li>the requested <a href="${newToy}" target="_blank">toy</a> was ${Status[Status.posted]}${o.targetReceived ? ` and received on ${(o.targetReceived as Date).toDateString()}` : ''}</li>`
                         :
                         `<li>the requested toy hasn't been sent yet</li>`}
-                    ${myShipmentStatus ?
+                    ${myShipmentStatus && !myReceived ?
                         `<li>your shipment status: ${myShipmentStatus}</li>`
                         : ''}
-                    ${otherSideShipmentStatus ?
+                    ${otherSideShipmentStatus && !otherSideReceived ?
                         `<li>the other user's shipment status: ${otherSideShipmentStatus}</li>`
-                        : otherSideShipmentBarcode ?
+                        : otherSideShipmentBarcode || otherSideReceived ?
                         ''
                         : `<li>the other user hasn't registered with Omniva yet</li>`}
                     `,
