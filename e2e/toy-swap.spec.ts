@@ -18,7 +18,7 @@ async function registerOmnivaBarcode(page: Page, barcode: string) {
   await expect(page.getByRole("button", { name: "View my QR code" })).toBeVisible();
 }
 
-test("two users trade toys: register with Omniva, ship, receive, and pay the service fee", async ({ browser }) => {
+test("two users trade toys: register with Omniva, ship, receive, and leave the optional tip", async ({ browser }) => {
   const runId = Date.now();
 
   const aliceContext = await browser.newContext();
@@ -76,15 +76,15 @@ test("two users trade toys: register with Omniva, ship, receive, and pay the ser
   await expect(alice.getByText(/the requested.*toy was posted/)).toBeVisible();
 
   // Bob confirms he received the toy Alice shipped - this is what makes
-  // Alice's side of the trade "successful" and unlocks her service fee.
+  // Alice's side of the trade "successful" and unlocks her optional tip.
   await bob.getByRole("button", { name: "refresh" }).click();
   await bob.getByRole("button", { name: "Mark the other toy as received" }).click();
   await expect(bob.getByText(/the requested.*toy was posted.*received on/)).toBeVisible();
 
   await alice.getByRole("button", { name: "refresh" }).click();
 
-  // Alice's 1 EUR service fee only becomes payable now, after her shipment
-  // is confirmed received - not upfront. There's no real Stripe test key
+  // Alice's optional 1 EUR tip only becomes offerable now, after her
+  // shipment is confirmed received - not upfront. There's no real Stripe test key
   // available, so the checkout-session creation call is mocked at the
   // network layer - everything else (auth, Firestore, the UI reacting to
   // it) is real. The mock also seeds Firestore exactly as the real
@@ -111,7 +111,7 @@ test("two users trade toys: register with Omniva, ship, receive, and pay the ser
     });
   });
 
-  await alice.getByRole("button", { name: /Pay service fee/ }).click();
+  await alice.getByRole("button", { name: /Leave a 1 EUR tip/ }).click();
   await alice.waitForURL("**/shipment/result*");
 
   expect(capturedOfferId).toBeTruthy();

@@ -1,6 +1,6 @@
 import { faChevronDown, faFlagCheckered, faHandshake, faRemove } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { memo, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import { Toy } from "../types/toy";
 
 interface Props {
@@ -17,14 +17,25 @@ function ToyDisplay(props: Props) {//TODO: change to NewOffer
 
     const [selectedToy, setSelectedToy] = useState<string | undefined>();
 
+    useEffect(() => {
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'ArrowLeft') props.nextToy(-1);
+            else if (e.key === 'ArrowRight') props.nextToy(1);
+            else if (e.key === 'Escape') props.nextToy(undefined);
+        };
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     return (
         <div className="largeOffer">
             <button onClick={() => setShowYourToys(x => !x)} className={showYourToys ? "animateBorder" : ''}
                 style={{border: '1px green dashed', position: 'fixed',left: '1em',top: '1em',zIndex: 1}}>
                     <FontAwesomeIcon icon={faChevronDown} />
             </button>
-            <div style={{ height: !showYourToys ? '1px' : '90%', transition: '2s',
-                position: 'fixed', left: '1em', top: '1em', width: '120px', overflowY: 'scroll'}}>
+            <div style={{ height: !showYourToys ? '1px' : '82%', transition: '2s',
+                position: 'fixed', left: '1em', top: '3.5em', width: '120px', overflowY: 'scroll'}}>
                 {showYourToys &&
                     <p style={{fontSize: '0.75em', margin: '0 0 0.5em', color: triedWithoutSelection ? '#ff6b6b' : undefined}}>
                         {triedWithoutSelection ? '👇 pick a toy first!' : '👇 pick your toy to offer'}
@@ -54,7 +65,11 @@ function ToyDisplay(props: Props) {//TODO: change to NewOffer
                     <FontAwesomeIcon icon={faHandshake} />
             </button>
             <button className="leftButton" onClick={() => props.nextToy(-1)} />
-            <img alt="being viewed at new offer" src={props.toy.file} />
+            <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                height: '100%', gap: '0.5em'}}>
+                <img alt={props.toy.title} src={props.toy.file} />
+                <p style={{color: 'white', fontSize: '1.1em', margin: 0}}>{props.toy.title}</p>
+            </div>
             <button className="rightButton" onClick={() => props.nextToy(1)} />
             <button onClick={() => props.nextToy(undefined)}
                 className={'buttonFixedRight'}>

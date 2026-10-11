@@ -12,7 +12,7 @@ if (getApps().length === 0) {
 }
 
 const REGION = "europe-west1";
-const SERVICE_FEE_EUR_CENTS = 100;
+const TIP_EUR_CENTS = 100;
 
 // Base URL of the deployed frontend, used to build Stripe's success/cancel
 // redirect URLs. Override with `firebase functions:config` / a deployed
@@ -25,13 +25,14 @@ interface StartShipmentCheckoutRequest {
 }
 
 /**
- * Callable that starts a Stripe Checkout session for ToyTrader's own 1 EUR
- * service fee. This is charged per side, only once that side's own shipment
- * has been confirmed received by the other party - i.e. only after a
- * successful trade, not upfront. Omniva registration/shipping itself is
- * handled entirely by the user on Omniva's own site (see submitOmnivaBarcode
- * in helper.ts) - this app has no business contract with Omniva and never
- * calls their API to create or charge for a shipment.
+ * Callable that starts a Stripe Checkout session for an optional 1 EUR tip
+ * to ToyTrader. Nothing in the trade depends on this being paid - it's only
+ * offerable per side, once that side's own shipment has been confirmed
+ * received by the other party, i.e. only after a successful trade, not
+ * upfront. Omniva registration/shipping itself is handled entirely by the
+ * user on Omniva's own site (see submitOmnivaBarcode in helper.ts) - this
+ * app has no business contract with Omniva and never calls their API to
+ * create or charge for a shipment.
  */
 export const startShipmentCheckout = onCall<StartShipmentCheckoutRequest>(
   {region: REGION, secrets: [stripeSecretKey]},
@@ -70,13 +71,14 @@ export const startShipmentCheckout = onCall<StartShipmentCheckoutRequest>(
     if (!offer[receivedField]) {
       throw new HttpsError(
         "failed-precondition",
-        "This shipment hasn't been confirmed received yet - the fee is only charged after a successful trade."
+        "This shipment hasn't been confirmed received yet - the optional tip " +
+        "only becomes available after a successful trade."
       );
     }
 
     const paidField = `${side}ShipmentPaid`;
     if (offer[paidField]) {
-      throw new HttpsError("already-exists", "This fee has already been paid.");
+      throw new HttpsError("already-exists", "This tip has already been paid.");
     }
 
     const stripe = getStripe();
@@ -87,8 +89,8 @@ export const startShipmentCheckout = onCall<StartShipmentCheckoutRequest>(
       line_items: [{
         price_data: {
           currency: "eur",
-          unit_amount: SERVICE_FEE_EUR_CENTS,
-          product_data: {name: "ToyTrader service fee"},
+          unit_amount: TIP_EUR_CENTS,
+          product_data: {name: "ToyTrader optional tip"},
         },
         quantity: 1,
       }],
@@ -105,7 +107,7 @@ export const startShipmentCheckout = onCall<StartShipmentCheckoutRequest>(
 );
 
 /**
- * Marks one side of an offer's service fee as paid. Idempotent (no-ops if
+ * Marks one side of an offer's optional tip as paid. Idempotent (no-ops if
  * already paid) and shared between the webhook and recheckShipmentPayment,
  * so a missed/delayed webhook can be recovered from without duplicating
  * this logic or double-charging anyone - Stripe is only ever charged once
@@ -169,6 +171,16 @@ export const stripeWebhook = onRequest(
     }
 
     const session = event.data.object as Stripe.Checkout.Session;
+
+    // Donations (functions/src/donation.ts) go through this same webhook
+    // endpoint but aren't tied to any offer - nothing to reconcile in
+    // Firestore, just acknowledge so Stripe doesn't retry.
+    if (session.metadata?.kind === "donation") {
+      logger.info("stripeWebhook: donation completed", session.id);
+      res.status(200).send("ok - donation");
+      return;
+    }
+
     const offerId = session.metadata?.offerId;
     const side = session.metadata?.side as ShipmentSide | undefined;
 
@@ -230,7 +242,7 @@ export const recheckShipmentPayment = onCall<RecheckShipmentPaymentRequest>(
 
     const sessionId = offer[`${side}ShipmentStripeSessionId`];
     if (!sessionId) {
-      throw new HttpsError("failed-precondition", "No checkout session found for this fee yet.");
+      throw new HttpsError("failed-precondition", "No checkout session found for this tip yet.");
     }
 
     const stripe = getStripe();

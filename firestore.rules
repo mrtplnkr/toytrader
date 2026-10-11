@@ -1,4 +1,13 @@
 service cloud.firestore {
+  // Omniva's own technical docs accept barcodes between 5 and 30 characters
+  // (a real one is typically 13, e.g. CC730129455EE) - doesn't verify the
+  // barcode is real, just rejects obvious typos/junk at the rules level too,
+  // matching the same check already done client-side before submission.
+  function validBarcodeOrAbsent(data, field) {
+    return !(field in data) ||
+      (data[field] is string && data[field].size() >= 5 && data[field].size() <= 30);
+  }
+
  match /databases/{database}/documents {
     match /offers/{offerId} {
       allow read: if request.auth.uid != null;
@@ -12,11 +21,19 @@ service cloud.firestore {
         !request.resource.data.diff(resource.data).affectedKeys().hasAny([
           'offerShipmentPaid', 'offerShipmentStripeSessionId',
           'targetShipmentPaid', 'targetShipmentStripeSessionId'
-        ]);
+        ]) &&
+        validBarcodeOrAbsent(request.resource.data, 'offerShipmentBarcode') &&
+        validBarcodeOrAbsent(request.resource.data, 'targetShipmentBarcode');
       allow delete: if request.auth.uid != null;
     }
     match /mail/{docId} {
       allow read, write: if false;
+    }
+    match /ratings/{ratingId} {
+      allow read: if request.auth.uid != null;
+      allow create: if request.auth.uid != null &&
+        request.resource.data.raterUid == request.auth.uid;
+      allow update, delete: if false;
     }
  		match /{collectionName}/{doc}{
       allow read : if request.auth.uid != null;

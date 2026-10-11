@@ -17,8 +17,9 @@ export interface Offer {
     targetPosted?: Date;
     targetReceived?: Date;
 
-    // Our own 1 EUR service fee - charged per side, only once that side's
-    // shipment is confirmed received by the other party.
+    // Our own optional 1 EUR tip - offerable per side, only once that side's
+    // shipment is confirmed received by the other party. Entirely voluntary -
+    // nothing else in the trade depends on this being paid.
     offerShipmentPaid?: Date;
     offerShipmentStripeSessionId?: string;
 

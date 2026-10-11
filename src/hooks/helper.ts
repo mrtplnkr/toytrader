@@ -1,10 +1,11 @@
 import { FacebookAuthProvider, signInWithPopup, signOut, updateProfile } from "firebase/auth";
-import { addDoc, collection, deleteDoc, doc, DocumentData, getDocs, or, query, Timestamp, updateDoc, where } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, DocumentData, getDocs, or, query, setDoc, Timestamp, updateDoc, where } from "firebase/firestore";
 import { getDownloadURL, ref } from "firebase/storage";
 import { httpsCallable } from "firebase/functions";
 import { auth, db, facebookProvider, googleProvider, functions, storage } from "../firebase-config";
 import { Offer } from "../types/offer";
 import { Toy } from "../types/toy";
+import { Rating } from "../types/rating";
 
 export const logOff = async () => {
     await signOut(auth);
@@ -65,26 +66,30 @@ export const addNewOffer = async (toyOffered: string, toyTargeted: string, userR
 
 export const getToyList = async () => {
     try {
-        const toyList: Toy[] = [];
         const q = query(toysCollectionRef)
         const querySnapshot = await getDocs(q);
 
         const dataList: DocumentData[] = [];
-        querySnapshot.forEach(async (doc) => {
+        querySnapshot.forEach((doc) => {
             dataList.push({...doc.data(), id: doc.id});
       });
-      
-      await Promise.all(dataList.map(async (d) => {
+
+      // Returning (not pushing) from each mapped promise keeps the result
+      // array in dataList's original order regardless of which
+      // getDownloadURL call resolves first - pushing inside the callback
+      // ordered by resolution time instead, so the list's order (and
+      // anything tracking a toy by position, e.g. list.tsx) would shuffle
+      // on every refetch.
+      const toyList: Toy[] = await Promise.all(dataList.map(async (d) => {
         const filesFolderRef = ref(storage, `projectFiles/${d.file}`);
         const url = await getDownloadURL(filesFolderRef);
 
-        toyList.push({
+        return {
             id: d.id,
             userId: d.userId,
             title: d.title,
             file: url,
-            // offers: offerList ? offerList : [],
-        });
+        };
       }));
       return toyList;
     } catch (err) {
@@ -166,15 +171,64 @@ export const markToyReceived = async (id: string, side: ShipmentSide) => {
     await updateDoc(docToUpdate, {[`${side}Received`]: Date.now()});
 };
 
+const ratingsCollectionRef = collection(db, "ratings");
+
+// One rating per receipt event - doc id doubles as "has this already been
+// rated" (no query needed), and as the Firestore rule's self-attribution
+// check (raterUid must match the signed-in user).
+export const getRatingList = async (): Promise<Rating[]> => {
+    try {
+        const ratings: Rating[] = [];
+        const querySnapshot = await getDocs(query(ratingsCollectionRef));
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            ratings.push({
+                id: doc.id,
+                offerId: data.offerId,
+                toyId: data.toyId,
+                raterUid: data.raterUid,
+                stars: data.stars,
+                createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : new Date(data.createdAt),
+            });
+        });
+        return ratings;
+    } catch (err) {
+        console.error(err);
+        return [];
+    }
+};
+
+export const submitRating = async (offerId: string, side: ShipmentSide, toyId: string, stars: number) => {
+    await setDoc(doc(db, "ratings", `${offerId}_${side}`), {
+        offerId,
+        toyId,
+        stars,
+        raterUid: auth.currentUser?.uid,
+        createdAt: Date.now(),
+    });
+};
+
 const startShipmentCheckoutCallable = httpsCallable<
     { offerId: string, side: ShipmentSide },
     { checkoutUrl: string }
 >(functions, "startShipmentCheckout");
 
-// Charges ToyTrader's own 1 EUR service fee - only callable once the
+// Charges an optional 1 EUR tip to ToyTrader - only callable once the
 // backend confirms this side's shipment was received by the other party.
 export const startShipmentCheckout = async (offerId: string, side: ShipmentSide) => {
     const result = await startShipmentCheckoutCallable({ offerId, side });
+    return result.data;
+};
+
+const startDonationCheckoutCallable = httpsCallable<
+    { amountCents: number },
+    { checkoutUrl: string }
+>(functions, "startDonationCheckout");
+
+// A one-off donation from the public landing page - no sign-in or offer
+// involved, unlike startShipmentCheckout above.
+export const startDonationCheckout = async (amountCents: number) => {
+    const result = await startDonationCheckoutCallable({ amountCents });
     return result.data;
 };
 

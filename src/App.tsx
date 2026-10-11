@@ -21,8 +21,9 @@ import { ReactNotifications } from "react-notifications-component";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Toy } from "./types/toy";
 import { Offer } from "./types/offer";
+import { Rating } from "./types/rating";
 import { GoodAppContext } from "./hooks/context";
-import { getOfferList, getToyList, logOff } from "./hooks/helper";
+import { getOfferList, getRatingList, getToyList, logOff } from "./hooks/helper";
 import { diffAndNotifyShipmentStatus } from "./hooks/shipmentNotifications";
 import HistoryPage from "./pages/inPost";
 import MyOffersPage from "./pages/myOffers";
@@ -32,6 +33,7 @@ import { User } from "firebase/auth";
 function StateProvider({children}: any) {
   const [toys, setToys] = useState<Toy[]>([])
   const [offers, setOffers] = useState<Offer[]>([]);
+  const [ratings, setRatings] = useState<Rating[]>([]);
   const prevOffersRef = useRef<Offer[]>([]);
 
   const signOut = async () => {
@@ -50,6 +52,7 @@ function StateProvider({children}: any) {
     if (!uid) return;
 
     setToys(await getToyList());
+    setRatings(await getRatingList());
     const newOffers = await getOfferList(uid);
     if (prevOffersRef.current.length > 0) {
       diffAndNotifyShipmentStatus(uid, prevOffersRef.current, newOffers);
@@ -68,7 +71,7 @@ function StateProvider({children}: any) {
   }, [getData]);
 
   return (
-    <GoodAppContext.Provider value={{toys, offers, refresh: getData, signOut}}>
+    <GoodAppContext.Provider value={{toys, offers, ratings, refresh: getData, signOut}}>
       {children}
     </GoodAppContext.Provider>
   )

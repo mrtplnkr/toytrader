@@ -8,6 +8,7 @@ import { GoodAppContext } from "../hooks/context";
 import { useContextSelector } from "use-context-selector";
 import { Store } from "react-notifications-component";
 import { Toy } from "../types/toy";
+import { Rating } from "../types/rating";
 
 function MyToysPage() {
   let navigate = useNavigate();
@@ -20,6 +21,14 @@ function MyToysPage() {
 
   const toys = useContextSelector(GoodAppContext, (state: any) => state.toys);
   const offers = useContextSelector(GoodAppContext, (state: any) => state.offers);
+  const ratings = useContextSelector(GoodAppContext, (state: any) => state.ratings);
+
+  const toyRatingStats = (toyId: string) => {
+    const toyRatings = ratings.filter((r: Rating) => r.toyId === toyId);
+    if (!toyRatings.length) return { averageRating: undefined, ratingCount: 0 };
+    const averageRating = toyRatings.reduce((sum: number, r: Rating) => sum + r.stars, 0) / toyRatings.length;
+    return { averageRating, ratingCount: toyRatings.length };
+  };
 
   const countOffers = (items: Offer[], target: string) => {
     return items.filter((x:Offer) => x.toyOffered === target || x.toyTargeted === target).length;
@@ -88,7 +97,7 @@ function MyToysPage() {
           {toys.length > 0 ? toys.filter((x: Toy) => x.userId === auth.currentUser?.uid).map((x: Toy) => {
             return (
               <div key={x.id}>
-                <Item {...toys.find((o: Toy) => x.id === o.id)} deleteItem={deleteItem} />
+                <Item {...toys.find((o: Toy) => x.id === o.id)} deleteItem={deleteItem} {...toyRatingStats(x.id)} />
                 <div style={{fontSize: '0.9em', color: 'var(--color-text-dim)'}}>
                   {countOffers(offers, x.id) ?
                     <div>

@@ -120,7 +120,7 @@ function ShipmentResultPage() {
                                 </p>}
                         </>
                     : status === 'success' ?
-                        <p>{polling ? 'Confirming your payment...' : 'Thanks - your service fee was received!'}</p>
+                        <p>{polling ? 'Confirming your tip...' : 'Thanks so much for the tip!'}</p>
                     :
                         <p>Register your shipment on Omniva's own site, then save your barcode
                             from your offers page to see it here as a QR code.</p>

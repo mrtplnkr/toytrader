@@ -1,11 +1,30 @@
 
-import { faFaceSmileBeam, faSmileWink } from '@fortawesome/free-solid-svg-icons';
+import { faFaceSmileBeam, faHeart, faSmileWink } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import logo from '../logo.svg';
+import { startDonationCheckout } from '../hooks/helper';
 
 const randomWord = ['trade', 'swap', 'switch', 'exchange']
 
+const DONATION_TIERS_EUR_CENTS = [300, 500, 1000];
+
 function PublicPage() {
+    const [searchParams] = useSearchParams();
+    const donationStatus = searchParams.get('donation');
+
+    const [donatingCents, setDonatingCents] = useState<number | undefined>();
+
+    const donate = async (amountCents: number) => {
+        try {
+            setDonatingCents(amountCents);
+            const { checkoutUrl } = await startDonationCheckout(amountCents);
+            window.location.href = checkoutUrl;
+        } catch (err) {
+            setDonatingCents(undefined);
+        }
+    };
 
     const randomSelect = () => {
       return randomWord[Math.floor(Math.random() * randomWord.length)];
@@ -54,6 +73,34 @@ function PublicPage() {
         >
           Learn React
         </a>
+
+        <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5em', margin: '2em 0'}}>
+          {donationStatus === 'success' ?
+            <p style={{color: 'var(--color-primary)', fontSize: '1.2em'}}>
+              Thank you so much for the donation! <FontAwesomeIcon icon={faHeart} />
+            </p>
+          : donationStatus === 'cancel' ?
+            <p style={{color: 'var(--color-text-dim)'}}>Donation cancelled - no charge was made.</p>
+          :
+            <>
+              <p style={{fontSize: '0.95em', color: 'var(--color-text-dim)'}}>
+                Enjoying ToyTrader? You can support it with a small donation <FontAwesomeIcon icon={faHeart} />
+              </p>
+              <div style={{display: 'flex', gap: '0.75em'}}>
+                {DONATION_TIERS_EUR_CENTS.map((cents) => (
+                  <button
+                    key={cents}
+                    className="btn-primary"
+                    disabled={donatingCents !== undefined}
+                    onClick={() => donate(cents)}
+                  >
+                    {donatingCents === cents ? 'redirecting...' : `€${(cents / 100).toFixed(0)}`}
+                  </button>
+                ))}
+              </div>
+            </>
+          }
+        </div>
       </>
     );
 }

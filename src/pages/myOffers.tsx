@@ -6,8 +6,12 @@ import { Offer } from "../types/offer";
 import { GoodAppContext } from "../hooks/context";
 import { useContextSelector } from "use-context-selector";
 import { Toy } from "../types/toy";
-import { ShipmentSide, ShippingPrice, declineOffer, getShippingPrice, markToyPosted, markToyReceived, startShipmentCheckout, submitOmnivaBarcode, updateOffer } from "../hooks/helper";
+import { Rating } from "../types/rating";
+import { ShipmentSide, ShippingPrice, declineOffer, getShippingPrice, markToyPosted, markToyReceived, startShipmentCheckout, submitOmnivaBarcode, submitRating, updateOffer } from "../hooks/helper";
 import { DEFAULT_TOY_SIZE, OMNIVA_PRICE_LIST_URL, OMNIVA_SEND_PARCEL_URL, TOY_SIZES, ToySize } from "../constants/omnivaPricing";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faStar as faStarSolid } from "@fortawesome/free-solid-svg-icons";
+import { faStar as faStarRegular } from "@fortawesome/free-regular-svg-icons";
 
 const newToy = 'https://images.thewest.com.au/publication/C-7139668/f9b8852d964a8de53d6089791d3e176fbb732976-16x9-x0y723w3000h1688.jpg';
 interface HistoryItem {
@@ -25,6 +29,8 @@ interface HistoryItem {
     canMarkReceived: boolean;
     canCancel: boolean;
     awaitingOtherRegistration: boolean;
+    canRate: boolean;
+    toyToRate?: Toy;
     myShipmentBarcode?: string;
     myShipmentStatus?: string;
 }
@@ -44,6 +50,7 @@ function MyOffersPage() {
 
     const toys = useContextSelector(GoodAppContext, (state: any) => state.toys);
     const offers = useContextSelector(GoodAppContext, (state: any) => state.offers);
+    const ratings = useContextSelector(GoodAppContext, (state: any) => state.ratings);
 
     const [history, setHistory] = useState<HistoryItem[]>([]);
     const [payingId, setPayingId] = useState<string | undefined>();
@@ -54,6 +61,10 @@ function MyOffersPage() {
     const [selectedSizeByOfferId, setSelectedSizeByOfferId] = useState<Record<string, ToySize>>({});
     const [quoteByOfferId, setQuoteByOfferId] = useState<Record<string, ShippingPrice | 'loading' | 'error'>>({});
     const [barcodeInputByOfferId, setBarcodeInputByOfferId] = useState<Record<string, string>>({});
+    const [starsByOfferId, setStarsByOfferId] = useState<Record<string, number>>({});
+    const [submittingRatingId, setSubmittingRatingId] = useState<string | undefined>();
+    const [dismissedRatingIds, setDismissedRatingIds] = useState<Set<string>>(new Set());
+    const [dismissedTipIds, setDismissedTipIds] = useState<Set<string>>(new Set());
 
     useEffect(() => {
         let history:HistoryItem[] = [];
@@ -88,6 +99,12 @@ function MyOffersPage() {
             const otherSideReceived = otherSide === 'offer' ? o.offerReceived : o.targetReceived;
             const otherSideShipmentBarcode = otherSide === 'offer' ? o.offerShipmentBarcode : o.targetShipmentBarcode;
             const otherSideShipmentStatus = otherSide === 'offer' ? o.offerShipmentStatus : o.targetShipmentStatus;
+            // The toy *I* just received is the other side's toy - same
+            // otherSide-prefixed fields as otherSidePosted/otherSideReceived
+            // above, since "otherSideReceived" becomes true exactly when I
+            // click "Mark the other toy as received".
+            const toyIReceived = otherSide === 'offer' ? toyIOffered : toyTargeted;
+            const alreadyRated = ratings.some((r: Rating) => r.id === `${o.id}_${otherSide}`);
 
             history.push({
                 id: o.id,
@@ -96,8 +113,9 @@ function MyOffersPage() {
                 myShipmentBarcode,
                 myShipmentStatus,
                 isAccepted: !!o.offerAccepted,
-                // The 1 EUR service fee is charged only after a successful
-                // trade - once the toy I shipped is confirmed received.
+                // The optional 1 EUR tip only becomes offerable after a
+                // successful trade - once the toy I shipped is confirmed
+                // received. Entirely voluntary - nothing else depends on it.
                 isMyTurnToPay: !!myReceived && !myShipmentPaid,
                 isMyTurnToRespond: isReceiver && !o.offerAccepted,
                 canSubmitBarcode: !!o.offerAccepted && (!myShipmentBarcode || myShipmentStatus === 'RETURNED'),
@@ -112,6 +130,8 @@ function MyOffersPage() {
                 // Cancellable any time before either toy has physically shipped -
                 // once posted, the parcel's in Omniva's hands and can't be recalled.
                 canCancel: !o.offerPosted && !o.targetPosted,
+                canRate: !!otherSideReceived && !alreadyRated,
+                toyToRate: toyIReceived,
                 toyIOffered,
                 status: `<li>${isInitiator ?
                             `you offered your <a href="${newToy}" target="_target">toy</a>` :
@@ -144,7 +164,7 @@ function MyOffersPage() {
             });
         });
         setHistory(history);
-    }, [offers, toys]);
+    }, [offers, toys, ratings]);
 
     const notifyError = (err: Error) => {
         Store.addNotification({
@@ -222,6 +242,28 @@ function MyOffersPage() {
         }
     };
 
+    const onSubmitRating = async (offerId: string, side: ShipmentSide, toyId: string) => {
+        const stars = starsByOfferId[offerId];
+        if (!stars) return;
+        try {
+            setSubmittingRatingId(offerId);
+            await submitRating(offerId, side, toyId, stars);
+            await refresh();
+        } catch (err) {
+            notifyError(err as Error);
+        } finally {
+            setSubmittingRatingId(undefined);
+        }
+    };
+
+    const dismissRatingPrompt = (offerId: string) => {
+        setDismissedRatingIds((prev) => new Set(prev).add(offerId));
+    };
+
+    const dismissTipPrompt = (offerId: string) => {
+        setDismissedTipIds((prev) => new Set(prev).add(offerId));
+    };
+
     const fetchQuote = async (offerId: string, toySize: ToySize) => {
         setQuoteByOfferId((prev) => ({...prev, [offerId]: 'loading'}));
         try {
@@ -253,6 +295,14 @@ function MyOffersPage() {
         const barcode = barcodeInputByOfferId[offerId]?.trim();
         if (!barcode) {
             notifyError(new Error("Enter the barcode Omniva gave you first."));
+            return;
+        }
+        // Omniva's own technical docs accept barcodes between 5 and 30
+        // characters (a real one is typically 13, e.g. CC730129455EE) -
+        // this doesn't verify the barcode is real, just catches obvious
+        // typos/junk before it's saved.
+        if (barcode.length < 5 || barcode.length > 30) {
+            notifyError(new Error("That doesn't look like a real Omniva barcode - it should be 5-30 characters."));
             return;
         }
         try {
@@ -332,6 +382,9 @@ function MyOffersPage() {
                                 <p style={{fontSize: '0.85em', color: 'var(--color-text-dim)', margin: 0, textAlign: 'center'}}>
                                     Register your shipment yourself on Omniva's own site/app
                                     (no account with us needed there), then paste the barcode it gives you below.
+                                    That barcode is what the parcel machine scans when you drop your toy off -
+                                    saving it here turns it into a QR code you can pull up on your phone at the
+                                    machine, and lets us know both sides have registered before either of you ships.
                                 </p>
                                 <label style={{display: 'flex', alignItems: 'center', gap: '0.5em', fontSize: '0.9em'}}>
                                     Shipping country:
@@ -415,18 +468,52 @@ function MyOffersPage() {
                             <button className="btn-primary" disabled={markingId === x.id} onClick={() => markAsReceived(x.id, x.otherSide)}>
                                 {markingId === x.id ? 'saving...' : "Mark the other toy as received"}
                             </button>}
-                        {x.isMyTurnToPay &&
+                        {x.canRate && x.toyToRate && !dismissedRatingIds.has(x.id) &&
+                            <div style={{display: 'flex', flexDirection: 'column', gap: '0.5em', alignItems: 'center'}}>
+                                <p style={{fontSize: '0.85em', color: 'var(--color-text-dim)', margin: 0, textAlign: 'center'}}>
+                                    How was the {x.toyToRate.title} you received?
+                                </p>
+                                <div style={{display: 'flex', gap: '0.25em'}}>
+                                    {[1, 2, 3, 4, 5].map((n) => (
+                                        <button
+                                            key={n}
+                                            style={{background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: '1.4em'}}
+                                            onClick={() => setStarsByOfferId((prev) => ({...prev, [x.id]: n}))}
+                                        >
+                                            <FontAwesomeIcon
+                                                icon={(starsByOfferId[x.id] ?? 0) >= n ? faStarSolid : faStarRegular}
+                                                color="var(--color-primary)"
+                                            />
+                                        </button>
+                                    ))}
+                                </div>
+                                <div style={{display: 'flex', gap: '0.5em'}}>
+                                    <button
+                                        className="btn-primary"
+                                        disabled={submittingRatingId === x.id || !starsByOfferId[x.id]}
+                                        onClick={() => onSubmitRating(x.id, x.otherSide, x.toyToRate!.id)}
+                                    >
+                                        {submittingRatingId === x.id ? 'saving...' : 'Submit rating'}
+                                    </button>
+                                    <button onClick={() => dismissRatingPrompt(x.id)}>Skip</button>
+                                </div>
+                            </div>}
+                        {x.isMyTurnToPay && !dismissedTipIds.has(x.id) &&
                             <div style={{display: 'flex', flexDirection: 'column', gap: '0.5em', alignItems: 'center'}}>
                                 <p style={{fontSize: '0.8em', color: 'var(--color-text-dim)', margin: 0, textAlign: 'center'}}>
-                                    Your toy was confirmed received - time to pay ToyTrader's 1 EUR service fee.
+                                    Your toy was confirmed received! If ToyTrader was useful to you, you're welcome
+                                    to leave an entirely optional 1 EUR tip - totally your call either way.
                                 </p>
-                                <button
-                                    className="btn-primary"
-                                    disabled={payingId === x.id}
-                                    onClick={() => payForShipment(x.id, x.mySide)}
-                                >
-                                    {payingId === x.id ? 'redirecting to payment...' : 'Pay service fee (1 EUR)'}
-                                </button>
+                                <div style={{display: 'flex', gap: '0.5em'}}>
+                                    <button
+                                        className="btn-primary"
+                                        disabled={payingId === x.id}
+                                        onClick={() => payForShipment(x.id, x.mySide)}
+                                    >
+                                        {payingId === x.id ? 'redirecting to payment...' : 'Leave a 1 EUR tip'}
+                                    </button>
+                                    <button onClick={() => dismissTipPrompt(x.id)}>No thanks</button>
+                                </div>
                             </div>
                         }
                         {x.canCancel ?

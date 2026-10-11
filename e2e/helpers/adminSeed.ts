@@ -20,7 +20,7 @@ export type ShipmentSide = "offer" | "target";
 
 /**
  * Simulates what the real stripeWebhook Cloud Function does once Stripe
- * confirms the service fee payment (functions/src/shipment.ts): marks the
+ * confirms the optional tip payment (functions/src/shipment.ts): marks the
  * shipment-paid field via the Admin SDK, bypassing firestore.rules exactly
  * like the real webhook does. The e2e suite has no real Stripe test keys,
  * so checkout-session creation is mocked at the network layer instead (see
