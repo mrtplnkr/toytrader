@@ -10,6 +10,16 @@ export const OMNIVA_PRICE_LIST_URL: Record<string, string> = {
     LT: 'https://www.omniva.lt/en/price-lists/',
 };
 
+// Omniva's private-customer self-service (no business contract needed) -
+// each country's own domain, but all landing on the same "/parcel/baltics/new"
+// shipment-creation flow, as linked from the "Start sending" button on each
+// country's own omniva.{ee,lv,lt} sending-parcels page.
+export const OMNIVA_SEND_PARCEL_URL: Record<string, string> = {
+    EE: 'https://minu.omniva.ee/parcel/baltics/new/?language=en',
+    LV: 'https://mana.omniva.lv/parcel/baltics/new/?language=en',
+    LT: 'https://mano.omniva.lt/parcel/baltics/new/?language=en',
+};
+
 export const TOY_SIZES = ['S', 'M', 'L', 'XL'] as const;
 export type ToySize = typeof TOY_SIZES[number];
 export const DEFAULT_TOY_SIZE: ToySize = 'S';

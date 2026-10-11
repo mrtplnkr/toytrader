@@ -8,7 +8,7 @@ import { useContextSelector } from "use-context-selector";
 import { Toy } from "../types/toy";
 import { ParcelMachine, ShipmentSide, ShippingPrice, declineOffer, getShippingPrice, markToyPosted, markToyReceived, startShipmentCheckout, submitOmnivaBarcode, updateOffer } from "../hooks/helper";
 import ParcelMachinePicker from "../components/parcelMachinePicker";
-import { DEFAULT_TOY_SIZE, OMNIVA_PRICE_LIST_URL, TOY_SIZES, ToySize } from "../constants/omnivaPricing";
+import { DEFAULT_TOY_SIZE, OMNIVA_PRICE_LIST_URL, OMNIVA_SEND_PARCEL_URL, TOY_SIZES, ToySize } from "../constants/omnivaPricing";
 
 const newToy = 'https://images.thewest.com.au/publication/C-7139668/f9b8852d964a8de53d6089791d3e176fbb732976-16x9-x0y723w3000h1688.jpg';
 interface HistoryItem {
@@ -236,6 +236,9 @@ function MyOffersPage() {
     const onMachineChange = (offerId: string, machine: ParcelMachine) => {
         setSelectedMachineByOfferId((prev) => ({...prev, [offerId]: machine}));
         fetchQuote(offerId, machine.id, selectedSizeByOfferId[offerId] ?? DEFAULT_TOY_SIZE);
+        // Fires from the parcel-machine list's own click handler, so this is
+        // still within a user gesture and won't be blocked as a popup.
+        window.open(OMNIVA_SEND_PARCEL_URL[machine.countryCode], '_blank', 'noopener,noreferrer');
     };
 
     const onSizeChange = (offerId: string, size: ToySize) => {
@@ -360,6 +363,18 @@ function MyOffersPage() {
                                         >
                                             Check exact Omniva shipping price for {selectedMachineByOfferId[x.id].countryCode}
                                         </a>
+                                        <a
+                                            href={OMNIVA_SEND_PARCEL_URL[selectedMachineByOfferId[x.id].countryCode]}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="btn-primary"
+                                            style={{textDecoration: 'none', textAlign: 'center'}}
+                                        >
+                                            Register this shipment on Omniva ↗
+                                        </a>
+                                        <p style={{fontSize: '0.8em', color: 'var(--color-text-dim)', margin: 0, textAlign: 'center'}}>
+                                            This already opened in a new tab - once Omniva gives you a barcode there, come back and paste it below.
+                                        </p>
                                     </>
                                 }
                                 <input
