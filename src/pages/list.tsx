@@ -2,7 +2,7 @@ import { faBatteryEmpty, faCirclePlus, faGear} from "@fortawesome/free-solid-svg
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useState } from "react";
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { auth } from "../firebase-config";
 import Item from "../components/item";
 import { GoodAppContext } from "../hooks/context";
@@ -16,6 +16,7 @@ import { Store } from "react-notifications-component";
 
 function ListPage() {
   let navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const toys = useContextSelector(GoodAppContext, (state: any) => state.toys);
   const offers = useContextSelector(GoodAppContext, (state: any) => state.offers);
@@ -52,7 +53,12 @@ function ListPage() {
   // 60s polling) and the array's order isn't guaranteed stable across
   // fetches, so an index into it could silently end up pointing at a
   // different toy than the one actually being viewed.
-  const [selectedToyId, setSelectedToyId] = useState<string | undefined>(undefined);
+  // Seeded from ?toyId=... so a shared toy link (see item.tsx's shareToy)
+  // opens straight into that toy's full-screen view - toys may not have
+  // loaded yet at this point, but toyBeingDisplayed below re-resolves
+  // against visibleToys on every render, so it picks it up as soon as
+  // the fetch completes.
+  const [selectedToyId, setSelectedToyId] = useState<string | undefined>(searchParams.get('toyId') ?? undefined);
 
   const visibleToys = toys.filter((x: Toy) => x.userId !== auth.currentUser?.uid);
   const toyBeingDisplayed = visibleToys.find((x: Toy) => x.id === selectedToyId);

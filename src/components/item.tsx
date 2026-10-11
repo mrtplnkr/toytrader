@@ -18,14 +18,19 @@ function Item(props: Props) {
     const shareToy = (e: MouseEvent) => {
         e.stopPropagation();
         const text = `Check out "${props.title}" on ToyTrader!`;
-        // No per-toy page to deep-link to yet, so this shares the site itself
-        // (with the app's own Open Graph preview) alongside the toy's name as
-        // the accompanying text - not a toy-specific preview card.
+        // Deep-links to this specific toy (list.tsx opens it straight into
+        // the full-screen view via ?toyId=...) - works even for a logged-out
+        // recipient, since login.tsx now returns to this exact URL after
+        // sign-in. Note this is only a *navigation* link, not a social
+        // preview: Facebook/etc. still render the app's one static Open
+        // Graph title/image (public/index.html) for any URL on this site,
+        // since there's no server-side rendering to vary it per toy.
+        const shareUrl = `${SITE_URL}/list?toyId=${props.id}`;
         if (navigator.share) {
-            navigator.share({ title: text, url: SITE_URL }).catch(() => {});
+            navigator.share({ title: text, url: shareUrl }).catch(() => {});
         } else {
-            const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(SITE_URL)}&quote=${encodeURIComponent(text)}`;
-            window.open(shareUrl, '_blank', 'noopener,noreferrer');
+            const fbShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(text)}`;
+            window.open(fbShareUrl, '_blank', 'noopener,noreferrer');
         }
     };
 

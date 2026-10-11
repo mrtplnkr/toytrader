@@ -17,16 +17,21 @@ function ToyDisplay(props: Props) {//TODO: change to NewOffer
 
     const [selectedToy, setSelectedToy] = useState<string | undefined>();
 
+    const { nextToy } = props;
+
     useEffect(() => {
         const onKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'ArrowLeft') props.nextToy(-1);
-            else if (e.key === 'ArrowRight') props.nextToy(1);
-            else if (e.key === 'Escape') props.nextToy(undefined);
+            if (e.key === 'ArrowLeft') nextToy(-1);
+            else if (e.key === 'ArrowRight') nextToy(1);
+            else if (e.key === 'Escape') nextToy(undefined);
         };
         window.addEventListener('keydown', onKeyDown);
         return () => window.removeEventListener('keydown', onKeyDown);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    // list.tsx's nextToy isn't wrapped in useCallback, so it's a new
+    // function (closing over the current selectedToyId) every render -
+    // this must re-bind each time or the listener keeps calling a stale
+    // closure and gets stuck after the first keypress.
+    }, [nextToy]);
 
     return (
         <div className="largeOffer">
@@ -67,7 +72,10 @@ function ToyDisplay(props: Props) {//TODO: change to NewOffer
             <button className="leftButton" onClick={() => props.nextToy(-1)} />
             <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                 height: '100%', gap: '0.5em'}}>
-                <img alt={props.toy.title} src={props.toy.file} />
+                {/* Inline maxHeight overrides the shared ".largeOffer img { max-height: 100% }"
+                    rule (by specificity) - otherwise the image alone fills this whole flex
+                    column and the caption below it gets squeezed off-screen. */}
+                <img alt={props.toy.title} src={props.toy.file} style={{maxHeight: '80%', maxWidth: '100%'}} />
                 <p style={{color: 'white', fontSize: '1.1em', margin: 0}}>{props.toy.title}</p>
             </div>
             <button className="rightButton" onClick={() => props.nextToy(1)} />

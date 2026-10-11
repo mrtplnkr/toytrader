@@ -1,12 +1,18 @@
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { facebookSign, googleSign } from "../hooks/helper";
 
 function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const signedInCallback = (user: any) => {
     console.log('just signed in', user);
-    navigate('/list');
+    // RequireAuth (App.tsx) redirects here with state.from set to the
+    // originally-requested location (e.g. a shared /list?toyId=... link) -
+    // return there instead of always landing on plain /list, or a deep
+    // link clicked while logged out would get silently dropped.
+    const from = (location.state as { from?: { pathname: string, search: string } })?.from;
+    navigate(from ? `${from.pathname}${from.search}` : '/list');
   };
 
   return (
