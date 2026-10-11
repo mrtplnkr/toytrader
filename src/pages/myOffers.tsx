@@ -6,8 +6,7 @@ import { Offer } from "../types/offer";
 import { GoodAppContext } from "../hooks/context";
 import { useContextSelector } from "use-context-selector";
 import { Toy } from "../types/toy";
-import { ParcelMachine, ShipmentSide, ShippingPrice, declineOffer, getShippingPrice, markToyPosted, markToyReceived, startShipmentCheckout, submitOmnivaBarcode, updateOffer } from "../hooks/helper";
-import ParcelMachinePicker from "../components/parcelMachinePicker";
+import { ShipmentSide, ShippingPrice, declineOffer, getShippingPrice, markToyPosted, markToyReceived, startShipmentCheckout, submitOmnivaBarcode, updateOffer } from "../hooks/helper";
 import { DEFAULT_TOY_SIZE, OMNIVA_PRICE_LIST_URL, OMNIVA_SEND_PARCEL_URL, TOY_SIZES, ToySize } from "../constants/omnivaPricing";
 
 const newToy = 'https://images.thewest.com.au/publication/C-7139668/f9b8852d964a8de53d6089791d3e176fbb732976-16x9-x0y723w3000h1688.jpg';
@@ -51,7 +50,7 @@ function MyOffersPage() {
     const [respondingId, setRespondingId] = useState<string | undefined>();
     const [markingId, setMarkingId] = useState<string | undefined>();
     const [submittingBarcodeId, setSubmittingBarcodeId] = useState<string | undefined>();
-    const [selectedMachineByOfferId, setSelectedMachineByOfferId] = useState<Record<string, ParcelMachine>>({});
+    const [selectedCountryByOfferId, setSelectedCountryByOfferId] = useState<Record<string, string>>({});
     const [selectedSizeByOfferId, setSelectedSizeByOfferId] = useState<Record<string, ToySize>>({});
     const [quoteByOfferId, setQuoteByOfferId] = useState<Record<string, ShippingPrice | 'loading' | 'error'>>({});
     const [barcodeInputByOfferId, setBarcodeInputByOfferId] = useState<Record<string, string>>({});
@@ -223,28 +222,31 @@ function MyOffersPage() {
         }
     };
 
-    const fetchQuote = async (offerId: string, parcelMachineId: string, toySize: ToySize) => {
+    const fetchQuote = async (offerId: string, toySize: ToySize) => {
         setQuoteByOfferId((prev) => ({...prev, [offerId]: 'loading'}));
         try {
-            const price = await getShippingPrice(parcelMachineId, toySize);
+            const price = await getShippingPrice(toySize);
             setQuoteByOfferId((prev) => ({...prev, [offerId]: price}));
         } catch (err) {
             setQuoteByOfferId((prev) => ({...prev, [offerId]: 'error'}));
         }
     };
 
-    const onMachineChange = (offerId: string, machine: ParcelMachine) => {
-        setSelectedMachineByOfferId((prev) => ({...prev, [offerId]: machine}));
-        fetchQuote(offerId, machine.id, selectedSizeByOfferId[offerId] ?? DEFAULT_TOY_SIZE);
-        // Fires from the parcel-machine list's own click handler, so this is
-        // still within a user gesture and won't be blocked as a popup.
-        window.open(OMNIVA_SEND_PARCEL_URL[machine.countryCode], '_blank', 'noopener,noreferrer');
+    // There's no way to carry a chosen destination terminal over to Omniva's
+    // own site (no deep-linking support there), so this only asks for the
+    // country - just enough to send the user to the right Omniva domain and
+    // price-list page. The actual terminal is picked on Omniva's own site.
+    const onCountryChange = (offerId: string, countryCode: string) => {
+        setSelectedCountryByOfferId((prev) => ({...prev, [offerId]: countryCode}));
+        fetchQuote(offerId, selectedSizeByOfferId[offerId] ?? DEFAULT_TOY_SIZE);
+        // Fires from the select's own change handler, within the same user
+        // gesture, so this won't be blocked as a popup.
+        window.open(OMNIVA_SEND_PARCEL_URL[countryCode], '_blank', 'noopener,noreferrer');
     };
 
     const onSizeChange = (offerId: string, size: ToySize) => {
         setSelectedSizeByOfferId((prev) => ({...prev, [offerId]: size}));
-        const machine = selectedMachineByOfferId[offerId];
-        if (machine) fetchQuote(offerId, machine.id, size);
+        if (selectedCountryByOfferId[offerId]) fetchQuote(offerId, size);
     };
 
     const onSubmitBarcode = async (offerId: string, side: ShipmentSide) => {
@@ -259,7 +261,6 @@ function MyOffersPage() {
                 offerId,
                 side,
                 barcode,
-                selectedMachineByOfferId[offerId]?.id,
                 selectedSizeByOfferId[offerId] ?? DEFAULT_TOY_SIZE
             );
             setBarcodeInputByOfferId((prev) => ({...prev, [offerId]: ''}));
@@ -332,10 +333,18 @@ function MyOffersPage() {
                                     Register your shipment yourself on Omniva's own site/app
                                     (no account with us needed there), then paste the barcode it gives you below.
                                 </p>
-                                <ParcelMachinePicker
-                                    value={selectedMachineByOfferId[x.id]?.id}
-                                    onChange={(machine) => onMachineChange(x.id, machine)}
-                                />
+                                <label style={{display: 'flex', alignItems: 'center', gap: '0.5em', fontSize: '0.9em'}}>
+                                    Shipping country:
+                                    <select
+                                        value={selectedCountryByOfferId[x.id] ?? ''}
+                                        onChange={(e) => onCountryChange(x.id, e.target.value)}
+                                    >
+                                        <option value="" disabled>Select...</option>
+                                        <option value="EE">Estonia</option>
+                                        <option value="LV">Latvia</option>
+                                        <option value="LT">Lithuania</option>
+                                    </select>
+                                </label>
                                 <label style={{display: 'flex', alignItems: 'center', gap: '0.5em', fontSize: '0.9em'}}>
                                     Toy size:
                                     <select
@@ -345,7 +354,7 @@ function MyOffersPage() {
                                         {TOY_SIZES.map((size) => <option key={size} value={size}>{size}</option>)}
                                     </select>
                                 </label>
-                                {selectedMachineByOfferId[x.id] &&
+                                {selectedCountryByOfferId[x.id] &&
                                     <>
                                         {quoteByOfferId[x.id] === 'loading' ?
                                             <p style={{fontSize: '0.85em', margin: 0}}>Fetching Omniva price estimate...</p>
@@ -356,15 +365,15 @@ function MyOffersPage() {
                                             </p>
                                         : null}
                                         <a
-                                            href={OMNIVA_PRICE_LIST_URL[selectedMachineByOfferId[x.id].countryCode]}
+                                            href={OMNIVA_PRICE_LIST_URL[selectedCountryByOfferId[x.id]]}
                                             target="_blank"
                                             rel="noreferrer"
                                             style={{fontSize: '0.85em'}}
                                         >
-                                            Check exact Omniva shipping price for {selectedMachineByOfferId[x.id].countryCode}
+                                            Check exact Omniva shipping price for {selectedCountryByOfferId[x.id]}
                                         </a>
                                         <a
-                                            href={OMNIVA_SEND_PARCEL_URL[selectedMachineByOfferId[x.id].countryCode]}
+                                            href={OMNIVA_SEND_PARCEL_URL[selectedCountryByOfferId[x.id]]}
                                             target="_blank"
                                             rel="noreferrer"
                                             className="btn-primary"
@@ -373,7 +382,8 @@ function MyOffersPage() {
                                             Register this shipment on Omniva ↗
                                         </a>
                                         <p style={{fontSize: '0.8em', color: 'var(--color-text-dim)', margin: 0, textAlign: 'center'}}>
-                                            This already opened in a new tab - once Omniva gives you a barcode there, come back and paste it below.
+                                            This already opened in a new tab - pick your parcel machine over there,
+                                            and once Omniva gives you a barcode, come back and paste it below.
                                         </p>
                                     </>
                                 }

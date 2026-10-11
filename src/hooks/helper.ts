@@ -185,13 +185,11 @@ export const submitOmnivaBarcode = async (
     id: string,
     side: ShipmentSide,
     barcode: string,
-    terminalId?: string,
     toySize?: string
 ) => {
     const docToUpdate = doc(db, "offers", id);
     await updateDoc(docToUpdate, {
         [`${side}ShipmentBarcode`]: barcode,
-        [`${side}ShipmentTerminalId`]: terminalId ?? null,
         [`${side}ShipmentToySize`]: toySize ?? null,
         [`${side}ShipmentStatus`]: "REGISTERED",
         [`${side}ShipmentStatusUpdatedAt`]: Date.now(),
@@ -211,36 +209,18 @@ export const recheckShipmentPayment = async (offerId: string, side: ShipmentSide
     return result.data;
 };
 
-export interface ParcelMachine {
-    id: string;
-    name: string;
-    address: string;
-    countryCode: string;
-    type: string;
-}
-
-const listParcelMachinesCallable = httpsCallable<
-    Record<string, never>,
-    { machines: ParcelMachine[], fetchedAt: string }
->(functions, "listParcelMachines");
-
-export const listParcelMachines = async () => {
-    const result = await listParcelMachinesCallable({});
-    return result.data.machines;
-};
-
 export interface ShippingPrice {
     priceCents: number;
     currency: string;
 }
 
 const getShippingPriceCallable = httpsCallable<
-    { parcelMachineId: string, toySize: string },
+    { toySize: string },
     ShippingPrice
 >(functions, "getShippingPrice");
 
-export const getShippingPrice = async (parcelMachineId: string, toySize: string) => {
-    const result = await getShippingPriceCallable({ parcelMachineId, toySize });
+export const getShippingPrice = async (toySize: string) => {
+    const result = await getShippingPriceCallable({ toySize });
     return result.data;
 };
 

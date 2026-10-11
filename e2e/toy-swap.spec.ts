@@ -7,15 +7,11 @@ import { markShipmentPaid } from "./helpers/adminSeed";
 const FIXTURE_IMAGE = path.join(__dirname, "fixtures", "toy.png");
 
 async function registerOmnivaBarcode(page: Page, barcode: string) {
-  // The picker is a search input backed by a custom (non-native-<select>)
-  // results list fed by the real Functions emulator's listParcelMachines
-  // (stub client, real public Omniva terminal data) - focusing it with an
-  // empty filter shows every result, click the first one.
-  const parcelMachineInput = page.getByPlaceholder("Search parcel machine by name or address...");
-  await parcelMachineInput.click();
-  const firstMachineOption = page.locator("ul.parcelMachineResults li").first();
-  await expect(firstMachineOption).toBeVisible();
-  await firstMachineOption.click();
+  // There's no way to deep-link a chosen parcel machine into Omniva's own
+  // site, so the app only asks for a country here (enough to route to the
+  // right Omniva domain) - the actual terminal is picked over there, outside
+  // this app, which is why this test only fills in the self-reported barcode.
+  await page.getByLabel("Shipping country:").selectOption("EE");
 
   await page.getByPlaceholder("Paste your Omniva barcode here").fill(barcode);
   await page.getByRole("button", { name: "Save my barcode" }).click();

@@ -27,7 +27,6 @@ export interface Offer {
     // resulting barcode here themselves - this app never calls Omniva's API
     // to create a shipment.
     offerShipmentBarcode?: string;
-    offerShipmentTerminalId?: string;
     offerShipmentToySize?: string;
     offerShipmentStatus?: string;
     offerShipmentStatusUpdatedAt?: Date;
@@ -35,7 +34,6 @@ export interface Offer {
     targetShipmentPaid?: Date;
     targetShipmentStripeSessionId?: string;
     targetShipmentBarcode?: string;
-    targetShipmentTerminalId?: string;
     targetShipmentToySize?: string;
     targetShipmentStatus?: string;
     targetShipmentStatusUpdatedAt?: Date;
