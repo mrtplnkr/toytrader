@@ -2,3 +2,4 @@ export {startShipmentCheckout, stripeWebhook, recheckShipmentPayment} from "./sh
 export {getShippingPrice} from "./omnivaShippingPrice";
 export {syncOmnivaShipmentStatuses} from "./omnivaStatusSync";
 export {startDonationCheckout} from "./donation";
+export {toyShareCard} from "./toyShareCard";

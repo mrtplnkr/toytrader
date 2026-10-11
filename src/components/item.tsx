@@ -18,20 +18,17 @@ function Item(props: Props) {
     const shareToy = (e: MouseEvent) => {
         e.stopPropagation();
         const text = `Check out "${props.title}" on ToyTrader!`;
-        // Deep-links to this specific toy (list.tsx opens it straight into
-        // the full-screen view via ?toyId=...) - works even for a logged-out
-        // recipient, since login.tsx now returns to this exact URL after
-        // sign-in. Note this is only a *navigation* link, not a social
-        // preview: Facebook/etc. still render the app's one static Open
-        // Graph title/image (public/index.html) for any URL on this site,
-        // since there's no server-side rendering to vary it per toy.
-        const shareUrl = `${SITE_URL}/list?toyId=${props.id}`;
-        if (navigator.share) {
-            navigator.share({ title: text, url: shareUrl }).catch(() => {});
-        } else {
-            const fbShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(text)}`;
-            window.open(fbShareUrl, '_blank', 'noopener,noreferrer');
-        }
+        // /toy/<id> is a Cloud Function (functions/src/toyShareCard.ts,
+        // routed via the Hosting rewrite in firebase.json) that serves this
+        // toy's own Open Graph title/image for crawlers, then bounces real
+        // visitors into /list?toyId=<id> (which opens it in the viewer -
+        // works even logged-out, since login.tsx returns here after
+        // sign-in). Always goes straight to Facebook's own share dialog -
+        // navigator.share hands off to whatever the OS offers, which often
+        // doesn't even list Facebook as an option.
+        const shareUrl = `${SITE_URL}/toy/${props.id}`;
+        const fbShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(text)}`;
+        window.open(fbShareUrl, '_blank', 'noopener,noreferrer');
     };
 
     return (
