@@ -38,4 +38,18 @@ export interface Offer {
     targetShipmentToySize?: string;
     targetShipmentStatus?: string;
     targetShipmentStatusUpdatedAt?: Date;
+
+    // Self-reported, shared on this specific trade once each side is ready
+    // to ship - copied from their own private ShippingProfile (see
+    // src/types/shippingProfile.ts), so the other trader knows who/where
+    // to actually send their toy to.
+    offerShippingName?: string;
+    offerShippingPhone?: string;
+    offerShippingParcelMachineId?: string;
+    offerShippingParcelMachineLabel?: string;
+
+    targetShippingName?: string;
+    targetShippingPhone?: string;
+    targetShippingParcelMachineId?: string;
+    targetShippingParcelMachineLabel?: string;
 }

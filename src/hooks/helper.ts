@@ -7,6 +7,7 @@ import { Offer } from "../types/offer";
 import { Toy } from "../types/toy";
 import { Rating } from "../types/rating";
 import { Complaint } from "../types/complaint";
+import { ShippingProfile } from "../types/shippingProfile";
 
 export const logOff = async () => {
     await signOut(auth);
@@ -387,4 +388,58 @@ export const getComplaintList = async (): Promise<Complaint[]> => {
         });
     }));
     return complaints;
+};
+
+// TEMPORARY - see functions/src/bootstrapAdmin.ts. Remove both once the
+// real owner has been granted the admin claim.
+const bootstrapAdminCallable = httpsCallable<Record<string, never>, { ok: boolean }>(functions, "bootstrapAdmin");
+
+export const bootstrapAdmin = async () => {
+    await bootstrapAdminCallable({});
+};
+
+export interface ParcelMachine {
+    id: string;
+    name: string;
+    address: string;
+    countryCode: string;
+    type: string;
+}
+
+const listParcelMachinesCallable = httpsCallable<
+    Record<string, never>,
+    { machines: ParcelMachine[], fetchedAt: string }
+>(functions, "listParcelMachines");
+
+export const listParcelMachines = async () => {
+    const result = await listParcelMachinesCallable({});
+    return result.data.machines;
+};
+
+const shippingProfileDocRef = (uid: string) => doc(db, "shippingProfiles", uid);
+
+export const getShippingProfile = async (): Promise<ShippingProfile | undefined> => {
+    const uid = auth.currentUser?.uid;
+    if (!uid) return undefined;
+    const snap = await getDoc(shippingProfileDocRef(uid));
+    return snap.exists() ? (snap.data() as ShippingProfile) : undefined;
+};
+
+export const saveShippingProfile = async (profile: ShippingProfile) => {
+    const uid = auth.currentUser?.uid;
+    if (!uid) return;
+    await setDoc(shippingProfileDocRef(uid), profile);
+};
+
+// Copies a user's saved ShippingProfile onto this specific offer's
+// ${side}-prefixed fields, self-reported same as the barcode fields - this
+// is what actually becomes visible to the other trader (the private
+// shippingProfiles doc itself never is).
+export const shareShippingInfo = async (offerId: string, side: ShipmentSide, profile: ShippingProfile) => {
+    await updateDoc(doc(db, "offers", offerId), {
+        [`${side}ShippingName`]: profile.name,
+        [`${side}ShippingPhone`]: profile.phone,
+        [`${side}ShippingParcelMachineId`]: profile.parcelMachineId,
+        [`${side}ShippingParcelMachineLabel`]: profile.parcelMachineLabel,
+    });
 };

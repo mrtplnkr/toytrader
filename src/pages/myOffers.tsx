@@ -7,7 +7,8 @@ import { GoodAppContext } from "../hooks/context";
 import { useContextSelector } from "use-context-selector";
 import { Toy } from "../types/toy";
 import { Rating } from "../types/rating";
-import { ShipmentSide, ShippingPrice, declineOffer, getShippingPrice, markToyPosted, markToyReceived, startShipmentCheckout, submitOmnivaBarcode, submitRating, updateOffer } from "../hooks/helper";
+import { ShipmentSide, ShippingPrice, declineOffer, getShippingPrice, getShippingProfile, markToyPosted, markToyReceived, shareShippingInfo, startShipmentCheckout, submitOmnivaBarcode, submitRating, updateOffer } from "../hooks/helper";
+import { ShippingProfile } from "../types/shippingProfile";
 import { DEFAULT_TOY_SIZE, OMNIVA_PRICE_LIST_URL, OMNIVA_SEND_PARCEL_URL, TOY_SIZES, ToySize } from "../constants/omnivaPricing";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faStar as faStarSolid } from "@fortawesome/free-solid-svg-icons";
@@ -33,6 +34,10 @@ interface HistoryItem {
     toyToRate?: Toy;
     myShipmentBarcode?: string;
     myShipmentStatus?: string;
+    hasSharedMyShipping: boolean;
+    otherShippingName?: string;
+    otherShippingPhone?: string;
+    otherShippingParcelMachineLabel?: string;
 }
 
 enum Status {
@@ -65,6 +70,12 @@ function MyOffersPage() {
     const [submittingRatingId, setSubmittingRatingId] = useState<string | undefined>();
     const [dismissedRatingIds, setDismissedRatingIds] = useState<Set<string>>(new Set());
     const [dismissedTipIds, setDismissedTipIds] = useState<Set<string>>(new Set());
+    const [myShippingProfile, setMyShippingProfile] = useState<ShippingProfile | undefined>();
+    const [sharingShippingId, setSharingShippingId] = useState<string | undefined>();
+
+    useEffect(() => {
+        getShippingProfile().then(setMyShippingProfile);
+    }, []);
 
     useEffect(() => {
         let history:HistoryItem[] = [];
@@ -105,6 +116,11 @@ function MyOffersPage() {
             // click "Mark the other toy as received".
             const toyIReceived = otherSide === 'offer' ? toyIOffered : toyTargeted;
             const alreadyRated = ratings.some((r: Rating) => r.id === `${o.id}_${otherSide}`);
+            const myShippingName = mySide === 'offer' ? o.offerShippingName : o.targetShippingName;
+            const otherShippingName = otherSide === 'offer' ? o.offerShippingName : o.targetShippingName;
+            const otherShippingPhone = otherSide === 'offer' ? o.offerShippingPhone : o.targetShippingPhone;
+            const otherShippingParcelMachineLabel = otherSide === 'offer' ?
+                o.offerShippingParcelMachineLabel : o.targetShippingParcelMachineLabel;
 
             history.push({
                 id: o.id,
@@ -112,6 +128,10 @@ function MyOffersPage() {
                 otherSide,
                 myShipmentBarcode,
                 myShipmentStatus,
+                hasSharedMyShipping: !!myShippingName,
+                otherShippingName,
+                otherShippingPhone,
+                otherShippingParcelMachineLabel,
                 isAccepted: !!o.offerAccepted,
                 // The optional 1 EUR tip only becomes offerable after a
                 // successful trade - once the toy I shipped is confirmed
@@ -264,6 +284,19 @@ function MyOffersPage() {
         setDismissedTipIds((prev) => new Set(prev).add(offerId));
     };
 
+    const onShareShipping = async (offerId: string, side: ShipmentSide) => {
+        if (!myShippingProfile) return;
+        try {
+            setSharingShippingId(offerId);
+            await shareShippingInfo(offerId, side, myShippingProfile);
+            await refresh();
+        } catch (err) {
+            notifyError(err as Error);
+        } finally {
+            setSharingShippingId(undefined);
+        }
+    };
+
     const fetchQuote = async (offerId: string, toySize: ToySize) => {
         setQuoteByOfferId((prev) => ({...prev, [offerId]: 'loading'}));
         try {
@@ -377,6 +410,31 @@ function MyOffersPage() {
                             <p style={{fontSize: '0.8em', color: '#ff6b6b', margin: 0}}>
                                 Your shipment was returned by Omniva - register it again and enter the new barcode below.
                             </p>}
+                        {x.isAccepted &&
+                            <div style={{display: 'flex', flexDirection: 'column', gap: '0.5em', alignItems: 'center',
+                                fontSize: '0.85em', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', padding: '0.75em'}}>
+                                {x.hasSharedMyShipping ?
+                                    <p style={{margin: 0, color: 'var(--color-text-dim)'}}>You've shared your shipping info.</p>
+                                : myShippingProfile ?
+                                    <button className="btn-primary" disabled={sharingShippingId === x.id}
+                                        onClick={() => onShareShipping(x.id, x.mySide)}>
+                                        {sharingShippingId === x.id ? 'sharing...' : 'Share my shipping info'}
+                                    </button>
+                                :
+                                    <p style={{margin: 0}}>
+                                        Save your name, phone, and preferred parcel machine on{' '}
+                                        <a href="/profile">your profile</a> so you can share it here.
+                                    </p>}
+                                {x.otherShippingName ?
+                                    <p style={{margin: 0}}>
+                                        Ship to: <strong>{x.otherShippingName}</strong>, {x.otherShippingPhone},{' '}
+                                        {x.otherShippingParcelMachineLabel}
+                                    </p>
+                                :
+                                    <p style={{margin: 0, color: 'var(--color-text-dim)'}}>
+                                        Waiting for the other side to share their shipping info.
+                                    </p>}
+                            </div>}
                         {x.canSubmitBarcode &&
                             <div style={{display: 'flex', flexDirection: 'column', gap: '0.5em', alignItems: 'center'}}>
                                 <p style={{fontSize: '0.85em', color: 'var(--color-text-dim)', margin: 0, textAlign: 'center'}}>

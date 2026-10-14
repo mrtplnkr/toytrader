@@ -14,7 +14,15 @@ service cloud.firestore {
 
  match /databases/{database}/documents {
     match /offers/{offerId} {
-      allow read: if request.auth.uid != null;
+      // A phone number can live on an offer now (offerShippingPhone/
+      // targetShippingPhone, self-reported alongside the barcode fields) -
+      // meaningfully more sensitive than anything else here, so unlike the
+      // rest of this app's open-read model, only the two participants and
+      // admins can read an offer back.
+      allow read: if request.auth.uid != null &&
+        (request.auth.uid == resource.data.userInitiated ||
+         request.auth.uid == resource.data.userReceived ||
+         request.auth.token.admin == true);
       allow create: if request.auth.uid != null && !isBanned(database, request.auth.uid);
       // Only the service-fee payment fields stay server-only (verified via
       // Stripe webhook/recheck). Barcode/terminal/size/status are now
@@ -49,6 +57,17 @@ service cloud.firestore {
         request.resource.data.raterUid == request.auth.uid;
       allow update, delete: if false;
     }
+    match /shippingProfiles/{uid} {
+      // A user's own reusable default (name/phone/preferred parcel
+      // machine) - fully private, never read directly by anyone else.
+      // Sharing it on a specific trade means copying it onto that offer's
+      // own ${side}Shipping* fields instead (see /offers above).
+      allow read, write: if request.auth.uid != null && request.auth.uid == uid;
+    }
+    match /omnivaCache/{docId} {
+      allow read: if request.auth.uid != null;
+      allow write: if false;
+    }
     match /complaints/{complaintId} {
       // May name someone else and describe a dispute - only the person who
       // filed it or an admin should be able to read it back, unlike the
@@ -68,9 +87,11 @@ service cloud.firestore {
     // (this is exactly how the ratings/mail rules above were previously
     // being bypassed - mail was openly readable, ratings openly writable).
  		match /{collectionName}/{doc}{
-      allow read : if request.auth.uid != null && !(collectionName in ['mail', 'complaints']);
+      allow read : if request.auth.uid != null &&
+        !(collectionName in ['mail', 'complaints', 'offers', 'shippingProfiles']);
       allow write : if request.auth.uid != null &&
-        !(collectionName in ['offers', 'mail', 'ratings', 'bannedUsers', 'toys', 'complaints']);
+        !(collectionName in ['offers', 'mail', 'ratings', 'bannedUsers', 'toys', 'complaints',
+          'shippingProfiles', 'omnivaCache']);
     }
   }
   //match /databases/{database}/documents {

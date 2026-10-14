@@ -1,6 +1,6 @@
 import { faChevronDown, faFlagCheckered, faHandshake, faRemove } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { memo, useEffect, useState } from "react";
+import { memo, TouchEvent, useEffect, useRef, useState } from "react";
 import { Toy } from "../types/toy";
 
 interface Props {
@@ -33,8 +33,33 @@ function ToyDisplay(props: Props) {//TODO: change to NewOffer
     // closure and gets stuck after the first keypress.
     }, [nextToy]);
 
+    // Swipe-to-browse on touch devices, mirroring the arrow-key/button nav
+    // above. A ref (not state) is enough here since the start point is only
+    // ever read once, synchronously, at touchEnd of the same gesture.
+    const touchStart = useRef<{ x: number, y: number } | undefined>();
+    const SWIPE_THRESHOLD_PX = 50;
+
+    const onTouchStart = (e: TouchEvent) => {
+        const t = e.touches[0];
+        touchStart.current = { x: t.clientX, y: t.clientY };
+    };
+
+    const onTouchEnd = (e: TouchEvent) => {
+        const start = touchStart.current;
+        touchStart.current = undefined;
+        if (!start) return;
+        const t = e.changedTouches[0];
+        const dx = t.clientX - start.x;
+        const dy = t.clientY - start.y;
+        // Require a mostly-horizontal gesture so scrolling the "your toys"
+        // list vertically on the left doesn't get mistaken for a swipe.
+        if (Math.abs(dx) > SWIPE_THRESHOLD_PX && Math.abs(dx) > Math.abs(dy)) {
+            nextToy(dx < 0 ? 1 : -1);
+        }
+    };
+
     return (
-        <div className="largeOffer">
+        <div className="largeOffer" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
             <button onClick={() => setShowYourToys(x => !x)} className={showYourToys ? "animateBorder" : ''}
                 style={{border: '1px green dashed', position: 'fixed',left: '1em',top: '1em',zIndex: 1}}>
                     <FontAwesomeIcon icon={faChevronDown} />
