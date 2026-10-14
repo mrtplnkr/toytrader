@@ -18,7 +18,7 @@ import ProfilePage from "./pages/profile";
 import { auth } from "./firebase-config";
 import MyToysPage from "./pages/myToys";
 import { ReactNotifications } from "react-notifications-component";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { Toy } from "./types/toy";
 import { Offer } from "./types/offer";
 import { Rating } from "./types/rating";
@@ -28,11 +28,15 @@ import { diffAndNotifyShipmentStatus } from "./hooks/shipmentNotifications";
 import HistoryPage from "./pages/inPost";
 import MyOffersPage from "./pages/myOffers";
 import ShipmentResultPage from "./pages/shipmentResult";
-import AdminPage from "./pages/admin";
 import HelpPage from "./pages/help";
+import SplashScreen from "./components/splashScreen";
 import AboutPage from "./pages/about";
 import DisclaimerPage from "./pages/disclaimer";
 import { User } from "firebase/auth";
+
+// Code-split: only the one admin account ever needs this page's code, so
+// there's no reason it should be in everyone's initial bundle.
+const AdminPage = lazy(() => import("./pages/admin"));
 
 function StateProvider({children}: any) {
   const [toys, setToys] = useState<Toy[]>([])
@@ -83,6 +87,20 @@ function StateProvider({children}: any) {
 
 function App() {
 
+  // Shown for a couple of seconds on initial load, then fades out - purely
+  // cosmetic, doesn't block or delay auth/data fetching happening underneath.
+  const [splashVisible, setSplashVisible] = useState(true);
+  const [splashFading, setSplashFading] = useState(false);
+
+  useEffect(() => {
+    const fadeTimer = setTimeout(() => setSplashFading(true), 1800);
+    const hideTimer = setTimeout(() => setSplashVisible(false), 2100);
+    return () => {
+      clearTimeout(fadeTimer);
+      clearTimeout(hideTimer);
+    };
+  }, []);
+
   function RequireAuth(children: any) {
     let location = useLocation();
 
@@ -125,6 +143,10 @@ function App() {
 
   return (
     <div className="App">
+      {splashVisible &&
+        <div style={{opacity: splashFading ? 0 : 1, transition: 'opacity 0.3s ease'}}>
+          <SplashScreen />
+        </div>}
       <ReactNotifications />
       <StateProvider>  
         <header>
@@ -196,7 +218,9 @@ function App() {
                   element={
                     <RequireAuth>
                       <RequireAdmin>
-                        <AdminPage />
+                        <Suspense fallback={<div>loading...</div>}>
+                          <AdminPage />
+                        </Suspense>
                       </RequireAdmin>
                     </RequireAuth>
                   }

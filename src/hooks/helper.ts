@@ -390,14 +390,6 @@ export const getComplaintList = async (): Promise<Complaint[]> => {
     return complaints;
 };
 
-// TEMPORARY - see functions/src/bootstrapAdmin.ts. Remove both once the
-// real owner has been granted the admin claim.
-const bootstrapAdminCallable = httpsCallable<Record<string, never>, { ok: boolean }>(functions, "bootstrapAdmin");
-
-export const bootstrapAdmin = async () => {
-    await bootstrapAdminCallable({});
-};
-
 export interface ParcelMachine {
     id: string;
     name: string;

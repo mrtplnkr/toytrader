@@ -1,0 +1,5 @@
+/* @tailwind base is inert for now - see tailwind.config.js's
+   corePlugins.preflight: false, flipped on once every page has migrated. */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

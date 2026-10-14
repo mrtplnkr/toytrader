@@ -7,7 +7,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBackspace } from "@fortawesome/free-solid-svg-icons";
 import { Store } from "react-notifications-component";
 import { auth, storage } from "../firebase-config";
-import { bootstrapAdmin, getShippingProfile, ParcelMachine, saveShippingProfile } from "../hooks/helper";
+import { getShippingProfile, ParcelMachine, saveShippingProfile } from "../hooks/helper";
 import ParcelMachinePicker from "../components/parcelMachinePicker";
 
 const notify = (title: string, message: string, type: 'success' | 'danger') => {
@@ -31,7 +31,6 @@ function ProfilePage() {
     const [photoURL, setPhotoURL] = useState(currentUser?.photoURL ?? '');
     const [uploading, setUploading] = useState(false);
     const [saving, setSaving] = useState(false);
-    const [bootstrapping, setBootstrapping] = useState(false);
 
     const [shippingName, setShippingName] = useState('');
     const [shippingPhone, setShippingPhone] = useState('');
@@ -80,21 +79,6 @@ function ProfilePage() {
             notify("Unfortunately this action failed !", "Please try again later.", "danger");
         } finally {
             setSavingShipping(false);
-        }
-    };
-
-    // TEMPORARY - see functions/src/bootstrapAdmin.ts. Remove this button
-    // (and that function, and the helper wrapper) once the real owner has
-    // been granted the admin claim.
-    const onBootstrapAdmin = async () => {
-        setBootstrapping(true);
-        try {
-            await bootstrapAdmin();
-            notify("You're now an admin", "Refresh the page to see the Admin menu item.", "success");
-        } catch (err) {
-            notify("Not eligible", "This account isn't on the admin allowlist.", "danger");
-        } finally {
-            setBootstrapping(false);
         }
     };
 
@@ -165,10 +149,6 @@ function ProfilePage() {
 
                 <button className="btn-primary" disabled={saving || uploading} onClick={onSave} style={{alignSelf: 'flex-end'}}>
                     {saving ? 'saving...' : 'Save'}
-                </button>
-
-                <button disabled={bootstrapping} onClick={onBootstrapAdmin} style={{alignSelf: 'flex-end', fontSize: '0.8em'}}>
-                    {bootstrapping ? 'checking...' : 'Become admin (one-time)'}
                 </button>
             </div>
 
