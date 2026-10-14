@@ -1,11 +1,12 @@
 import { FacebookAuthProvider, signInWithPopup, signOut, updateProfile } from "firebase/auth";
-import { addDoc, collection, deleteDoc, doc, DocumentData, getDocs, or, query, setDoc, Timestamp, updateDoc, where } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, DocumentData, getDoc, getDocs, or, query, setDoc, Timestamp, updateDoc, where } from "firebase/firestore";
 import { getDownloadURL, ref } from "firebase/storage";
 import { httpsCallable } from "firebase/functions";
 import { auth, db, facebookProvider, googleProvider, functions, storage } from "../firebase-config";
 import { Offer } from "../types/offer";
 import { Toy } from "../types/toy";
 import { Rating } from "../types/rating";
+import { Complaint } from "../types/complaint";
 
 export const logOff = async () => {
     await signOut(auth);
@@ -282,3 +283,108 @@ export const isAuthLoading = () => {
     if (auth.currentUser) return false;
     else return true;
 }
+
+// Firebase Auth custom claims aren't included on the base User object - they
+// only show up after decoding the ID token, and only reflect a claim grant
+// once the token's been refreshed since that grant (getIdTokenResult's
+// second arg forces that refresh rather than waiting for the ~1hr natural one).
+export const checkIsAdmin = async (): Promise<boolean> => {
+    const user = auth.currentUser;
+    if (!user) return false;
+    const result = await user.getIdTokenResult(true);
+    return result.claims.admin === true;
+};
+
+interface UserProfile {
+    uid: string;
+    email?: string;
+    displayName?: string;
+}
+
+const getUserProfilesCallable = httpsCallable<
+    { uids: string[] },
+    { profiles: UserProfile[] }
+>(functions, "getUserProfiles");
+
+export const getUserProfiles = async (uids: string[]) => {
+    const result = await getUserProfilesCallable({ uids });
+    return result.data.profiles;
+};
+
+const banUserCallable = httpsCallable<
+    { uid: string, reason?: string },
+    { bannedToyCount: number }
+>(functions, "banUser");
+
+// Disables the user's account, removes every toy they've listed, and
+// records the ban so firestore.rules can keep rejecting writes from an
+// already-issued token during its remaining lifetime - see
+// functions/src/admin.ts.
+export const banUser = async (uid: string, reason?: string) => {
+    const result = await banUserCallable({ uid, reason });
+    return result.data;
+};
+
+const unbanUserCallable = httpsCallable<{ uid: string }, { ok: boolean }>(functions, "unbanUser");
+
+export const unbanUser = async (uid: string) => {
+    await unbanUserCallable({ uid });
+};
+
+// Looks up a single offer directly by id, independent of getOfferList's
+// current-user scoping (that query is `where userReceived/userInitiated ==
+// uid`, so it only ever returns the signed-in user's own trades) - offers
+// have no ownership check on read, so this works for any offer, which is
+// what the admin page needs to show trade context for someone else's
+// complaint.
+export const getOfferById = async (offerId: string): Promise<Offer | undefined> => {
+    const snap = await getDoc(doc(db, "offers", offerId));
+    if (!snap.exists()) return undefined;
+    const data = snap.data();
+    return { ...data, id: snap.id } as Offer;
+};
+
+const complaintsCollectionRef = collection(db, "complaints");
+
+// photoFile is a Storage object name under projectFiles/ (same upload
+// convention as addNewToy.tsx/profile.tsx), not a resolved URL - resolved
+// lazily on read, same as Toy.file.
+export const submitComplaint = async (offerId: string, reportedUid: string, message: string, photoFile?: string) => {
+    await addDoc(complaintsCollectionRef, {
+        offerId,
+        reportedUid,
+        reporterUid: auth.currentUser?.uid,
+        message,
+        photoFile: photoFile ?? null,
+        createdAt: Date.now(),
+    });
+};
+
+// Admin-only in practice: firestore.rules only lets a non-admin read back
+// complaints they filed themselves, so an unfiltered fetch like this only
+// succeeds for an admin account - see src/pages/admin.tsx.
+export const getComplaintList = async (): Promise<Complaint[]> => {
+    const querySnapshot = await getDocs(query(complaintsCollectionRef));
+    const complaints: Complaint[] = [];
+    await Promise.all(querySnapshot.docs.map(async (docSnap) => {
+        const data = docSnap.data();
+        let photoUrl: string | undefined;
+        if (data.photoFile) {
+            try {
+                photoUrl = await getDownloadURL(ref(storage, `projectFiles/${data.photoFile}`));
+            } catch (err) {
+                photoUrl = undefined;
+            }
+        }
+        complaints.push({
+            id: docSnap.id,
+            offerId: data.offerId,
+            reporterUid: data.reporterUid,
+            reportedUid: data.reportedUid,
+            message: data.message,
+            photoFile: photoUrl,
+            createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : new Date(data.createdAt),
+        });
+    }));
+    return complaints;
+};

@@ -23,11 +23,15 @@ import { Toy } from "./types/toy";
 import { Offer } from "./types/offer";
 import { Rating } from "./types/rating";
 import { GoodAppContext } from "./hooks/context";
-import { getOfferList, getRatingList, getToyList, logOff } from "./hooks/helper";
+import { checkIsAdmin, getOfferList, getRatingList, getToyList, logOff } from "./hooks/helper";
 import { diffAndNotifyShipmentStatus } from "./hooks/shipmentNotifications";
 import HistoryPage from "./pages/inPost";
 import MyOffersPage from "./pages/myOffers";
 import ShipmentResultPage from "./pages/shipmentResult";
+import AdminPage from "./pages/admin";
+import HelpPage from "./pages/help";
+import AboutPage from "./pages/about";
+import DisclaimerPage from "./pages/disclaimer";
 import { User } from "firebase/auth";
 
 function StateProvider({children}: any) {
@@ -97,12 +101,28 @@ function App() {
     return <>
       { user !== undefined ?
         <>{ user ? children.children : <Navigate to="/login" state={{ from: location }} replace /> }</>
-        : 
+        :
         <>loading...</>
       }
     </>;
   }
-  
+
+  function RequireAdmin(children: any) {
+    const [isAdmin, setIsAdmin] = useState<boolean | undefined>(undefined);
+
+    useEffect(() => {
+      checkIsAdmin().then(setIsAdmin);
+    }, []);
+
+    return <>
+      { isAdmin !== undefined ?
+        <>{ isAdmin ? children.children : <Navigate to="/list" replace /> }</>
+        :
+        <>loading...</>
+      }
+    </>;
+  }
+
   return (
     <div className="App">
       <ReactNotifications />
@@ -113,6 +133,8 @@ function App() {
               <Route element={<Layout />}>
                 <Route path="/" element={<PublicPage />} />
                 <Route path="/login" element={<LoginPage />} />
+                <Route path="/about" element={<AboutPage />} />
+                <Route path="/disclaimer" element={<DisclaimerPage />} />
                 <Route
                   path="/list"
                   element={
@@ -166,6 +188,24 @@ function App() {
                   element={
                     <RequireAuth>
                       <ProfilePage />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/admin"
+                  element={
+                    <RequireAuth>
+                      <RequireAdmin>
+                        <AdminPage />
+                      </RequireAdmin>
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/help"
+                  element={
+                    <RequireAuth>
+                      <HelpPage />
                     </RequireAuth>
                   }
                 />

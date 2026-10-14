@@ -5,6 +5,7 @@ import { useContextSelector } from "use-context-selector";
 import { auth } from "../firebase-config";
 import { GoodAppContext } from "../hooks/context";
 import { Toy } from "../types/toy";
+import { checkIsAdmin } from "../hooks/helper";
 import appConfig from "../../package.json";
 
 function Auth() {
@@ -18,12 +19,22 @@ function Auth() {
   const toys = useContextSelector(GoodAppContext, (x:any) => x.toys);
 
   const [greyUser, setGreyUser] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     if (!auth.currentUser) setGreyUser(true);
     else {
       setGreyUser(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [auth.currentUser?.uid])
+
+  useEffect(() => {
+    if (!auth.currentUser) {
+      setIsAdmin(false);
+      return;
+    }
+    checkIsAdmin().then(setIsAdmin);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auth.currentUser?.uid])
 
@@ -46,6 +57,8 @@ function Auth() {
                     onClick={() => navigate('/myToys')}>My Toys ({toys.filter((t:Toy) => t.userId === auth.currentUser?.uid).length})</li>
                   <li onClick={() => navigate('/myOffers')}>My Offers</li>
                   {/* <li onClick={() => navigate('/history')}>My trades</li> */}
+                  <li onClick={() => { openMenu(x => !x); navigate('/help'); }}>Help</li>
+                  {isAdmin && <li onClick={() => { openMenu(x => !x); navigate('/admin'); }}>Admin</li>}
                   <li onClick={(async () => {
                     try {
                       openMenu(x => !x);

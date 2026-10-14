@@ -1,0 +1,51 @@
+import { useNavigate } from "react-router-dom";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faBackspace } from "@fortawesome/free-solid-svg-icons";
+
+function DisclaimerPage() {
+    const navigate = useNavigate();
+
+    return (
+        <>
+            <div style={{display: 'flex', flexDirection: 'column', margin: '1em 0'}}>
+                <button id="backButton" onClick={() => navigate(-1)}>
+                    <FontAwesomeIcon color="darkviolet" icon={faBackspace} />
+                </button>
+            </div>
+
+            <div className="card" style={{maxWidth: '600px', margin: '0 auto', padding: '1.5em', textAlign: 'left'}}>
+                <h3>Disclaimer</h3>
+
+                <p><strong>Trades are between users, not with ToyTrader.</strong> ToyTrader only connects
+                    two people who agree to trade a toy - it is never a party to the trade itself, never
+                    inspects, holds, or ships either toy, and cannot guarantee the condition, safety, or
+                    accuracy of anything listed. Check age ratings, choking-hazard warnings, and condition
+                    yourself before agreeing to any trade, and have a parent or guardian involved for any
+                    trade made by a child.</p>
+
+                <p><strong>Shipping is handled entirely by Omniva.</strong> Users register and pay for
+                    their own shipments directly on Omniva's own site - ToyTrader has no business
+                    contract with Omniva, never creates a shipment on a user's behalf, and cannot verify
+                    that a barcode entered in the app corresponds to a real, successfully registered
+                    shipment. Omniva's own terms and liability apply to the physical delivery.</p>
+
+                <p><strong>Most information in the app is self-reported.</strong> Whether a toy was
+                    posted, received, or accurately described is reported by the users involved, not
+                    independently verified by ToyTrader. Toy ratings reflect individual users' opinions,
+                    not an endorsement by ToyTrader.</p>
+
+                <p><strong>The optional tip is a donation, not a fee for a service.</strong> It does not
+                    purchase insurance, a guarantee, or any right to a refund if a trade goes wrong.</p>
+
+                <p><strong>No warranty.</strong> ToyTrader is provided "as is," without warranty of any
+                    kind, and the developer is not liable for any loss, damage, or dispute arising from a
+                    trade, a shipment, or use of the app, to the fullest extent permitted by law.</p>
+
+                <p>If something has gone wrong with a specific trade, please use the{' '}
+                    <a href="/help">Help</a> page to report it.</p>
+            </div>
+        </>
+    );
+}
+
+export default DisclaimerPage;

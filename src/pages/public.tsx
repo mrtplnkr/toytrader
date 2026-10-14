@@ -101,6 +101,11 @@ function PublicPage() {
             </>
           }
         </div>
+
+        <div style={{display: 'flex', gap: '1em', justifyContent: 'center', fontSize: '0.85em', margin: '1em 0'}}>
+          <a href="/about">About us</a>
+          <a href="/disclaimer">Disclaimer</a>
+        </div>
       </>
     );
 }

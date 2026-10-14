@@ -8,10 +8,14 @@ service cloud.firestore {
       (data[field] is string && data[field].size() >= 5 && data[field].size() <= 30);
   }
 
+  function isBanned(database, uid) {
+    return exists(/databases/$(database)/documents/bannedUsers/$(uid));
+  }
+
  match /databases/{database}/documents {
     match /offers/{offerId} {
       allow read: if request.auth.uid != null;
-      allow create: if request.auth.uid != null;
+      allow create: if request.auth.uid != null && !isBanned(database, request.auth.uid);
       // Only the service-fee payment fields stay server-only (verified via
       // Stripe webhook/recheck). Barcode/terminal/size/status are now
       // self-reported by the user who manually registered their own
@@ -29,15 +33,44 @@ service cloud.firestore {
     match /mail/{docId} {
       allow read, write: if false;
     }
+    match /bannedUsers/{uid} {
+      allow read: if request.auth.uid != null;
+      allow write: if false;
+      // Admin SDK only (functions/src/admin.ts's banUser/unbanUser) -
+      // checked by isBanned() above on toys/offers writes.
+    }
+    match /toys/{toyId} {
+      allow read: if request.auth.uid != null;
+      allow create, update, delete: if request.auth.uid != null && !isBanned(database, request.auth.uid);
+    }
     match /ratings/{ratingId} {
       allow read: if request.auth.uid != null;
       allow create: if request.auth.uid != null &&
         request.resource.data.raterUid == request.auth.uid;
       allow update, delete: if false;
     }
+    match /complaints/{complaintId} {
+      // May name someone else and describe a dispute - only the person who
+      // filed it or an admin should be able to read it back, unlike the
+      // mostly-open read model the rest of this app uses.
+      allow read: if request.auth.uid != null &&
+        (request.auth.uid == resource.data.reporterUid || request.auth.token.admin == true);
+      allow create: if request.auth.uid != null &&
+        request.resource.data.reporterUid == request.auth.uid;
+      allow update, delete: if false;
+    }
+    // Firestore evaluates every match block that applies to a path and
+    // grants access if ANY of them allows it - a document matching both
+    // this catch-all and one of the dedicated blocks above is governed by
+    // whichever is more permissive, not "most specific wins". So every
+    // collection with its own tighter rule above must be excluded here too,
+    // or this catch-all silently re-grants what the dedicated block denies
+    // (this is exactly how the ratings/mail rules above were previously
+    // being bypassed - mail was openly readable, ratings openly writable).
  		match /{collectionName}/{doc}{
-      allow read : if request.auth.uid != null;
-      allow write : if request.auth.uid != null && collectionName != 'offers';
+      allow read : if request.auth.uid != null && !(collectionName in ['mail', 'complaints']);
+      allow write : if request.auth.uid != null &&
+        !(collectionName in ['offers', 'mail', 'ratings', 'bannedUsers', 'toys', 'complaints']);
     }
   }
   //match /databases/{database}/documents {
