@@ -7,13 +7,13 @@ function DisclaimerPage() {
 
     return (
         <>
-            <div style={{display: 'flex', flexDirection: 'column', margin: '1em 0'}}>
+            <div className="flex flex-col my-4">
                 <button id="backButton" onClick={() => navigate(-1)}>
                     <FontAwesomeIcon color="darkviolet" icon={faBackspace} />
                 </button>
             </div>
 
-            <div className="card" style={{maxWidth: '600px', margin: '0 auto', padding: '1.5em', textAlign: 'left'}}>
+            <div className="card max-w-[600px] mx-auto p-6 text-left">
                 <h3>Disclaimer</h3>
 
                 <p><strong>Trades are between users, not with ToyTrader.</strong> ToyTrader only connects

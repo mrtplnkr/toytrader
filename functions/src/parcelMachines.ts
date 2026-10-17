@@ -9,7 +9,10 @@ if (getApps().length === 0) {
 
 const REGION = "europe-west1";
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
-const CACHE_DOC_PATH = "omnivaCache/parcelMachines";
+// Bumped from parcelMachines to v2 when lat/lng were added - a same-path
+// cache hit would otherwise keep serving up to 24h of already-cached
+// entries from before that field existed.
+const CACHE_DOC_PATH = "omnivaCache/parcelMachinesV2";
 
 export interface ParcelMachine {
   id: string;
@@ -17,6 +20,8 @@ export interface ParcelMachine {
   address: string;
   countryCode: string;
   type: string;
+  lat: number;
+  lng: number;
 }
 
 interface CacheEntry {
@@ -26,11 +31,11 @@ interface CacheEntry {
 
 const STUB_PARCEL_MACHINES: ParcelMachine[] = [
   {id: "88894", name: "Tallinn Ülemiste Selver", address: "Suur-Sõjamäe 4, Tallinn",
-    countryCode: "EE", type: "parcel_machine"},
+    countryCode: "EE", type: "parcel_machine", lat: 59.4239, lng: 24.7704},
   {id: "39102", name: "Riga Origo", address: "Stacijas laukums 2, Riga",
-    countryCode: "LV", type: "parcel_machine"},
+    countryCode: "LV", type: "parcel_machine", lat: 56.9465, lng: 24.1049},
   {id: "23904", name: "Vilnius Akropolis", address: "Ozo g. 25, Vilnius",
-    countryCode: "LT", type: "parcel_machine"},
+    countryCode: "LT", type: "parcel_machine", lat: 54.7212, lng: 25.2522},
 ];
 
 // Public, unauthenticated, and confirmed to return the full Baltic-wide
@@ -57,9 +62,15 @@ async function fetchRealParcelMachines(): Promise<ParcelMachine[]> {
         address,
         countryCode: String(entry["A0_NAME"] ?? ""),
         type: "parcel_machine",
+        // Omniva's field names are swapped from the usual convention:
+        // X_COORDINATE is longitude, Y_COORDINATE is latitude - verified
+        // against live sample data (Tallinn entries have Y around 59, the
+        // right ballpark for latitude, not longitude).
+        lat: parseFloat(String(entry["Y_COORDINATE"] ?? "")),
+        lng: parseFloat(String(entry["X_COORDINATE"] ?? "")),
       };
     })
-    .filter((m) => m.id && m.name);
+    .filter((m) => m.id && m.name && Number.isFinite(m.lat) && Number.isFinite(m.lng));
 }
 
 // Firestore-backed cache in front of the fetch above (semi-static, large

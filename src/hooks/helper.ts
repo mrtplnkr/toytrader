@@ -396,6 +396,8 @@ export interface ParcelMachine {
     address: string;
     countryCode: string;
     type: string;
+    lat: number;
+    lng: number;
 }
 
 const listParcelMachinesCallable = httpsCallable<

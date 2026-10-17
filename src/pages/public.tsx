@@ -5,7 +5,6 @@ import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import logo from '../logo.svg';
 import { startDonationCheckout } from '../hooks/helper';
-import Bubbles from '../components/bubbles';
 
 const randomWord = ['trade', 'swap', 'switch', 'exchange']
 
@@ -33,8 +32,6 @@ function PublicPage() {
 
     return (
       <>
-        <Bubbles />
-        <div style={{position: 'relative', zIndex: 1}}>
         <h1 className="App-header">Toy Trader App</h1>
 
         <img src={logo} className="App-logo" alt="ToyTrader logo" />
@@ -108,7 +105,6 @@ function PublicPage() {
         <div style={{display: 'flex', gap: '1em', justifyContent: 'center', fontSize: '0.85em', margin: '1em 0'}}>
           <a href="/about">About us</a>
           <a href="/disclaimer">Disclaimer</a>
-        </div>
         </div>
       </>
     );

@@ -30,6 +30,7 @@ import MyOffersPage from "./pages/myOffers";
 import ShipmentResultPage from "./pages/shipmentResult";
 import HelpPage from "./pages/help";
 import SplashScreen from "./components/splashScreen";
+import Bubbles from "./components/bubbles";
 import AboutPage from "./pages/about";
 import DisclaimerPage from "./pages/disclaimer";
 import { User } from "firebase/auth";
@@ -246,24 +247,27 @@ function Layout() {
 
   return (
     <div>
-      <div className="navBar">
-        <Link className="brand" to="/">ToyTrader</Link>
+      <Bubbles />
+      <div className="relative z-10">
+        <div className="navBar">
+          <Link className="brand" to="/">ToyTrader</Link>
 
-        <ul className="navigation">
-          <li>
-            <Link to="/">Intro</Link>
-          </li>
-          <li>
-            <Link to="/list">Search for toys</Link>
-          </li>
-        </ul>
+          <ul className="navigation">
+            <li>
+              <Link to="/">Intro</Link>
+            </li>
+            <li>
+              <Link to="/list">Search for toys</Link>
+            </li>
+          </ul>
 
-        <Auth />
+          <Auth />
+        </div>
+
+        <main>
+          <Outlet />
+        </main>
       </div>
-
-      <main>
-        <Outlet />
-      </main>
     </div>
   );
 }

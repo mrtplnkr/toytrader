@@ -16,8 +16,8 @@ function LoginPage() {
   };
 
   return (
-    <div className="card" style={{maxWidth: '360px', margin: '3em auto', padding: '2em', display: 'flex', flexDirection: 'column', gap: '1em'}}>
-      <h1 style={{margin: 0}}>Login</h1>
+    <div className="card max-w-[360px] mx-auto my-12 p-8 flex flex-col gap-4">
+      <h1 className="m-0">Login</h1>
 
       <button className="btn-primary" onClick={() => googleSign(signedInCallback)}>Google login</button>
       <button className="btn-primary" onClick={() => facebookSign(signedInCallback)}>Facebook login</button>

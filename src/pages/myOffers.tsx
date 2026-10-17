@@ -7,8 +7,9 @@ import { GoodAppContext } from "../hooks/context";
 import { useContextSelector } from "use-context-selector";
 import { Toy } from "../types/toy";
 import { Rating } from "../types/rating";
-import { ShipmentSide, ShippingPrice, declineOffer, getShippingPrice, getShippingProfile, markToyPosted, markToyReceived, shareShippingInfo, startShipmentCheckout, submitOmnivaBarcode, submitRating, updateOffer } from "../hooks/helper";
+import { ParcelMachine, ShipmentSide, ShippingPrice, declineOffer, getShippingPrice, getShippingProfile, markToyPosted, markToyReceived, saveShippingProfile, shareShippingInfo, startShipmentCheckout, submitOmnivaBarcode, submitRating, updateOffer } from "../hooks/helper";
 import { ShippingProfile } from "../types/shippingProfile";
+import ParcelMachinePicker from "../components/parcelMachinePicker";
 import { DEFAULT_TOY_SIZE, OMNIVA_PRICE_LIST_URL, OMNIVA_SEND_PARCEL_URL, TOY_SIZES, ToySize } from "../constants/omnivaPricing";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faStar as faStarSolid } from "@fortawesome/free-solid-svg-icons";
@@ -72,6 +73,12 @@ function MyOffersPage() {
     const [dismissedTipIds, setDismissedTipIds] = useState<Set<string>>(new Set());
     const [myShippingProfile, setMyShippingProfile] = useState<ShippingProfile | undefined>();
     const [sharingShippingId, setSharingShippingId] = useState<string | undefined>();
+    // Inline fallback for a user placing their first trade with no saved
+    // profile yet - not enforced (setting one up on /profile beforehand is
+    // still the normal path), just an alternative that avoids a detour.
+    const [shippingSetupName, setShippingSetupName] = useState<Record<string, string>>({});
+    const [shippingSetupPhone, setShippingSetupPhone] = useState<Record<string, string>>({});
+    const [shippingSetupMachine, setShippingSetupMachine] = useState<Record<string, ParcelMachine>>({});
 
     useEffect(() => {
         getShippingProfile().then(setMyShippingProfile);
@@ -297,6 +304,37 @@ function MyOffersPage() {
         }
     };
 
+    // First-trade fallback: saves this as the user's reusable default too
+    // (not just a one-off for this offer), so future trades skip straight
+    // to the one-click "Share my shipping info" button above.
+    const onSetupAndShareShipping = async (offerId: string, side: ShipmentSide) => {
+        const name = shippingSetupName[offerId]?.trim();
+        const phone = shippingSetupPhone[offerId]?.trim();
+        const machine = shippingSetupMachine[offerId];
+        if (!name || !phone || !machine) {
+            notifyError(new Error("Name, phone, and a parcel machine are all required."));
+            return;
+        }
+        const profile: ShippingProfile = {
+            name,
+            phone,
+            parcelMachineId: machine.id,
+            parcelMachineLabel: `${machine.name} — ${machine.address}`,
+            countryCode: machine.countryCode,
+        };
+        try {
+            setSharingShippingId(offerId);
+            await saveShippingProfile(profile);
+            await shareShippingInfo(offerId, side, profile);
+            setMyShippingProfile(profile);
+            await refresh();
+        } catch (err) {
+            notifyError(err as Error);
+        } finally {
+            setSharingShippingId(undefined);
+        }
+    };
+
     const fetchQuote = async (offerId: string, toySize: ToySize) => {
         setQuoteByOfferId((prev) => ({...prev, [offerId]: 'loading'}));
         try {
@@ -421,10 +459,26 @@ function MyOffersPage() {
                                         {sharingShippingId === x.id ? 'sharing...' : 'Share my shipping info'}
                                     </button>
                                 :
-                                    <p style={{margin: 0}}>
-                                        Save your name, phone, and preferred parcel machine on{' '}
-                                        <a href="/profile">your profile</a> so you can share it here.
-                                    </p>}
+                                    <div style={{display: 'flex', flexDirection: 'column', gap: '0.5em', width: '100%', alignItems: 'center'}}>
+                                        <p style={{margin: 0}}>
+                                            No shipping info saved yet - set it up here (also saves it for next
+                                            time), or do it anytime on <a href="/profile">your profile</a>.
+                                        </p>
+                                        <input type="text" placeholder="Your name"
+                                            value={shippingSetupName[x.id] ?? ''}
+                                            onChange={(e) => setShippingSetupName((prev) => ({...prev, [x.id]: e.target.value}))} />
+                                        <input type="tel" placeholder="Your phone"
+                                            value={shippingSetupPhone[x.id] ?? ''}
+                                            onChange={(e) => setShippingSetupPhone((prev) => ({...prev, [x.id]: e.target.value}))} />
+                                        <ParcelMachinePicker
+                                            value={shippingSetupMachine[x.id]?.id}
+                                            onChange={(machine) => setShippingSetupMachine((prev) => ({...prev, [x.id]: machine}))}
+                                        />
+                                        <button className="btn-primary" disabled={sharingShippingId === x.id}
+                                            onClick={() => onSetupAndShareShipping(x.id, x.mySide)}>
+                                            {sharingShippingId === x.id ? 'saving...' : 'Save & share my shipping info'}
+                                        </button>
+                                    </div>}
                                 {x.otherShippingName ?
                                     <p style={{margin: 0}}>
                                         Ship to: <strong>{x.otherShippingName}</strong>, {x.otherShippingPhone},{' '}
