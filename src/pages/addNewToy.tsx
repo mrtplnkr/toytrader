@@ -3,6 +3,7 @@ import { useState } from "react";
 import { storage } from "../firebase-config";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { v4 } from 'uuid';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBackspace } from "@fortawesome/free-solid-svg-icons";
@@ -28,6 +29,7 @@ function AddNew() {
     const [url, setUrl] = useState<string | undefined>(undefined);
     const [uploading, setUploading] = useState(false);
     const navigate = useNavigate();
+    const { t } = useTranslation();
 
     const uploadFile = async (file: any) => {
         if (!file) return;
@@ -42,7 +44,7 @@ function AddNew() {
           setFileUpload(fileName);
           setUrl(u);
         } catch (err) {
-          notifyError("Image upload failed", "Please try selecting the picture again.");
+          notifyError(t('addNewToy:imageUploadFailedTitle'), t('common:toast.pictureUploadFailedBody'));
         } finally {
           setUploading(false);
         }
@@ -50,7 +52,7 @@ function AddNew() {
 
     const onSubmitToy = async () => {
         if (!url || !fileUploadName) {
-            notifyError("Picture required", "Please add a picture of your toy before submitting (wait for it to finish uploading).");
+            notifyError(t('addNewToy:pictureRequiredTitle'), t('addNewToy:pictureRequiredBody'));
             return;
         }
         try {
@@ -60,38 +62,38 @@ function AddNew() {
           );
           navigate('/myToys');
         } catch (err) {
-            notifyError("Unfortunately this action failed !", "Please try again later.");
+            notifyError(t('common:toast.actionFailedTitle'), t('common:toast.tryAgainLater'));
         }
     };
 
     return (
       <>
-        <div style={{display: 'flex', flexDirection: 'column', margin: '1em 0'}}>
+        <div className="flex flex-col my-4">
           <button id="backButton" onClick={() => navigate(-1)}>
             <FontAwesomeIcon color="darkviolet" icon={faBackspace} />
           </button>
         </div>
-        
-        <h3>List your toy</h3>
 
-        <form id="newToy" style={{display: 'flex', flexDirection: 'column'}} onSubmit={(e) => {
+        <h3>{t('addNewToy:heading')}</h3>
+
+        <form id="newToy" className="flex flex-col" onSubmit={(e) => {
             onSubmitToy();
             e.preventDefault();
         }}>
-          <div style={{display: 'flex'}}>
-            <div style={{textAlign: 'left'}}>
-              <input id="title" type="text" style={{margin: '0.5em 0'}} onChange={(e) => setTitle(e.target.value)} />
-              <input id="picture" type="file" alt="toy" style={{margin: '0.5em 0'}}
+          <div className="flex">
+            <div className="text-left">
+              <input id="title" type="text" className="my-2" onChange={(e) => setTitle(e.target.value)} />
+              <input id="picture" type="file" alt="toy" className="my-2"
                   onChange={(e) => {
                       uploadFile(e.target.files != null ? e.target.files[0] : '')
                   }} />
             </div>
-            {uploading && <p style={{fontSize: '0.85em'}}>Uploading picture...</p>}
-            {url && <img style={{width: '5em', marginBottom: '1em'}} alt="newImg" src={url} />}
+            {uploading && <p className="text-[0.85em]">{t('addNewToy:uploadingPicture')}</p>}
+            {url && <img className="w-[5em] mb-4" alt="newImg" src={url} />}
           </div>
 
-          <div style={{display: 'flex', flexDirection: 'column'}}>
-            <button type="submit" disabled={uploading || !url} style={{alignSelf: 'flex-end'}}>Add</button>
+          <div className="flex flex-col">
+            <button type="submit" disabled={uploading || !url} className="self-end">{t('addNewToy:add')}</button>
           </div>
         </form>
       </>

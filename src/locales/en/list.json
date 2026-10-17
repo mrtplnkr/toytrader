@@ -1,0 +1,10 @@
+{
+  "heading": "Search for toys in your area",
+  "refresh": "refresh",
+  "nothingInArea": "nothing in your area",
+  "updateLocation": "update your location settings",
+  "cantOfferTitle": "Can't offer this toy",
+  "cantOfferBody": "It's already part of another active trade.",
+  "offerSuccessTitle": "Success !",
+  "offerSuccessBody": "Toy successfully offered ."
+}

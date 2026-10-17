@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useContextSelector } from "use-context-selector";
+import { useTranslation } from "react-i18next";
 import { auth } from "../firebase-config";
 import { GoodAppContext } from "../hooks/context";
 import { Toy } from "../types/toy";
@@ -9,7 +10,8 @@ import { checkIsAdmin } from "../hooks/helper";
 import appConfig from "../../package.json";
 
 function Auth() {
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
+  const { t } = useTranslation();
   const signOut = useContextSelector(GoodAppContext, (state: any) => state.signOut);
 
   const [loading] = useState(false);
@@ -48,17 +50,17 @@ function Auth() {
             {
               auth?.currentUser?.uid &&
               <>
-                <img alt={auth?.currentUser?.displayName??'no name'} className={greyUser ? 'opacity-10' : ''}
+                <img alt={auth?.currentUser?.displayName??t('auth:noName')} className={greyUser ? 'opacity-10' : ''}
                   src={auth?.currentUser?.photoURL??''} onClick={() => openMenu(s => !s)} />
                 {menu && <ul>
                   <li className="underline cursor-pointer"
                     onClick={() => { openMenu(x => !x); navigate('/profile'); }}>{auth.currentUser?.displayName}</li>
                   <li className="underline cursor-pointer"
-                    onClick={() => navigate('/myToys')}>My Toys ({toys.filter((t:Toy) => t.userId === auth.currentUser?.uid).length})</li>
-                  <li onClick={() => navigate('/myOffers')}>My Offers</li>
+                    onClick={() => navigate('/myToys')}>{t('auth:myToysCount', { count: toys.filter((toy:Toy) => toy.userId === auth.currentUser?.uid).length })}</li>
+                  <li onClick={() => navigate('/myOffers')}>{t('auth:myOffers')}</li>
                   {/* <li onClick={() => navigate('/history')}>My trades</li> */}
-                  <li onClick={() => { openMenu(x => !x); navigate('/help'); }}>Help</li>
-                  {isAdmin && <li onClick={() => { openMenu(x => !x); navigate('/admin'); }}>Admin</li>}
+                  <li onClick={() => { openMenu(x => !x); navigate('/help'); }}>{t('auth:help')}</li>
+                  {isAdmin && <li onClick={() => { openMenu(x => !x); navigate('/admin'); }}>{t('auth:admin')}</li>}
                   <li onClick={(async () => {
                     try {
                       openMenu(x => !x);
@@ -67,7 +69,7 @@ function Auth() {
                     } catch (err) {
                       throw new Error('err signing out' + (err as Error).message);
                     }}
-                  )}>Sign out</li>
+                  )}>{t('auth:signOut')}</li>
                   <li>{appConfig.version}</li>
                 </ul>}
               </>

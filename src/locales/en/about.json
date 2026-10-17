@@ -1,0 +1,7 @@
+{
+  "heading": "About ToyTrader",
+  "p1": "ToyTrader is a small, independent project for trading toys directly with other families nearby - no money changes hands in the trade itself, just toy for toy. It started as a way to help kids pass unwanted toys on to someone who'll actually enjoy them, instead of letting them pile up or get thrown away.",
+  "p2": "It's run by a single developer, not a company, and it's a side project rather than a full-time business. There's no customer support team - if something goes wrong, the person reading your report on the <HelpLink>Help</HelpLink> page is also the person who built the app.",
+  "p3": "Shipping happens through Omniva's own parcel-machine network, arranged directly by each trader on Omniva's site - ToyTrader never handles your toy or your payment for shipping. The optional 1 EUR tip some traders choose to leave simply helps keep the app running; it's never required.",
+  "p4": "Questions, problems, or just want to say hi? Use the <HelpLink>Help</HelpLink> page to report an issue with a specific trade, or see the <DisclaimerLink>Disclaimer</DisclaimerLink> for what ToyTrader can and can't be responsible for."
+}

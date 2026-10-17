@@ -1,0 +1,19 @@
+{
+  "recentCommits": "Recent commits ({{count}})",
+  "commitsError": "Couldn't load commit history from GitHub right now.",
+  "complaintsHeading": "Admin - complaints",
+  "noComplaints": "No complaints filed.",
+  "complaintBy": "{{reporter}} about {{reported}} - {{date}}",
+  "tradeLine": "Trade: {{toyOffered}} for {{toyTargeted}}",
+  "banUser": "Ban {{name}}",
+  "banning": "banning...",
+  "toysHeading": "Admin - review toys",
+  "searchPlaceholder": "Search by toy name or user...",
+  "noToysYet": "No toys listed yet.",
+  "noToysMatch": "No toys match \"{{query}}\".",
+  "banPoster": "Ban poster",
+  "confirmBan": "Ban {{name}}? This disables their account and removes every toy they've listed.",
+  "bannedTitle": "User banned",
+  "bannedBody": "Removed {{count}} listing(s).",
+  "toyNoLongerListed": "a toy (no longer listed)"
+}

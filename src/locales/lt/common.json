@@ -1,0 +1,13 @@
+{
+  "nav": {
+    "intro": "Pradžia",
+    "search": "Ieškoti žaislų"
+  },
+  "toast": {
+    "actionFailedTitle": "Nepavyko atlikti veiksmo !",
+    "tryAgainLater": "Bandykite vėliau.",
+    "tryAgainLaterWithError": "Bandykite vėliau... {{error}}",
+    "pictureUploadFailedBody": "Bandykite pasirinkti nuotrauką iš naujo.",
+    "photoUploadFailedTitle": "Nuotraukos įkelti nepavyko"
+  }
+}

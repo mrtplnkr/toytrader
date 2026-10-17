@@ -1,0 +1,19 @@
+{
+  "heading": "Report a problem with a trade",
+  "whichTrade": "Which trade?",
+  "selectTrade": "Select a trade...",
+  "tradeOption": "{{toyOffered}} for {{toyTargeted}} ({{date}})",
+  "aToy": "a toy",
+  "whatHappened": "What happened?",
+  "describePlaceholder": "Describe the problem with this trade...",
+  "photoEvidence": "Photo evidence (optional)",
+  "uploadingPhoto": "Uploading photo...",
+  "submitting": "submitting...",
+  "submit": "Submit complaint",
+  "pickTradeTitle": "Pick a trade",
+  "pickTradeBody": "Choose which trade this complaint is about.",
+  "descriptionRequiredTitle": "Description required",
+  "descriptionRequiredBody": "Please describe what went wrong.",
+  "submittedTitle": "Complaint submitted",
+  "submittedBody": "We'll take a look - thanks for letting us know."
+}

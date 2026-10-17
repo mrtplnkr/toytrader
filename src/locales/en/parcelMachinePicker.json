@@ -1,0 +1,13 @@
+{
+  "searchPlaceholder": "Search parcel machine by name or address...",
+  "findingClosest": "finding closest...",
+  "useMyLocation": "📍 Use my location to find the closest one",
+  "selected": "Selected: {{name}} — {{address}}",
+  "distanceAway": " (~{{km}} km away)",
+  "loading": "Loading parcel machines...",
+  "noMatches": "No matches",
+  "errorNoGeolocation": "Your browser doesn't support location access.",
+  "errorStillLoading": "Still loading parcel machines - try again in a moment.",
+  "errorPermissionDenied": "Location access denied - you can still search manually above.",
+  "errorGeneric": "Couldn't get your location - you can still search manually above."
+}

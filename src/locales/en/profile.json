@@ -1,0 +1,22 @@
+{
+  "heading": "Your profile",
+  "displayName": "Display name",
+  "changePicture": "Change picture",
+  "uploadingPicture": "Uploading picture...",
+  "email": "Email",
+  "save": "Save",
+  "saving": "saving...",
+  "nameRequiredTitle": "Name required",
+  "nameRequiredBody": "Please enter a display name.",
+  "profileUpdatedTitle": "Profile updated !",
+  "profileUpdatedBody": "Your changes have been saved.",
+  "shippingHeading": "Shipping info",
+  "shippingDescription": "Shared with a trade partner once you're ready to ship, so they know who/where to send their toy to - this app ships via Omniva parcel machines, not door-to-door, so no home address is needed, just your name, phone, and preferred parcel machine.",
+  "name": "Name",
+  "phone": "Phone",
+  "saveShippingInfo": "Save shipping info",
+  "missingInfoTitle": "Missing info",
+  "missingInfoBody": "Name, phone, and a parcel machine are all required.",
+  "shippingSavedTitle": "Shipping info saved !",
+  "shippingSavedBody": "You can now share this with trade partners from My Offers."
+}

@@ -1,0 +1,22 @@
+{
+  "heading": "Jūsų profilis",
+  "displayName": "Rodomas vardas",
+  "changePicture": "Pakeisti nuotrauką",
+  "uploadingPicture": "Keliama nuotrauka...",
+  "email": "El. paštas",
+  "save": "Išsaugoti",
+  "saving": "saugoma...",
+  "nameRequiredTitle": "Būtinas vardas",
+  "nameRequiredBody": "Įveskite rodomą vardą.",
+  "profileUpdatedTitle": "Profilis atnaujintas !",
+  "profileUpdatedBody": "Jūsų pakeitimai išsaugoti.",
+  "shippingHeading": "Siuntimo informacija",
+  "shippingDescription": "Pasidalinama su mainų partneriu, kai esate pasiruošę siųsti, kad jie žinotų, kam ir kur siųsti savo žaislą - šioje programoje siunčiama per Omniva paštomatus, ne durų-iki-durų principu, todėl namų adreso nereikia, tik vardo, telefono ir pageidaujamo paštomato.",
+  "name": "Vardas",
+  "phone": "Telefonas",
+  "saveShippingInfo": "Išsaugoti siuntimo informaciją",
+  "missingInfoTitle": "Trūksta informacijos",
+  "missingInfoBody": "Vardas, telefonas ir paštomatas yra būtini.",
+  "shippingSavedTitle": "Siuntimo informacija išsaugota !",
+  "shippingSavedBody": "Dabar galite pasidalinti šia informacija su mainų partneriais iš „Mano pasiūlymai“."
+}

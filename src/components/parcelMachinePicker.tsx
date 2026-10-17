@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ParcelMachine, listParcelMachines } from "../hooks/helper";
 
 interface Props {
@@ -18,6 +19,7 @@ function distanceKm(lat1: number, lng1: number, lat2: number, lng2: number): num
 }
 
 function ParcelMachinePicker({ value, onChange }: Props) {
+    const { t } = useTranslation();
     const [machines, setMachines] = useState<ParcelMachine[]>([]);
     const [filter, setFilter] = useState('');
     const [debouncedFilter, setDebouncedFilter] = useState('');
@@ -53,11 +55,11 @@ function ParcelMachinePicker({ value, onChange }: Props) {
     // still works with no location permission granted at all.
     const useMyLocation = () => {
         if (!navigator.geolocation) {
-            setLocateError("Your browser doesn't support location access.");
+            setLocateError(t('parcelMachinePicker:errorNoGeolocation'));
             return;
         }
         if (!machines.length) {
-            setLocateError("Still loading parcel machines - try again in a moment.");
+            setLocateError(t('parcelMachinePicker:errorStillLoading'));
             return;
         }
         setLocating(true);
@@ -80,8 +82,8 @@ function ParcelMachinePicker({ value, onChange }: Props) {
             },
             (err) => {
                 setLocateError(err.code === err.PERMISSION_DENIED ?
-                    "Location access denied - you can still search manually above." :
-                    "Couldn't get your location - you can still search manually above.");
+                    t('parcelMachinePicker:errorPermissionDenied') :
+                    t('parcelMachinePicker:errorGeneric'));
                 setLocating(false);
             },
             { timeout: 10_000 }
@@ -89,44 +91,40 @@ function ParcelMachinePicker({ value, onChange }: Props) {
     };
 
     return (
-        <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: '0.4em', width: '100%', maxWidth: '360px' }}>
+        <div className="relative flex flex-col gap-[0.4em] w-full max-w-[360px]">
             <input
                 type="text"
-                placeholder="Search parcel machine by name or address..."
+                placeholder={t('parcelMachinePicker:searchPlaceholder')}
                 value={filter}
                 onChange={(e) => { setFilter(e.target.value); setOpen(true); }}
                 onFocus={() => setOpen(true)}
                 // Delay so a click on a list item registers before the blur closes it.
                 onBlur={() => setTimeout(() => setOpen(false), 150)}
             />
-            <button type="button" onClick={useMyLocation} disabled={locating} style={{alignSelf: 'flex-start', fontSize: '0.85em'}}>
-                {locating ? 'finding closest...' : '📍 Use my location to find the closest one'}
+            <button type="button" onClick={useMyLocation} disabled={locating} className="self-start text-[0.85em]">
+                {locating ? t('parcelMachinePicker:findingClosest') : t('parcelMachinePicker:useMyLocation')}
             </button>
-            {locateError && <p style={{fontSize: '0.8em', color: 'var(--color-danger)', margin: 0}}>{locateError}</p>}
+            {locateError && <p className="text-[0.8em] text-danger m-0">{locateError}</p>}
             {selected && !open &&
-                <p style={{fontSize: '0.85em', color: 'var(--color-primary)', margin: 0}}>
-                    Selected: {selected.name} — {selected.address}
+                <p className="text-[0.85em] text-primary m-0">
+                    {t('parcelMachinePicker:selected', { name: selected.name, address: selected.address })}
                     {nearestDistanceKm !== undefined && selected.id === value &&
-                        ` (~${nearestDistanceKm < 1 ? '<1' : nearestDistanceKm.toFixed(1)} km away)`}
+                        t('parcelMachinePicker:distanceAway', { km: nearestDistanceKm < 1 ? '<1' : nearestDistanceKm.toFixed(1) })}
                 </p>}
             {open &&
-                <ul className="parcelMachineResults" style={{
-                    position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 2,
-                    background: 'white', color: 'black', border: '1px solid #ccc', borderRadius: '4px',
-                    maxHeight: '220px', overflowY: 'auto', listStyle: 'none', margin: 0, padding: '0.25em 0',
-                }}>
+                <ul className="parcelMachineResults absolute top-full left-0 right-0 z-[2] bg-white text-black border border-[#ccc] rounded max-h-[220px] overflow-y-auto list-none m-0 py-[0.25em] px-0">
                     {filtered.length > 0 ? filtered.map((m) => (
                         <li
                             key={m.id}
-                            style={{padding: '0.4em 0.6em', cursor: 'pointer'}}
+                            className="px-[0.6em] py-[0.4em] cursor-pointer"
                             onMouseDown={(e) => e.preventDefault()}
                             onClick={() => selectMachine(m)}
                         >
                             {m.name} — {m.address}
                         </li>
                     )) : (
-                        <li style={{padding: '0.4em 0.6em', color: 'var(--color-text-dim)'}}>
-                            {machines.length === 0 ? 'Loading parcel machines...' : 'No matches'}
+                        <li className="px-[0.6em] py-[0.4em] text-text-dim">
+                            {machines.length === 0 ? t('parcelMachinePicker:loading') : t('parcelMachinePicker:noMatches')}
                         </li>
                     )}
                 </ul>}

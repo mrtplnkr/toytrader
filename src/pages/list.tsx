@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useState } from "react";
 import { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { auth } from "../firebase-config";
 import Item from "../components/item";
 import { GoodAppContext } from "../hooks/context";
@@ -16,6 +17,7 @@ import { Store } from "react-notifications-component";
 
 function ListPage() {
   let navigate = useNavigate();
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
 
   const toys = useContextSelector(GoodAppContext, (state: any) => state.toys);
@@ -84,8 +86,8 @@ function ListPage() {
   const proposeOffer = async (toyOffered: string) => {
     if (isToyCommittedElsewhere(toyOffered)) {
       Store.addNotification({
-        title: "Can't offer this toy",
-        message: "It's already part of another active trade.",
+        title: t('list:cantOfferTitle'),
+        message: t('list:cantOfferBody'),
         type: "danger",
         insert: "top",
         container: "top-right",
@@ -101,8 +103,8 @@ function ListPage() {
     try {
       if (toyBeingDisplayed) await addNewOffer(toyOffered, toyBeingDisplayed.id, toyBeingDisplayed.userId);
       Store.addNotification({
-        title: "Success !",
-        message: "Toy successfully offered .",
+        title: t('list:offerSuccessTitle'),
+        message: t('list:offerSuccessBody'),
         type: "success",
         insert: "top",
         container: "top-right",
@@ -116,8 +118,8 @@ function ListPage() {
       navigate('/history');
     } catch (e: any) {
       Store.addNotification({
-        title: "Unfortunately this action failed !",
-        message: "Please try again later... " + e.message.toString(),
+        title: t('common:toast.actionFailedTitle'),
+        message: t('common:toast.tryAgainLaterWithError', { error: e.message.toString() }),
         type: "danger",
         insert: "top",
         container: "top-right",
@@ -133,7 +135,7 @@ function ListPage() {
 
   return (
     <>
-        <h3>Search for toys in your area</h3>
+        <h3>{t('list:heading')}</h3>
 
         {
           toyBeingDisplayed &&
@@ -141,30 +143,30 @@ function ListPage() {
               toy={toyBeingDisplayed} nextToy={nextToy} proposeOffer={proposeOffer} />
         }
 
-        <div style={{display: 'flex', flexDirection: 'column'}}>
+        <div className="flex flex-col">
           <button id="addButton" onClick={() => navigate('/addNew')}>
             <FontAwesomeIcon color="darkviolet" icon={faCirclePlus} />
           </button>
-          <button style={{alignSelf: 'flex-start'}} onClick={() => refresh()}>refresh</button>
+          <button className="self-start" onClick={() => refresh()}>{t('list:refresh')}</button>
         </div>
 
         <ul id="toyList">
           {visibleToys.length > 0 ? visibleToys.map((x: any) => {
             return (
-              <div key={x.id} style={{cursor: 'pointer'}} onClick={() => setSelectedToyId(x.id)}>
+              <div key={x.id} className="cursor-pointer" onClick={() => setSelectedToyId(x.id)}>
                 <Item key={x.id} {...x} addRemoveWish={addRemoveWish}
                   wished={myWishedItems.filter(w => w.id === x.id).length > 0}
                   {...toyRatingStats(x.id)} />
               </div>
             )
           }) :
-          <div style={{fontSize: '0.5em'}}>
+          <div className="text-[0.5em]">
             <h2>
-              <FontAwesomeIcon icon={faBatteryEmpty} />  
-              {' '}nothing in your area
+              <FontAwesomeIcon icon={faBatteryEmpty} />
+              {' '}{t('list:nothingInArea')}
             </h2>
-            <h3 style={{textDecoration: 'underline'}}>
-              update your location settings{' '}
+            <h3 className="underline">
+              {t('list:updateLocation')}{' '}
               <FontAwesomeIcon icon={faGear} />
             </h3>
           </div>}

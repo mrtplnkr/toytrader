@@ -1,0 +1,23 @@
+{
+  "appHeading": "Toy Trader App",
+  "actionWords": ["trade", "swap", "switch", "exchange"],
+  "boredQuestion": "Bored of <Old>your old</Old> toys ?",
+  "wellTradeThem": "Well, <Action>{{word}}</Action> them !",
+  "discoverFun": " <Discover> Discover </Discover> the <Fun> fun </Fun> of <Trading> trading </Trading> , just like the <GrownUps> GROWN UPS </GrownUps> do !",
+  "exceptToy4Toy": "Except, not for money, just {{word}} toy4toy",
+  "justLogin": "Just login and start checking all them toys of other children which you can swap and share as you grow.",
+  "enjoy": "Enjoy !",
+  "asForParents": "as for the parents :",
+  "enoughPlastic": "don't you have enough plastic at home ?",
+  "helpYoungsters": "help your youngsters to showcase their unwanted toys instead of discarding them..",
+  "someoneAppreciate": "someone would still appreciate them as new !",
+  "letThemTrade": "so go ahead, let them trade with each other!",
+  "learnSkills": "they might as well learn new skills for life",
+  "learnReact": "Learn React",
+  "donationThankYou": "Thank you so much for the donation!",
+  "donationCancelled": "Donation cancelled - no charge was made.",
+  "donationSupportPrompt": "Enjoying ToyTrader? You can support it with a small donation",
+  "redirecting": "redirecting...",
+  "aboutUs": "About us",
+  "disclaimer": "Disclaimer"
+}

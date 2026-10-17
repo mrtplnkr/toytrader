@@ -1,0 +1,19 @@
+{
+  "recentCommits": "Последние изменения ({{count}})",
+  "commitsError": "Сейчас не удалось загрузить историю коммитов из GitHub.",
+  "complaintsHeading": "Администрирование - жалобы",
+  "noComplaints": "Жалоб не подано.",
+  "complaintBy": "{{reporter}} на {{reported}} - {{date}}",
+  "tradeLine": "Обмен: {{toyOffered}} за {{toyTargeted}}",
+  "banUser": "Заблокировать {{name}}",
+  "banning": "блокировка...",
+  "toysHeading": "Администрирование - проверка игрушек",
+  "searchPlaceholder": "Поиск по названию игрушки или пользователю...",
+  "noToysYet": "Игрушек пока нет.",
+  "noToysMatch": "Игрушки, соответствующие \"{{query}}\", не найдены.",
+  "banPoster": "Заблокировать автора",
+  "confirmBan": "Заблокировать {{name}}? Это отключит его учётную запись и удалит все размещённые им игрушки.",
+  "bannedTitle": "Пользователь заблокирован",
+  "bannedBody": "Удалено {{count}} объявление(й).",
+  "toyNoLongerListed": "игрушка (больше не размещена)"
+}

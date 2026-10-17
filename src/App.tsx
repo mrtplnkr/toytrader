@@ -34,6 +34,8 @@ import Bubbles from "./components/bubbles";
 import AboutPage from "./pages/about";
 import DisclaimerPage from "./pages/disclaimer";
 import { User } from "firebase/auth";
+import { useTranslation } from "react-i18next";
+import { setLanguage, SupportedLanguage } from "./i18n";
 
 // Code-split: only the one admin account ever needs this page's code, so
 // there's no reason it should be in everyone's initial bundle.
@@ -145,7 +147,7 @@ function App() {
   return (
     <div className="App">
       {splashVisible &&
-        <div style={{opacity: splashFading ? 0 : 1, transition: 'opacity 0.3s ease'}}>
+        <div className={`transition-opacity duration-300 ease-in-out ${splashFading ? 'opacity-0' : 'opacity-100'}`}>
           <SplashScreen />
         </div>}
       <ReactNotifications />
@@ -244,6 +246,7 @@ function App() {
 }
 
 function Layout() {
+  const { t, i18n } = useTranslation();
 
   return (
     <div>
@@ -254,12 +257,22 @@ function Layout() {
 
           <ul className="navigation">
             <li>
-              <Link to="/">Intro</Link>
+              <Link to="/">{t('common:nav.intro')}</Link>
             </li>
             <li>
-              <Link to="/list">Search for toys</Link>
+              <Link to="/list">{t('common:nav.search')}</Link>
             </li>
           </ul>
+
+          <select
+            aria-label="Language"
+            value={i18n.language}
+            onChange={(e) => setLanguage(e.target.value as SupportedLanguage)}
+          >
+            <option value="en">EN</option>
+            <option value="lt">LT</option>
+            <option value="ru">RU</option>
+          </select>
 
           <Auth />
         </div>

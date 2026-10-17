@@ -1,0 +1,13 @@
+{
+  "searchPlaceholder": "Ieškokite paštomato pagal pavadinimą ar adresą...",
+  "findingClosest": "ieškoma artimiausio...",
+  "useMyLocation": "📍 Naudoti mano vietą artimiausiam rasti",
+  "selected": "Pasirinkta: {{name}} — {{address}}",
+  "distanceAway": " (~{{km}} km atstumu)",
+  "loading": "Kraunami paštomatai...",
+  "noMatches": "Atitikmenų nerasta",
+  "errorNoGeolocation": "Jūsų naršyklė nepalaiko vietos prieigos.",
+  "errorStillLoading": "Paštomatai vis dar kraunami - bandykite po kelių akimirkų.",
+  "errorPermissionDenied": "Vietos prieiga atmesta - vis tiek galite ieškoti rankiniu būdu aukščiau.",
+  "errorGeneric": "Nepavyko nustatyti jūsų vietos - vis tiek galite ieškoti rankiniu būdu aukščiau."
+}

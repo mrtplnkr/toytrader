@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useContextSelector } from "use-context-selector";
+import { useTranslation } from "react-i18next";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faRemove } from "@fortawesome/free-solid-svg-icons";
 import { QRCodeSVG } from "qrcode.react";
@@ -13,6 +14,7 @@ const POLL_DELAY_MS = 1500;
 
 function ShipmentResultPage() {
     const navigate = useNavigate();
+    const { t } = useTranslation();
     const [searchParams] = useSearchParams();
 
     const offerId = searchParams.get('offerId') ?? undefined;
@@ -83,50 +85,41 @@ function ShipmentResultPage() {
             <button className="buttonFixedRight" onClick={() => navigate('/myOffers')}>
                 <FontAwesomeIcon icon={faRemove} />
             </button>
-            <div style={{
-                display: 'flex', justifyContent: 'center', alignItems: 'center',
-                height: '100%', flexDirection: 'column', padding: '1em'
-            }}>
-                <div className="card" style={{
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75em',
-                    maxWidth: '400px', padding: '2em', textAlign: 'center'
-                }}>
+            <div className="flex justify-center items-center h-full flex-col p-4">
+                <div className="card flex flex-col items-center gap-3 max-w-[400px] p-8 text-center">
                     {status === 'cancel' ?
-                        <p>Checkout was cancelled - you can try again from your offers.</p>
+                        <p>{t('shipmentResult:cancelled')}</p>
                     : barcode ?
                         <>
-                            <p>Scan this code at an Omniva parcel machine to drop off your toy.</p>
-                            <div style={{background: '#fff', padding: '1em', borderRadius: 'var(--radius-sm)'}}>
+                            <p>{t('shipmentResult:scanInstruction')}</p>
+                            <div className="bg-white p-4 rounded-sm">
                                 <QRCodeSVG value={barcode} size={256} />
                             </div>
-                            <p style={{color: 'var(--color-text-dim)', fontSize: '0.9em'}}>{barcode}</p>
-                            <p>Current status: {shipmentStatus ?? 'awaiting first scan'}</p>
+                            <p className="text-text-dim text-[0.9em]">{barcode}</p>
+                            <p>{t('shipmentResult:currentStatus', { status: shipmentStatus ?? t('shipmentResult:awaitingFirstScan') })}</p>
                         </>
                     : status === 'success' && !polling && !paid ?
                         <>
-                            <p>We couldn't confirm your payment yet - this can happen if the
-                                confirmation is still catching up.</p>
+                            <p>{t('shipmentResult:paymentUnconfirmed')}</p>
                             <button className="btn-primary" disabled={rechecking} onClick={onRecheckPayment}>
-                                {rechecking ? 'checking...' : "I already paid - check again"}
+                                {rechecking ? t('shipmentResult:checking') : t('shipmentResult:recheckPayment')}
                             </button>
                             {recheckResult === 'not-paid' &&
-                                <p style={{color: 'var(--color-text-dim)', fontSize: '0.9em'}}>
-                                    Stripe shows this payment hasn't gone through yet. If you completed
-                                    checkout, give it a minute and try again.
+                                <p className="text-text-dim text-[0.9em]">
+                                    {t('shipmentResult:recheckNotPaid')}
                                 </p>}
                             {recheckResult === 'failed' &&
-                                <p style={{color: 'var(--color-danger)', fontSize: '0.9em'}}>
-                                    Couldn't check right now - please try again shortly.
+                                <p className="text-danger text-[0.9em]">
+                                    {t('shipmentResult:recheckFailed')}
                                 </p>}
                         </>
                     : status === 'success' ?
-                        <p>{polling ? 'Confirming your tip...' : 'Thanks so much for the tip!'}</p>
+                        <p>{polling ? t('shipmentResult:confirmingTip') : t('shipmentResult:thanksForTip')}</p>
                     :
-                        <p>Register your shipment on Omniva's own site, then save your barcode
-                            from your offers page to see it here as a QR code.</p>
+                        <p>{t('shipmentResult:noBarcodeYet')}</p>
                     }
-                    <button onClick={() => navigate('/myOffers')} style={{marginTop: '0.5em'}}>
-                        Back to My Offers
+                    <button onClick={() => navigate('/myOffers')} className="mt-2">
+                        {t('shipmentResult:backToMyOffers')}
                     </button>
                 </div>
             </div>

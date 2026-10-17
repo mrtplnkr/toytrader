@@ -1,0 +1,13 @@
+{
+  "nav": {
+    "intro": "Intro",
+    "search": "Search for toys"
+  },
+  "toast": {
+    "actionFailedTitle": "Unfortunately this action failed !",
+    "tryAgainLater": "Please try again later.",
+    "tryAgainLaterWithError": "Please try again later... {{error}}",
+    "pictureUploadFailedBody": "Please try selecting the picture again.",
+    "photoUploadFailedTitle": "Photo upload failed"
+  }
+}

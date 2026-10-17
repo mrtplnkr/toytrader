@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Store } from "react-notifications-component";
+import { Trans, useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { auth } from "../firebase-config";
 import { Offer } from "../types/offer";
 import { GoodAppContext } from "../hooks/context";
@@ -41,12 +43,56 @@ interface HistoryItem {
     otherShippingParcelMachineLabel?: string;
 }
 
-enum Status {
-    created, pending, accepted, posted, received
+function buildStatusHtml(t: TFunction, o: Offer, isInitiator: boolean, isReceiver: boolean, params: {
+    myShipmentStatus?: string;
+    myReceived?: Date;
+    otherSideShipmentStatus?: string;
+    otherSideReceived?: Date;
+    otherSideShipmentBarcode?: string;
+}): string {
+    const createdLine = isInitiator ?
+        t('myOffers:status.offeredYourToy', { toyUrl: newToy, date: (o.offerCreated as Date).toDateString() }) :
+        t('myOffers:status.receivedOfferForYourToy', { toyUrl: newToy, date: (o.offerCreated as Date).toDateString() });
+
+    const acceptedLine = o.offerAccepted ?
+        t('myOffers:status.offerAccepted', { date: (o.offerAccepted as Date).toDateString() }) :
+        isReceiver ?
+        t('myOffers:status.yourTurnToRespond') :
+        t('myOffers:status.waitingForAcceptance');
+
+    const offeredLine = o.offerPosted ?
+        (o.offerReceived ?
+            t('myOffers:status.offeredToyPostedAndReceived', { toyUrl: newToy, date: (o.offerReceived as Date).toDateString() }) :
+            t('myOffers:status.offeredToyPosted', { toyUrl: newToy })) :
+        t('myOffers:status.offeredToyNotSent');
+
+    const targetLine = o.targetPosted ?
+        (o.targetReceived ?
+            t('myOffers:status.requestedToyPostedAndReceived', { toyUrl: newToy, date: (o.targetReceived as Date).toDateString() }) :
+            t('myOffers:status.requestedToyPosted', { toyUrl: newToy })) :
+        t('myOffers:status.requestedToyNotSent');
+
+    const myShipmentLine = params.myShipmentStatus && !params.myReceived ?
+        t('myOffers:status.yourShipmentStatus', { status: params.myShipmentStatus }) : '';
+
+    const otherShipmentLine = params.otherSideShipmentStatus && !params.otherSideReceived ?
+        t('myOffers:status.otherShipmentStatus', { status: params.otherSideShipmentStatus }) :
+        (params.otherSideShipmentBarcode || params.otherSideReceived) ?
+        '' :
+        t('myOffers:status.otherNotRegistered');
+
+    return `<li>${createdLine}</li>
+            <li>${acceptedLine}</li>
+            <li>${offeredLine}</li>
+            <li>${targetLine}</li>
+            ${myShipmentLine ? `<li>${myShipmentLine}</li>` : ''}
+            ${otherShipmentLine ? `<li>${otherShipmentLine}</li>` : ''}
+            `;
 }
 
 function MyOffersPage() {
     let navigate = useNavigate();
+    const { t } = useTranslation();
 
     const refresh = useContextSelector(GoodAppContext, (state: any) => state.refresh);
 
@@ -160,42 +206,18 @@ function MyOffersPage() {
                 canRate: !!otherSideReceived && !alreadyRated,
                 toyToRate: toyIReceived,
                 toyIOffered,
-                status: `<li>${isInitiator ?
-                            `you offered your <a href="${newToy}" target="_target">toy</a>` :
-                            `you received an offer for your <a href="${newToy}" target="_target">toy</a>`}
-                            on ${(o.offerCreated as Date).toDateString()}</li>
-                    ${o.offerAccepted ?
-                        `<li>the offer was accepted on ${(o.offerAccepted as Date).toDateString()}</li>`
-                        : isReceiver ?
-                        '<li>it\'s your turn to accept or decline this offer</li>'
-                        :
-                        '<li>waiting for the offer to be accepted by user</li>'}
-                    ${o.offerPosted ?
-                        `<li>the offered <a href="${newToy}" target="_blank">toy</a> was ${Status[Status.posted]}${o.offerReceived ? ` and received on ${(o.offerReceived as Date).toDateString()}` : ''}</li>`
-                        :
-                        `<li>the offered toy hasn't been sent yet</li>`}
-                    ${o.targetPosted ?
-                        `<li>the requested <a href="${newToy}" target="_blank">toy</a> was ${Status[Status.posted]}${o.targetReceived ? ` and received on ${(o.targetReceived as Date).toDateString()}` : ''}</li>`
-                        :
-                        `<li>the requested toy hasn't been sent yet</li>`}
-                    ${myShipmentStatus && !myReceived ?
-                        `<li>your shipment status: ${myShipmentStatus}</li>`
-                        : ''}
-                    ${otherSideShipmentStatus && !otherSideReceived ?
-                        `<li>the other user's shipment status: ${otherSideShipmentStatus}</li>`
-                        : otherSideShipmentBarcode || otherSideReceived ?
-                        ''
-                        : `<li>the other user hasn't registered with Omniva yet</li>`}
-                    `,
+                status: buildStatusHtml(t, o, isInitiator, isReceiver, {
+                    myShipmentStatus, myReceived, otherSideShipmentStatus, otherSideReceived, otherSideShipmentBarcode,
+                }),
                 toyTargeted,
             });
         });
         setHistory(history);
-    }, [offers, toys, ratings]);
+    }, [offers, toys, ratings, t]);
 
     const notifyError = (err: Error) => {
         Store.addNotification({
-            title: "Unfortunately this action failed !",
+            title: t('common:toast.actionFailedTitle'),
             message: err.message,
             type: "danger",
             insert: "top",
@@ -231,7 +253,7 @@ function MyOffersPage() {
     };
 
     const cancelThisOffer = async (offerId: string) => {
-        if (!window.confirm('Cancel this trade? This cannot be undone.')) {
+        if (!window.confirm(t('myOffers:confirmCancel'))) {
             return;
         }
         try {
@@ -312,7 +334,7 @@ function MyOffersPage() {
         const phone = shippingSetupPhone[offerId]?.trim();
         const machine = shippingSetupMachine[offerId];
         if (!name || !phone || !machine) {
-            notifyError(new Error("Name, phone, and a parcel machine are all required."));
+            notifyError(new Error(t('profile:missingInfoBody')));
             return;
         }
         const profile: ShippingProfile = {
@@ -365,7 +387,7 @@ function MyOffersPage() {
     const onSubmitBarcode = async (offerId: string, side: ShipmentSide) => {
         const barcode = barcodeInputByOfferId[offerId]?.trim();
         if (!barcode) {
-            notifyError(new Error("Enter the barcode Omniva gave you first."));
+            notifyError(new Error(t('myOffers:enterBarcodeFirst')));
             return;
         }
         // Omniva's own technical docs accept barcodes between 5 and 30
@@ -373,7 +395,7 @@ function MyOffersPage() {
         // this doesn't verify the barcode is real, just catches obvious
         // typos/junk before it's saved.
         if (barcode.length < 5 || barcode.length > 30) {
-            notifyError(new Error("That doesn't look like a real Omniva barcode - it should be 5-30 characters."));
+            notifyError(new Error(t('myOffers:invalidBarcode')));
             return;
         }
         try {
@@ -401,7 +423,7 @@ function MyOffersPage() {
         } catch (err) {
             setPayingId(undefined);
             Store.addNotification({
-                title: "Unfortunately this action failed !",
+                title: t('common:toast.actionFailedTitle'),
                 message: (err as Error).message,
                 type: "danger",
                 insert: "top",
@@ -415,59 +437,58 @@ function MyOffersPage() {
 
   return (
     <>
-        <h3>All offers made by you</h3>
+        <h3>{t('myOffers:heading')}</h3>
 
-        <div style={{display: 'flex', justifyContent: 'space-between', margin: '0 0 1.5em'}}>
-          <button onClick={() => refresh()}>refresh</button>
-          <button className="btn-primary" onClick={() => navigate('/addNew')}>add your toy</button>
+        <div className="flex justify-between mb-6">
+          <button onClick={() => refresh()}>{t('myOffers:refresh')}</button>
+          <button className="btn-primary" onClick={() => navigate('/addNew')}>{t('myOffers:addYourToy')}</button>
         </div>
 
         {history.map((x:HistoryItem) =>
-            <div className="card" style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1em', margin: '0 0 1em', padding: '1.25em'}} key={x.id}>
-                <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1.5em'}}>
-                    <img style={{width:'50px', borderRadius: 'var(--radius-sm)'}} alt="offered" src={x.toyIOffered.file} />
+            <div className="card flex flex-col items-center gap-4 mb-4 p-5" key={x.id}>
+                <div className="flex items-center justify-center gap-6">
+                    <img className="w-[50px] rounded-sm" alt="offered" src={x.toyIOffered.file} />
                     <ul className="statusLines" dangerouslySetInnerHTML={{__html: x.status}}></ul>
-                    <img style={{width:'50px', borderRadius: 'var(--radius-sm)'}} alt="targeted" src={x.toyTargeted.file} />
+                    <img className="w-[50px] rounded-sm" alt="targeted" src={x.toyTargeted.file} />
                 </div>
                 {x.isMyTurnToRespond ?
-                    <div style={{display: 'flex', gap: '0.5em'}}>
+                    <div className="flex gap-2">
                         <button className="btn-primary" disabled={respondingId === x.id} onClick={() => acceptOffer(x.id)}>
-                            Accept
+                            {t('myOffers:accept')}
                         </button>
                         <button className="btn-danger" disabled={respondingId === x.id} onClick={() => declineThisOffer(x.id)}>
-                            Decline
+                            {t('myOffers:decline')}
                         </button>
                     </div>
                 :
-                    <div style={{display: 'flex', flexDirection: 'column', gap: '0.5em', alignItems: 'center'}}>
+                    <div className="flex flex-col gap-2 items-center">
                         {x.myShipmentBarcode &&
                             <button onClick={() => navigate(`/shipment/result?offerId=${x.id}&side=${x.mySide}`)}>
-                                View my QR code
+                                {t('myOffers:viewMyQrCode')}
                             </button>}
                         {x.myShipmentStatus === 'RETURNED' &&
-                            <p style={{fontSize: '0.8em', color: '#ff6b6b', margin: 0}}>
-                                Your shipment was returned by Omniva - register it again and enter the new barcode below.
+                            <p className="text-[0.8em] text-[#ff6b6b] m-0">
+                                {t('myOffers:shipmentReturned')}
                             </p>}
                         {x.isAccepted &&
-                            <div style={{display: 'flex', flexDirection: 'column', gap: '0.5em', alignItems: 'center',
-                                fontSize: '0.85em', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', padding: '0.75em'}}>
+                            <div className="flex flex-col gap-2 items-center text-[0.85em] border border-border rounded-sm p-3">
                                 {x.hasSharedMyShipping ?
-                                    <p style={{margin: 0, color: 'var(--color-text-dim)'}}>You've shared your shipping info.</p>
+                                    <p className="m-0 text-text-dim">{t('myOffers:sharedShippingInfo')}</p>
                                 : myShippingProfile ?
                                     <button className="btn-primary" disabled={sharingShippingId === x.id}
                                         onClick={() => onShareShipping(x.id, x.mySide)}>
-                                        {sharingShippingId === x.id ? 'sharing...' : 'Share my shipping info'}
+                                        {sharingShippingId === x.id ? t('myOffers:sharing') : t('myOffers:shareMyShippingInfo')}
                                     </button>
                                 :
-                                    <div style={{display: 'flex', flexDirection: 'column', gap: '0.5em', width: '100%', alignItems: 'center'}}>
-                                        <p style={{margin: 0}}>
-                                            No shipping info saved yet - set it up here (also saves it for next
-                                            time), or do it anytime on <a href="/profile">your profile</a>.
+                                    <div className="flex flex-col gap-2 w-full items-center">
+                                        <p className="m-0">
+                                            {/* eslint-disable-next-line jsx-a11y/anchor-has-content -- Trans clones this element and fills in the translated link text at render */}
+                                            <Trans i18nKey="myOffers:noShippingInfoYet" components={{ ProfileLink: <a href="/profile" /> }} />
                                         </p>
-                                        <input type="text" placeholder="Your name"
+                                        <input type="text" placeholder={t('myOffers:yourNamePlaceholder')}
                                             value={shippingSetupName[x.id] ?? ''}
                                             onChange={(e) => setShippingSetupName((prev) => ({...prev, [x.id]: e.target.value}))} />
-                                        <input type="tel" placeholder="Your phone"
+                                        <input type="tel" placeholder={t('myOffers:yourPhonePlaceholder')}
                                             value={shippingSetupPhone[x.id] ?? ''}
                                             onChange={(e) => setShippingSetupPhone((prev) => ({...prev, [x.id]: e.target.value}))} />
                                         <ParcelMachinePicker
@@ -476,42 +497,38 @@ function MyOffersPage() {
                                         />
                                         <button className="btn-primary" disabled={sharingShippingId === x.id}
                                             onClick={() => onSetupAndShareShipping(x.id, x.mySide)}>
-                                            {sharingShippingId === x.id ? 'saving...' : 'Save & share my shipping info'}
+                                            {sharingShippingId === x.id ? t('myOffers:saving') : t('myOffers:saveAndShareShippingInfo')}
                                         </button>
                                     </div>}
                                 {x.otherShippingName ?
-                                    <p style={{margin: 0}}>
-                                        Ship to: <strong>{x.otherShippingName}</strong>, {x.otherShippingPhone},{' '}
+                                    <p className="m-0">
+                                        {t('myOffers:shipTo')} <strong>{x.otherShippingName}</strong>, {x.otherShippingPhone},{' '}
                                         {x.otherShippingParcelMachineLabel}
                                     </p>
                                 :
-                                    <p style={{margin: 0, color: 'var(--color-text-dim)'}}>
-                                        Waiting for the other side to share their shipping info.
+                                    <p className="m-0 text-text-dim">
+                                        {t('myOffers:waitingForOtherShipping')}
                                     </p>}
                             </div>}
                         {x.canSubmitBarcode &&
-                            <div style={{display: 'flex', flexDirection: 'column', gap: '0.5em', alignItems: 'center'}}>
-                                <p style={{fontSize: '0.85em', color: 'var(--color-text-dim)', margin: 0, textAlign: 'center'}}>
-                                    Register your shipment yourself on Omniva's own site/app
-                                    (no account with us needed there), then paste the barcode it gives you below.
-                                    That barcode is what the parcel machine scans when you drop your toy off -
-                                    saving it here turns it into a QR code you can pull up on your phone at the
-                                    machine, and lets us know both sides have registered before either of you ships.
+                            <div className="flex flex-col gap-2 items-center">
+                                <p className="text-[0.85em] text-text-dim m-0 text-center">
+                                    {t('myOffers:registerShipmentInstructions')}
                                 </p>
-                                <label style={{display: 'flex', alignItems: 'center', gap: '0.5em', fontSize: '0.9em'}}>
-                                    Shipping country:
+                                <label className="flex items-center gap-2 text-[0.9em]">
+                                    {t('myOffers:shippingCountry')}
                                     <select
                                         value={selectedCountryByOfferId[x.id] ?? ''}
                                         onChange={(e) => onCountryChange(x.id, e.target.value)}
                                     >
-                                        <option value="" disabled>Select...</option>
-                                        <option value="EE">Estonia</option>
-                                        <option value="LV">Latvia</option>
-                                        <option value="LT">Lithuania</option>
+                                        <option value="" disabled>{t('myOffers:selectEllipsis')}</option>
+                                        <option value="EE">{t('myOffers:countryEstonia')}</option>
+                                        <option value="LV">{t('myOffers:countryLatvia')}</option>
+                                        <option value="LT">{t('myOffers:countryLithuania')}</option>
                                     </select>
                                 </label>
-                                <label style={{display: 'flex', alignItems: 'center', gap: '0.5em', fontSize: '0.9em'}}>
-                                    Toy size:
+                                <label className="flex items-center gap-2 text-[0.9em]">
+                                    {t('myOffers:toySize')}
                                     <select
                                         value={selectedSizeByOfferId[x.id] ?? DEFAULT_TOY_SIZE}
                                         onChange={(e) => onSizeChange(x.id, e.target.value as ToySize)}
@@ -522,39 +539,37 @@ function MyOffersPage() {
                                 {selectedCountryByOfferId[x.id] &&
                                     <>
                                         {quoteByOfferId[x.id] === 'loading' ?
-                                            <p style={{fontSize: '0.85em', margin: 0}}>Fetching Omniva price estimate...</p>
+                                            <p className="text-[0.85em] m-0">{t('myOffers:fetchingPrice')}</p>
                                         : quoteByOfferId[x.id] && quoteByOfferId[x.id] !== 'error' ?
-                                            <p style={{fontSize: '0.85em', margin: 0}}>
-                                                Estimated Omniva price: €{((quoteByOfferId[x.id] as ShippingPrice).priceCents / 100).toFixed(2)}
-                                                {' '}(estimate only - not an official quote)
+                                            <p className="text-[0.85em] m-0">
+                                                {t('myOffers:estimatedPrice', { price: ((quoteByOfferId[x.id] as ShippingPrice).priceCents / 100).toFixed(2) })}
+                                                {t('myOffers:estimateOnlyNote')}
                                             </p>
                                         : null}
                                         <a
                                             href={OMNIVA_PRICE_LIST_URL[selectedCountryByOfferId[x.id]]}
                                             target="_blank"
                                             rel="noreferrer"
-                                            style={{fontSize: '0.85em'}}
+                                            className="text-[0.85em]"
                                         >
-                                            Check exact Omniva shipping price for {selectedCountryByOfferId[x.id]}
+                                            {t('myOffers:checkExactPrice', { country: selectedCountryByOfferId[x.id] })}
                                         </a>
                                         <a
                                             href={OMNIVA_SEND_PARCEL_URL[selectedCountryByOfferId[x.id]]}
                                             target="_blank"
                                             rel="noreferrer"
-                                            className="btn-primary"
-                                            style={{textDecoration: 'none', textAlign: 'center'}}
+                                            className="btn-primary no-underline text-center"
                                         >
-                                            Register this shipment on Omniva ↗
+                                            {t('myOffers:registerOnOmniva')}
                                         </a>
-                                        <p style={{fontSize: '0.8em', color: 'var(--color-text-dim)', margin: 0, textAlign: 'center'}}>
-                                            This already opened in a new tab - pick your parcel machine over there,
-                                            and once Omniva gives you a barcode, come back and paste it below.
+                                        <p className="text-[0.8em] text-text-dim m-0 text-center">
+                                            {t('myOffers:openedInNewTab')}
                                         </p>
                                     </>
                                 }
                                 <input
                                     type="text"
-                                    placeholder="Paste your Omniva barcode here"
+                                    placeholder={t('myOffers:pasteBarcodePlaceholder')}
                                     value={barcodeInputByOfferId[x.id] ?? ''}
                                     onChange={(e) => setBarcodeInputByOfferId((prev) => ({...prev, [x.id]: e.target.value}))}
                                 />
@@ -563,33 +578,33 @@ function MyOffersPage() {
                                     disabled={submittingBarcodeId === x.id}
                                     onClick={() => onSubmitBarcode(x.id, x.mySide)}
                                 >
-                                    {submittingBarcodeId === x.id ? 'saving...' : 'Save my barcode'}
+                                    {submittingBarcodeId === x.id ? t('myOffers:saving') : t('myOffers:saveMyBarcode')}
                                 </button>
                             </div>}
                         {x.canMarkPosted &&
                             <button className="btn-primary" disabled={markingId === x.id} onClick={() => markAsPosted(x.id, x.mySide)}>
-                                {markingId === x.id ? 'saving...'
-                                    : x.myShipmentStatus === 'RETURNED' ? "Mark my toy as dropped off again"
-                                    : "Mark my toy as dropped off"}
+                                {markingId === x.id ? t('myOffers:saving')
+                                    : x.myShipmentStatus === 'RETURNED' ? t('myOffers:markPostedAgain')
+                                    : t('myOffers:markPosted')}
                             </button>}
                         {x.awaitingOtherRegistration &&
-                            <p style={{fontSize: '0.8em', color: 'var(--color-text-dim)', margin: 0}}>
-                                Hold off dropping your toy off - waiting for the other side to register with Omniva too.
+                            <p className="text-[0.8em] text-text-dim m-0">
+                                {t('myOffers:awaitingOtherRegistration')}
                             </p>}
                         {x.canMarkReceived &&
                             <button className="btn-primary" disabled={markingId === x.id} onClick={() => markAsReceived(x.id, x.otherSide)}>
-                                {markingId === x.id ? 'saving...' : "Mark the other toy as received"}
+                                {markingId === x.id ? t('myOffers:saving') : t('myOffers:markReceived')}
                             </button>}
                         {x.canRate && x.toyToRate && !dismissedRatingIds.has(x.id) &&
-                            <div style={{display: 'flex', flexDirection: 'column', gap: '0.5em', alignItems: 'center'}}>
-                                <p style={{fontSize: '0.85em', color: 'var(--color-text-dim)', margin: 0, textAlign: 'center'}}>
-                                    How was the {x.toyToRate.title} you received?
+                            <div className="flex flex-col gap-2 items-center">
+                                <p className="text-[0.85em] text-text-dim m-0 text-center">
+                                    {t('myOffers:howWasToy', { title: x.toyToRate.title })}
                                 </p>
-                                <div style={{display: 'flex', gap: '0.25em'}}>
+                                <div className="flex gap-1">
                                     {[1, 2, 3, 4, 5].map((n) => (
                                         <button
                                             key={n}
-                                            style={{background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: '1.4em'}}
+                                            className="bg-transparent border-none cursor-pointer p-0 text-[1.4em]"
                                             onClick={() => setStarsByOfferId((prev) => ({...prev, [x.id]: n}))}
                                         >
                                             <FontAwesomeIcon
@@ -599,42 +614,41 @@ function MyOffersPage() {
                                         </button>
                                     ))}
                                 </div>
-                                <div style={{display: 'flex', gap: '0.5em'}}>
+                                <div className="flex gap-2">
                                     <button
                                         className="btn-primary"
                                         disabled={submittingRatingId === x.id || !starsByOfferId[x.id]}
                                         onClick={() => onSubmitRating(x.id, x.otherSide, x.toyToRate!.id)}
                                     >
-                                        {submittingRatingId === x.id ? 'saving...' : 'Submit rating'}
+                                        {submittingRatingId === x.id ? t('myOffers:saving') : t('myOffers:submitRating')}
                                     </button>
-                                    <button onClick={() => dismissRatingPrompt(x.id)}>Skip</button>
+                                    <button onClick={() => dismissRatingPrompt(x.id)}>{t('myOffers:skip')}</button>
                                 </div>
                             </div>}
                         {x.isMyTurnToPay && !dismissedTipIds.has(x.id) &&
-                            <div style={{display: 'flex', flexDirection: 'column', gap: '0.5em', alignItems: 'center'}}>
-                                <p style={{fontSize: '0.8em', color: 'var(--color-text-dim)', margin: 0, textAlign: 'center'}}>
-                                    Your toy was confirmed received! If ToyTrader was useful to you, you're welcome
-                                    to leave an entirely optional 1 EUR tip - totally your call either way.
+                            <div className="flex flex-col gap-2 items-center">
+                                <p className="text-[0.8em] text-text-dim m-0 text-center">
+                                    {t('myOffers:tipPrompt')}
                                 </p>
-                                <div style={{display: 'flex', gap: '0.5em'}}>
+                                <div className="flex gap-2">
                                     <button
                                         className="btn-primary"
                                         disabled={payingId === x.id}
                                         onClick={() => payForShipment(x.id, x.mySide)}
                                     >
-                                        {payingId === x.id ? 'redirecting to payment...' : 'Leave a 1 EUR tip'}
+                                        {payingId === x.id ? t('myOffers:redirectingToPayment') : t('myOffers:leaveTip')}
                                     </button>
-                                    <button onClick={() => dismissTipPrompt(x.id)}>No thanks</button>
+                                    <button onClick={() => dismissTipPrompt(x.id)}>{t('myOffers:noThanks')}</button>
                                 </div>
                             </div>
                         }
                         {x.canCancel ?
                             <button className="btn-danger" disabled={respondingId === x.id} onClick={() => cancelThisOffer(x.id)}>
-                                {respondingId === x.id ? 'cancelling...' : 'Cancel this trade'}
+                                {respondingId === x.id ? t('myOffers:cancelling') : t('myOffers:cancelTrade')}
                             </button>
                         : x.isAccepted &&
-                            <p style={{fontSize: '0.8em', color: 'var(--color-text-dim)', margin: 0}}>
-                                This trade can no longer be cancelled - a toy is already on its way.
+                            <p className="text-[0.8em] text-text-dim m-0">
+                                {t('myOffers:cannotCancelAnymore')}
                             </p>
                         }
                     </div>

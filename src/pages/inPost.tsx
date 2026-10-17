@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useState } from "react";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { auth } from "../firebase-config";
 import Item from "../components/item";
 import { GoodAppContext } from "../hooks/context";
@@ -11,6 +12,7 @@ import { Toy } from "../types/toy";
 
 function HistoryPage() {
   let navigate = useNavigate();
+  const { t } = useTranslation();
 
   const toys = useContextSelector(GoodAppContext, (state: any) => state.toys);
   const refresh = useContextSelector(GoodAppContext, (state: any) => state.refresh);
@@ -36,13 +38,13 @@ function HistoryPage() {
 
   return (
     <>
-        <h3>Search for toys in your area</h3>
+        <h3>{t('inPost:heading')}</h3>
 
-        <div style={{display: 'flex', flexDirection: 'column'}}>
+        <div className="flex flex-col">
           <button id="addButton" onClick={() => navigate('/addNew')}>
             <FontAwesomeIcon color="darkviolet" icon={faCirclePlus} />
           </button>
-          <button style={{alignSelf: 'flex-start'}} onClick={() => refresh()}>refresh</button>
+          <button className="self-start" onClick={() => refresh()}>{t('inPost:refresh')}</button>
         </div>
 
         <ul id="toyList">
@@ -51,13 +53,13 @@ function HistoryPage() {
               <Item key={x.id} {...x} addRemoveWish={addRemoveWish}
                 wished={myWishedItems.some(w => w.id === x.id)} /> )
           }) :
-          <div style={{fontSize: '0.5em'}}>
+          <div className="text-[0.5em]">
             <h2>
-              <FontAwesomeIcon icon={faBatteryEmpty} />  
-              {' '}nothing in your area
+              <FontAwesomeIcon icon={faBatteryEmpty} />
+              {' '}{t('inPost:nothingInArea')}
             </h2>
-            <h3 style={{textDecoration: 'underline'}}>
-              update your location settings{' '}
+            <h3 className="underline">
+              {t('inPost:updateLocation')}{' '}
               <FontAwesomeIcon icon={faGear} />
             </h3>
           </div>}

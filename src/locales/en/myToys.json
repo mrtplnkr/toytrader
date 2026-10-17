@@ -1,0 +1,12 @@
+{
+  "heading": "All your toys",
+  "refresh": "refresh",
+  "addYourToy": "add your toy",
+  "noToysYet": "you haven't added anything yet",
+  "offersNotice": "You have <OfferLink>{{count}} offer(s)</OfferLink> on this toy - accept or decline them from My Offers.",
+  "noOffers": "no offers..",
+  "cantRemoveTitle": "Can't remove this toy",
+  "cantRemoveBody": "It's referenced by an active offer - decline or cancel that offer first.",
+  "removeSuccessTitle": "Success !",
+  "removeSuccessBody": "Toy successfully removed from your toy list."
+}

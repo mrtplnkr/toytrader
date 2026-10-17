@@ -1,6 +1,7 @@
 import { deleteDoc, doc } from "firebase/firestore";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { Trans, useTranslation } from "react-i18next";
 import { auth, db } from "../firebase-config";
 import Item from "../components/item";
 import { Offer } from "../types/offer";
@@ -12,6 +13,7 @@ import { Rating } from "../types/rating";
 
 function MyToysPage() {
   let navigate = useNavigate();
+  const { t } = useTranslation();
 
   const refresh = useContextSelector(GoodAppContext, (state: any) => state.refresh);
 
@@ -37,8 +39,8 @@ function MyToysPage() {
   const deleteItem = async (id: string) => {
     if (countOffers(offers, id)) {
       Store.addNotification({
-        title: "Can't remove this toy",
-        message: "It's referenced by an active offer - decline or cancel that offer first.",
+        title: t('myToys:cantRemoveTitle'),
+        message: t('myToys:cantRemoveBody'),
         type: "danger",
         insert: "top",
         container: "top-right",
@@ -55,8 +57,8 @@ function MyToysPage() {
     const movieDoc = doc(db, "toys", id);
     await deleteDoc(movieDoc)
       .then(() => Store.addNotification({
-        title: "Success !",
-        message: "Toy successfully removed from your toy list.",
+        title: t('myToys:removeSuccessTitle'),
+        message: t('myToys:removeSuccessBody'),
         type: "success",
         insert: "top",
         container: "top-right",
@@ -69,8 +71,8 @@ function MyToysPage() {
       }))
       .catch((e) =>
         Store.addNotification({
-          title: "Unfortunately this action failed !",
-          message: "Please try again later... " + e.message.toString(),
+          title: t('common:toast.actionFailedTitle'),
+          message: t('common:toast.tryAgainLaterWithError', { error: e.message.toString() }),
           type: "danger",
           insert: "top",
           container: "top-right",
@@ -86,11 +88,11 @@ function MyToysPage() {
 
   return (
     <>
-        <h3>All your toys</h3>
+        <h3>{t('myToys:heading')}</h3>
 
-        <div style={{display: 'flex', justifyContent: 'space-between', margin: '0 0 1.5em'}}>
-          <button onClick={() => refresh()}>refresh</button>
-          <button className="btn-primary" onClick={() => navigate('/addNew')}>add your toy</button>
+        <div className="flex justify-between mb-6">
+          <button onClick={() => refresh()}>{t('myToys:refresh')}</button>
+          <button className="btn-primary" onClick={() => navigate('/addNew')}>{t('myToys:addYourToy')}</button>
         </div>
 
         <ul id="toyList">
@@ -98,16 +100,15 @@ function MyToysPage() {
             return (
               <div key={x.id}>
                 <Item {...toys.find((o: Toy) => x.id === o.id)} deleteItem={deleteItem} {...toyRatingStats(x.id)} />
-                <div style={{fontSize: '0.9em', color: 'var(--color-text-dim)'}}>
+                <div className="text-[0.9em] text-text-dim">
                   {countOffers(offers, x.id) ?
                     <div>
-                      You have{' '}
-                      <span style={{ color: 'var(--color-primary)', textDecoration: 'underline', cursor: 'pointer' }}
-                          onClick={() => navigate('/myOffers')}>{countOffers(offers, x.id)} offer(s)</span>
-                      {' '}on this toy - accept or decline them from My Offers.
+                      <Trans i18nKey="myToys:offersNotice"
+                        values={{ count: countOffers(offers, x.id) }}
+                        components={{ OfferLink: <span className="text-primary underline cursor-pointer" onClick={() => navigate('/myOffers')} /> }} />
                     </div>
                   :
-                    <>no offers..</>}
+                    <>{t('myToys:noOffers')}</>}
                 </div>
               </div>
             )

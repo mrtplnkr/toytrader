@@ -1,0 +1,8 @@
+{
+  "heading": "List your toy",
+  "uploadingPicture": "Uploading picture...",
+  "add": "Add",
+  "imageUploadFailedTitle": "Image upload failed",
+  "pictureRequiredTitle": "Picture required",
+  "pictureRequiredBody": "Please add a picture of your toy before submitting (wait for it to finish uploading)."
+}

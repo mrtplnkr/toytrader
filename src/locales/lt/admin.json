@@ -1,0 +1,19 @@
+{
+  "recentCommits": "Naujausi pakeitimai ({{count}})",
+  "commitsError": "Šiuo metu nepavyko įkelti pakeitimų istorijos iš GitHub.",
+  "complaintsHeading": "Administravimas - pranešimai",
+  "noComplaints": "Pranešimų nėra.",
+  "complaintBy": "{{reporter}} apie {{reported}} - {{date}}",
+  "tradeLine": "Mainai: {{toyOffered}} už {{toyTargeted}}",
+  "banUser": "Blokuoti {{name}}",
+  "banning": "blokuojama...",
+  "toysHeading": "Administravimas - žaislų peržiūra",
+  "searchPlaceholder": "Ieškokite pagal žaislo pavadinimą ar naudotoją...",
+  "noToysYet": "Žaislų dar nėra.",
+  "noToysMatch": "Žaislų, atitinkančių \"{{query}}\", nerasta.",
+  "banPoster": "Blokuoti skelbėją",
+  "confirmBan": "Blokuoti {{name}}? Tai išjungs jo paskyrą ir pašalins visus jo įkeltus žaislus.",
+  "bannedTitle": "Naudotojas blokuotas",
+  "bannedBody": "Pašalinta {{count}} skelbimas(ų).",
+  "toyNoLongerListed": "žaislas (jau nebeskelbiamas)"
+}

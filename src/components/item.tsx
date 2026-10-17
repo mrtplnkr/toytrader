@@ -1,6 +1,7 @@
 import { faShareNodes, faStar as faStarSolid, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { memo, MouseEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { Toy } from "../types/toy";
 
 const SITE_URL = "https://toystrader-a494f.web.app";
@@ -15,9 +16,11 @@ interface Props extends Toy {
 }
 
 function Item(props: Props) {
+    const { t } = useTranslation();
+
     const shareToy = (e: MouseEvent) => {
         e.stopPropagation();
-        const text = `Check out "${props.title}" on ToyTrader!`;
+        const text = t('item:shareText', { title: props.title });
         // /toy/<id> is a Cloud Function (functions/src/toyShareCard.ts,
         // routed via the Hosting rewrite in firebase.json) that serves this
         // toy's own Open Graph title/image for crawlers, then bounces real
@@ -33,22 +36,22 @@ function Item(props: Props) {
 
     return (
         <li>
-            <div style={{display:'flex', justifyContent: "space-between", width: '90%'}}>
-                <h3 style={{fontStyle: 'italic', margin: '0', flex: 1}}>{props.title}</h3>
-                <button style={{marginLeft: '1em'}} onClick={shareToy} title="Share">
+            <div className="flex justify-between w-[90%]">
+                <h3 className="italic m-0 flex-1">{props.title}</h3>
+                <button className="ml-4" onClick={shareToy} title={t('item:share')}>
                     <FontAwesomeIcon icon={faShareNodes} />
                 </button>
-                {props.deleteItem && <button style={{marginLeft: '1em'}} onClick={() => props.deleteItem(props.id)}>
+                {props.deleteItem && <button className="ml-4" onClick={() => props.deleteItem(props.id)}>
                     <FontAwesomeIcon icon={faTrash} />
                 </button>}
             </div>
-            {!!props.ratingCount && <p style={{fontSize: '0.85em', color: 'var(--color-text-dim)', margin: 0}}>
+            {!!props.ratingCount && <p className="text-sm text-text-dim m-0">
                 <FontAwesomeIcon icon={faStarSolid} /> {props.averageRating!.toFixed(1)} ({props.ratingCount})
             </p>}
             <img alt={props.title} src={props.file} />
-            {props.wished != null && <div style={{ display: 'flex', width: '90%', justifyContent: 'space-between' }}>
-                <button style={{ alignSelf: 'center' }} onClick={() => props.addRemoveWish(props)}>
-                    {props.wished ? 'wished' : 'wish'}</button>
+            {props.wished != null && <div className="flex w-[90%] justify-between">
+                <button className="self-center" onClick={() => props.addRemoveWish(props)}>
+                    {props.wished ? t('item:wished') : t('item:wish')}</button>
             </div>}
         </li>
     );

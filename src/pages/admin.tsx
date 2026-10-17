@@ -1,11 +1,24 @@
 import { useEffect, useState } from "react";
 import { useContextSelector } from "use-context-selector";
 import { Store } from "react-notifications-component";
+import { useTranslation } from "react-i18next";
+import i18next from "i18next";
 import { GoodAppContext } from "../hooks/context";
 import { Toy } from "../types/toy";
 import { Offer } from "../types/offer";
 import { Complaint } from "../types/complaint";
 import { banUser, getComplaintList, getOfferById, getUserProfiles } from "../hooks/helper";
+import adminEn from "../locales/en/admin.json";
+import adminLt from "../locales/lt/admin.json";
+import adminRu from "../locales/ru/admin.json";
+
+// Statically imported here (not in src/i18n/index.ts) so these translations
+// ride along in AdminPage's own lazy-loaded chunk instead of bloating the
+// main bundle everyone downloads - addResourceBundle runs once, the first
+// time this chunk is evaluated.
+i18next.addResourceBundle('en', 'admin', adminEn);
+i18next.addResourceBundle('lt', 'admin', adminLt);
+i18next.addResourceBundle('ru', 'admin', adminRu);
 
 interface Profile {
     email?: string;
@@ -35,6 +48,7 @@ function notify(title: string, message: string, type: 'success' | 'danger') {
 }
 
 function AdminPage() {
+    const { t } = useTranslation();
     const toys = useContextSelector(GoodAppContext, (state: any) => state.toys);
     const refresh = useContextSelector(GoodAppContext, (state: any) => state.refresh);
 
@@ -99,7 +113,7 @@ function AdminPage() {
     }, [toys.length, complaints.length]);
 
     const nameFor = (uid: string) => profilesByUid[uid]?.email ?? profilesByUid[uid]?.displayName ?? uid;
-    const toyTitle = (id?: string) => (id && toys.find((t: Toy) => t.id === id)?.title) || 'a toy (no longer listed)';
+    const toyTitle = (id?: string) => (id && toys.find((toy: Toy) => toy.id === id)?.title) || t('admin:toyNoLongerListed');
 
     const [toySearchQuery, setToySearchQuery] = useState('');
     const filteredToys = toys.filter((toy: Toy) => {
@@ -109,16 +123,16 @@ function AdminPage() {
     });
 
     const onBan = async (uid: string) => {
-        if (!window.confirm(`Ban ${nameFor(uid)}? This disables their account and removes every toy they've listed.`)) {
+        if (!window.confirm(t('admin:confirmBan', { name: nameFor(uid) }))) {
             return;
         }
         try {
             setBanningUid(uid);
             const result = await banUser(uid);
-            notify("User banned", `Removed ${result.bannedToyCount} listing(s).`, "success");
+            notify(t('admin:bannedTitle'), t('admin:bannedBody', { count: result.bannedToyCount }), "success");
             await refresh();
         } catch (err) {
-            notify("Unfortunately this action failed !", (err as Error).message, "danger");
+            notify(t('common:toast.actionFailedTitle'), (err as Error).message, "danger");
         } finally {
             setBanningUid(undefined);
         }
@@ -126,69 +140,75 @@ function AdminPage() {
 
     return (
         <>
-            <details style={{margin: '0 0 1.5em'}}>
-                <summary style={{cursor: 'pointer', fontSize: '0.9em', color: 'var(--color-text-dim)'}}>
-                    Recent commits ({recentCommits.length})
+            <details className="mb-6">
+                <summary className="cursor-pointer text-[0.9em] text-text-dim">
+                    {t('admin:recentCommits', { count: recentCommits.length })}
                 </summary>
-                <ul style={{fontSize: '0.85em', margin: '0.5em 0 0'}}>
+                <ul className="text-[0.85em] mt-2 mb-0">
                     {recentCommits.map((c) => (
-                        <li key={c.sha} style={{marginBottom: '0.25em'}}>
+                        <li key={c.sha} className="mb-1">
                             <code>{c.shortSha}</code> {c.subject}
-                            <span style={{color: 'var(--color-text-dim)'}}> — {new Date(c.date).toDateString()}</span>
+                            <span className="text-text-dim"> — {new Date(c.date).toDateString()}</span>
                         </li>
                     ))}
-                    {commitsError && <li>Couldn't load commit history from GitHub right now.</li>}
+                    {commitsError && <li>{t('admin:commitsError')}</li>}
                 </ul>
             </details>
 
-            <h3>Admin - complaints</h3>
-            {complaints.length === 0 && <p>No complaints filed.</p>}
-            <ul id="complaintsList" style={{height: '420px', minHeight: '150px', overflowY: 'auto', resize: 'vertical'}}>
+            <h3>{t('admin:complaintsHeading')}</h3>
+            {complaints.length === 0 && <p>{t('admin:noComplaints')}</p>}
+            <ul id="complaintsList" className="h-[420px] min-h-[150px] overflow-y-auto resize-y">
                 {complaints.map((c) => {
                     const offer = offersByComplaint[c.id];
                     return (
-                        <li key={c.id} style={{display: 'flex', flexDirection: 'column', gap: '0.5em', marginBottom: '1em'}}>
-                            <div style={{fontSize: '0.85em', color: 'var(--color-text-dim)'}}>
-                                {nameFor(c.reporterUid)} about {nameFor(c.reportedUid)} - {c.createdAt.toDateString()}
+                        <li key={c.id} className="flex flex-col gap-2 mb-4">
+                            <div className="text-[0.85em] text-text-dim">
+                                {t('admin:complaintBy', {
+                                    reporter: nameFor(c.reporterUid),
+                                    reported: nameFor(c.reportedUid),
+                                    date: c.createdAt.toDateString(),
+                                })}
                             </div>
                             {offer &&
-                                <div style={{fontSize: '0.85em'}}>Trade: {toyTitle(offer.toyOffered)} for {toyTitle(offer.toyTargeted)}</div>}
+                                <div className="text-[0.85em]">
+                                    {t('admin:tradeLine', { toyOffered: toyTitle(offer.toyOffered), toyTargeted: toyTitle(offer.toyTargeted) })}
+                                </div>}
                             <div>{c.message}</div>
-                            {c.photoFile && <img src={c.photoFile} alt="evidence" style={{width: '8em', borderRadius: 'var(--radius-sm)'}} />}
-                            <button className="btn-danger" style={{alignSelf: 'flex-start'}}
+                            {c.photoFile && <img src={c.photoFile} alt="evidence" className="w-[8em] rounded-sm" />}
+                            <button className="btn-danger self-start"
                                 disabled={banningUid === c.reportedUid} onClick={() => onBan(c.reportedUid)}>
-                                {banningUid === c.reportedUid ? 'banning...' : `Ban ${nameFor(c.reportedUid)}`}
+                                {banningUid === c.reportedUid ? t('admin:banning') : t('admin:banUser', { name: nameFor(c.reportedUid) })}
                             </button>
                         </li>
                     );
                 })}
             </ul>
 
-            <h3>Admin - review toys</h3>
+            <h3>{t('admin:toysHeading')}</h3>
             <input
                 type="text"
-                placeholder="Search by toy name or user..."
+                placeholder={t('admin:searchPlaceholder')}
                 value={toySearchQuery}
                 onChange={(e) => setToySearchQuery(e.target.value)}
-                style={{marginBottom: '1em', width: '100%', maxWidth: '360px'}}
+                className="mb-4 w-full max-w-[360px]"
             />
-            <ul id="toyList" style={{height: '420px', minHeight: '150px', overflowY: 'auto', resize: 'vertical'}}>
+            <ul id="toyList" className="h-[420px] min-h-[150px] overflow-y-auto resize-y">
                 {filteredToys.map((toy: Toy) => (
-                    <li key={toy.id} style={{display: 'flex', alignItems: 'center', gap: '1em', marginBottom: '0.75em'}}>
+                    <li key={toy.id} className="flex items-center gap-4 mb-3">
                         <img src={toy.file} alt={toy.title}
-                            style={{width: '60px', height: '60px', objectFit: 'cover', borderRadius: 'var(--radius-sm)'}} />
-                        <div style={{flex: 1}}>
-                            <div style={{fontWeight: 'bold'}}>{toy.title}</div>
-                            <div style={{fontSize: '0.85em', color: 'var(--color-text-dim)'}}>{nameFor(toy.userId)}</div>
+                            className="w-[60px] h-[60px] object-cover rounded-sm" />
+                        <div className="flex-1">
+                            <div className="font-bold">{toy.title}</div>
+                            <div className="text-[0.85em] text-text-dim">{nameFor(toy.userId)}</div>
                         </div>
                         <button className="btn-danger" disabled={banningUid === toy.userId} onClick={() => onBan(toy.userId)}>
-                            {banningUid === toy.userId ? 'banning...' : 'Ban poster'}
+                            {banningUid === toy.userId ? t('admin:banning') : t('admin:banPoster')}
                         </button>
                     </li>
                 ))}
             </ul>
-            {toys.length === 0 && <p>No toys listed yet.</p>}
-            {toys.length > 0 && filteredToys.length === 0 && <p>No toys match "{toySearchQuery}".</p>}
+            {toys.length === 0 && <p>{t('admin:noToysYet')}</p>}
+            {toys.length > 0 && filteredToys.length === 0 && <p>{t('admin:noToysMatch', { query: toySearchQuery })}</p>}
         </>
     );
 }

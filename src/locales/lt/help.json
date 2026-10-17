@@ -1,0 +1,19 @@
+{
+  "heading": "Pranešti apie problemą dėl mainų",
+  "whichTrade": "Kurie mainai?",
+  "selectTrade": "Pasirinkite mainus...",
+  "tradeOption": "{{toyOffered}} už {{toyTargeted}} ({{date}})",
+  "aToy": "žaislas",
+  "whatHappened": "Kas atsitiko?",
+  "describePlaceholder": "Aprašykite problemą su šiais mainais...",
+  "photoEvidence": "Nuotrauka kaip įrodymas (neprivaloma)",
+  "uploadingPhoto": "Keliama nuotrauka...",
+  "submitting": "pateikiama...",
+  "submit": "Pateikti pranešimą",
+  "pickTradeTitle": "Pasirinkite mainus",
+  "pickTradeBody": "Pasirinkite, su kuriais mainais susijęs šis pranešimas.",
+  "descriptionRequiredTitle": "Būtinas aprašymas",
+  "descriptionRequiredBody": "Aprašykite, kas atsitiko blogai.",
+  "submittedTitle": "Pranešimas pateiktas",
+  "submittedBody": "Mes patikrinsime - dėkojame, kad informavote."
+}

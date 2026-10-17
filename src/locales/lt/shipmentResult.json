@@ -1,0 +1,15 @@
+{
+  "cancelled": "Apmokėjimas buvo atšauktas - galite bandyti vėl iš savo pasiūlymų.",
+  "scanInstruction": "Nuskaitykite šį kodą Omniva paštomate, kad paliktumėte savo žaislą.",
+  "currentStatus": "Dabartinė būsena: {{status}}",
+  "awaitingFirstScan": "laukiama pirmo nuskaitymo",
+  "paymentUnconfirmed": "Mums kol kas nepavyko patvirtinti jūsų mokėjimo - tai gali nutikti, jei patvirtinimas vis dar vėluoja.",
+  "checking": "tikrinama...",
+  "recheckPayment": "Jau apmokėjau - patikrinti dar kartą",
+  "recheckNotPaid": "Stripe rodo, kad šis mokėjimas dar neįvyko. Jei atlikote apmokėjimą, palaukite minutę ir bandykite vėl.",
+  "recheckFailed": "Nepavyko patikrinti dabar - bandykite dar kartą po kurio laiko.",
+  "confirmingTip": "Patvirtinamas jūsų arbatpinigis...",
+  "thanksForTip": "Labai dėkojame už arbatpinigį!",
+  "noBarcodeYet": "Užregistruokite savo siuntą Omniva svetainėje, tuomet įrašykite brūkšninį kodą savo pasiūlymų puslapyje, kad jį pamatytumėte čia kaip QR kodą.",
+  "backToMyOffers": "Atgal į Mano pasiūlymus"
+}

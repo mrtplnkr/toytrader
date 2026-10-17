@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { updateProfile } from "firebase/auth";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { v4 } from 'uuid';
@@ -25,6 +26,7 @@ const notify = (title: string, message: string, type: 'success' | 'danger') => {
 
 function ProfilePage() {
     const navigate = useNavigate();
+    const { t } = useTranslation();
     const currentUser = auth.currentUser;
 
     const [displayName, setDisplayName] = useState(currentUser?.displayName ?? '');
@@ -62,7 +64,7 @@ function ProfilePage() {
 
     const onSaveShipping = async () => {
         if (!shippingName.trim() || !shippingPhone.trim() || !shippingMachineId || !shippingMachineLabel || !shippingCountryCode) {
-            notify("Missing info", "Name, phone, and a parcel machine are all required.", "danger");
+            notify(t('profile:missingInfoTitle'), t('profile:missingInfoBody'), "danger");
             return;
         }
         setSavingShipping(true);
@@ -74,9 +76,9 @@ function ProfilePage() {
                 parcelMachineLabel: shippingMachineLabel,
                 countryCode: shippingCountryCode,
             });
-            notify("Shipping info saved !", "You can now share this with trade partners from My Offers.", "success");
+            notify(t('profile:shippingSavedTitle'), t('profile:shippingSavedBody'), "success");
         } catch (err) {
-            notify("Unfortunately this action failed !", "Please try again later.", "danger");
+            notify(t('common:toast.actionFailedTitle'), t('common:toast.tryAgainLater'), "danger");
         } finally {
             setSavingShipping(false);
         }
@@ -92,7 +94,7 @@ function ProfilePage() {
             const url = await getDownloadURL(fileRef);
             setPhotoURL(url);
         } catch (err) {
-            notify("Photo upload failed", "Please try selecting the picture again.", "danger");
+            notify(t('common:toast.photoUploadFailedTitle'), t('common:toast.pictureUploadFailedBody'), "danger");
         } finally {
             setUploading(false);
         }
@@ -101,16 +103,16 @@ function ProfilePage() {
     const onSave = async () => {
         if (!currentUser) return;
         if (!displayName.trim()) {
-            notify("Name required", "Please enter a display name.", "danger");
+            notify(t('profile:nameRequiredTitle'), t('profile:nameRequiredBody'), "danger");
             return;
         }
         setSaving(true);
         try {
             await updateProfile(currentUser, { displayName: displayName.trim(), photoURL });
-            notify("Profile updated !", "Your changes have been saved.", "success");
+            notify(t('profile:profileUpdatedTitle'), t('profile:profileUpdatedBody'), "success");
             navigate(-1);
         } catch (err) {
-            notify("Unfortunately this action failed !", "Please try again later.", "danger");
+            notify(t('common:toast.actionFailedTitle'), t('common:toast.tryAgainLater'), "danger");
         } finally {
             setSaving(false);
         }
@@ -118,61 +120,59 @@ function ProfilePage() {
 
     return (
         <>
-            <div style={{display: 'flex', flexDirection: 'column', margin: '1em 0'}}>
+            <div className="flex flex-col my-4">
                 <button id="backButton" onClick={() => navigate(-1)}>
                     <FontAwesomeIcon color="darkviolet" icon={faBackspace} />
                 </button>
             </div>
 
-            <h3>Your profile</h3>
+            <h3>{t('profile:heading')}</h3>
 
-            <div className="card" style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1em', maxWidth: '360px', margin: '0 auto', padding: '1.5em'}}>
+            <div className="card flex flex-col items-center gap-4 max-w-[360px] mx-auto p-6">
                 {photoURL &&
                     <img src={photoURL} alt={displayName || 'profile'}
-                        style={{width: '5em', height: '5em', borderRadius: '50%', objectFit: 'cover'}} />}
+                        className="w-[5em] h-[5em] rounded-full object-cover" />}
 
-                <label style={{display: 'flex', flexDirection: 'column', gap: '0.25em', width: '100%'}}>
-                    Display name
+                <label className="flex flex-col gap-1 w-full">
+                    {t('profile:displayName')}
                     <input type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
                 </label>
 
-                <label style={{display: 'flex', flexDirection: 'column', gap: '0.25em', width: '100%'}}>
-                    Change picture
+                <label className="flex flex-col gap-1 w-full">
+                    {t('profile:changePicture')}
                     <input type="file" onChange={(e) => uploadPhoto(e.target.files != null ? e.target.files[0] : '')} />
                 </label>
-                {uploading && <p style={{fontSize: '0.85em', margin: 0}}>Uploading picture...</p>}
+                {uploading && <p className="text-[0.85em] m-0">{t('profile:uploadingPicture')}</p>}
 
-                <label style={{display: 'flex', flexDirection: 'column', gap: '0.25em', width: '100%'}}>
-                    Email
+                <label className="flex flex-col gap-1 w-full">
+                    {t('profile:email')}
                     <input type="text" value={currentUser?.email ?? ''} disabled />
                 </label>
 
-                <button className="btn-primary" disabled={saving || uploading} onClick={onSave} style={{alignSelf: 'flex-end'}}>
-                    {saving ? 'saving...' : 'Save'}
+                <button className="btn-primary self-end" disabled={saving || uploading} onClick={onSave}>
+                    {saving ? t('profile:saving') : t('profile:save')}
                 </button>
             </div>
 
-            <h3>Shipping info</h3>
-            <p style={{fontSize: '0.9em', color: 'var(--color-text-dim)', maxWidth: '360px', margin: '0 auto 1em'}}>
-                Shared with a trade partner once you're ready to ship, so they know who/where to
-                send their toy to - this app ships via Omniva parcel machines, not door-to-door,
-                so no home address is needed, just your name, phone, and preferred parcel machine.
+            <h3>{t('profile:shippingHeading')}</h3>
+            <p className="text-[0.9em] text-text-dim max-w-[360px] mx-auto mt-0 mb-4">
+                {t('profile:shippingDescription')}
             </p>
-            <div className="card" style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1em', maxWidth: '360px', margin: '0 auto', padding: '1.5em'}}>
-                <label style={{display: 'flex', flexDirection: 'column', gap: '0.25em', width: '100%'}}>
-                    Name
+            <div className="card flex flex-col items-center gap-4 max-w-[360px] mx-auto p-6">
+                <label className="flex flex-col gap-1 w-full">
+                    {t('profile:name')}
                     <input type="text" value={shippingName} onChange={(e) => setShippingName(e.target.value)} />
                 </label>
 
-                <label style={{display: 'flex', flexDirection: 'column', gap: '0.25em', width: '100%'}}>
-                    Phone
+                <label className="flex flex-col gap-1 w-full">
+                    {t('profile:phone')}
                     <input type="tel" value={shippingPhone} onChange={(e) => setShippingPhone(e.target.value)} />
                 </label>
 
                 <ParcelMachinePicker value={shippingMachineId} onChange={onPickMachine} />
 
-                <button className="btn-primary" disabled={savingShipping} onClick={onSaveShipping} style={{alignSelf: 'flex-end'}}>
-                    {savingShipping ? 'saving...' : 'Save shipping info'}
+                <button className="btn-primary self-end" disabled={savingShipping} onClick={onSaveShipping}>
+                    {savingShipping ? t('profile:saving') : t('profile:saveShippingInfo')}
                 </button>
             </div>
         </>

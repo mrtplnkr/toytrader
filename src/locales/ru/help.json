@@ -1,0 +1,19 @@
+{
+  "heading": "Сообщить о проблеме с обменом",
+  "whichTrade": "Какой обмен?",
+  "selectTrade": "Выберите обмен...",
+  "tradeOption": "{{toyOffered}} за {{toyTargeted}} ({{date}})",
+  "aToy": "игрушка",
+  "whatHappened": "Что произошло?",
+  "describePlaceholder": "Опишите проблему с этим обменом...",
+  "photoEvidence": "Фото-доказательство (необязательно)",
+  "uploadingPhoto": "Загрузка фото...",
+  "submitting": "отправка...",
+  "submit": "Отправить жалобу",
+  "pickTradeTitle": "Выберите обмен",
+  "pickTradeBody": "Выберите, к какому обмену относится эта жалоба.",
+  "descriptionRequiredTitle": "Требуется описание",
+  "descriptionRequiredBody": "Пожалуйста, опишите, что пошло не так.",
+  "submittedTitle": "Жалоба отправлена",
+  "submittedBody": "Мы разберёмся - спасибо, что сообщили."
+}

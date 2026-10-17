@@ -1,6 +1,7 @@
 import { faChevronDown, faFlagCheckered, faHandshake, faRemove } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { memo, TouchEvent, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Toy } from "../types/toy";
 
 interface Props {
@@ -12,6 +13,7 @@ interface Props {
 
 function ToyDisplay(props: Props) {//TODO: change to NewOffer
 
+    const { t } = useTranslation();
     const [showYourToys, setShowYourToys] = useState<boolean>(true);
     const [triedWithoutSelection, setTriedWithoutSelection] = useState<boolean>(false);
 
@@ -60,24 +62,22 @@ function ToyDisplay(props: Props) {//TODO: change to NewOffer
 
     return (
         <div className="largeOffer" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
-            <button onClick={() => setShowYourToys(x => !x)} className={showYourToys ? "animateBorder" : ''}
-                style={{border: '1px green dashed', position: 'fixed',left: '1em',top: '1em',zIndex: 1}}>
+            <button onClick={() => setShowYourToys(x => !x)} className={`border border-dashed border-[green] fixed left-4 top-4 z-[1] ${showYourToys ? "animateBorder" : ''}`}>
                     <FontAwesomeIcon icon={faChevronDown} />
             </button>
-            <div style={{ height: !showYourToys ? '1px' : '82%', transition: '2s',
-                position: 'fixed', left: '1em', top: '3.5em', width: '120px', overflowY: 'scroll'}}>
+            <div className={`fixed left-4 top-14 w-[120px] overflow-y-scroll transition-all duration-[2000ms] ${!showYourToys ? 'h-px' : 'h-[82%]'}`}>
                 {showYourToys &&
-                    <p style={{fontSize: '0.75em', margin: '0 0 0.5em', color: triedWithoutSelection ? '#ff6b6b' : undefined}}>
-                        {triedWithoutSelection ? '👇 pick a toy first!' : '👇 pick your toy to offer'}
+                    <p className={`text-[0.75em] mt-0 mb-2 ${triedWithoutSelection ? 'text-[#ff6b6b]' : ''}`}>
+                        {triedWithoutSelection ? t('addNewOffer:pickFirst') : t('addNewOffer:pickToyToOffer')}
                     </p>}
-                <div style={{position: 'relative', display: 'block'}}>
+                <div className="relative block">
                 {
                     props.yourToys.map((x:Toy) =>
-                    <div key={x.id} style={{position: 'relative'}}>
+                    <div key={x.id} className="relative">
                         <img onClick={() => { setSelectedToy(x.id); setTriedWithoutSelection(false); }}
-                            alt={x.title} style={{width:'100px', marginTop: '1em', cursor: 'pointer'}} src={x.file} />
+                            alt={x.title} className="w-[100px] mt-4 cursor-pointer" src={x.file} />
                             {selectedToy === x.id &&
-                        <FontAwesomeIcon style={{top: '17px', right: '2px', position: 'absolute'}}
+                        <FontAwesomeIcon className="absolute top-[17px] right-[2px]"
                             color='#81fc51' icon={faFlagCheckered} />}
                     </div>)
                 }
@@ -89,19 +89,17 @@ function ToyDisplay(props: Props) {//TODO: change to NewOffer
                     setTriedWithoutSelection(true);
                     setShowYourToys(true);
                 } }}
-                className={`buttonFixedLeft${selectedToy ? '' : ' animateBorder'}`}
-                title={selectedToy ? 'Propose this trade' : 'Select your toy above first'}
-                style={{cursor: selectedToy ? 'pointer' : 'not-allowed', opacity: selectedToy ? 1 : 0.6}}>
+                className={`buttonFixedLeft ${selectedToy ? 'cursor-pointer opacity-100' : 'cursor-not-allowed opacity-60 animateBorder'}`}
+                title={selectedToy ? t('addNewOffer:proposeTrade') : t('addNewOffer:selectYourToyFirst')}>
                     <FontAwesomeIcon icon={faHandshake} />
             </button>
             <button className="leftButton" onClick={() => props.nextToy(-1)} />
-            <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                height: '100%', gap: '0.5em'}}>
+            <div className="flex flex-col items-center justify-center h-full gap-2">
                 {/* Inline maxHeight overrides the shared ".largeOffer img { max-height: 100% }"
                     rule (by specificity) - otherwise the image alone fills this whole flex
                     column and the caption below it gets squeezed off-screen. */}
-                <img alt={props.toy.title} src={props.toy.file} style={{maxHeight: '80%', maxWidth: '100%'}} />
-                <p style={{color: 'white', fontSize: '1.1em', margin: 0}}>{props.toy.title}</p>
+                <img alt={props.toy.title} src={props.toy.file} className="max-h-[80%] max-w-full" />
+                <p className="text-white text-[1.1em] m-0">{props.toy.title}</p>
             </div>
             <button className="rightButton" onClick={() => props.nextToy(1)} />
             <button onClick={() => props.nextToy(undefined)}

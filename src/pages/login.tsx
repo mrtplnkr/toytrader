@@ -1,9 +1,11 @@
 import { useLocation, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { facebookSign, googleSign } from "../hooks/helper";
 
 function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
 
   const signedInCallback = (user: any) => {
     console.log('just signed in', user);
@@ -17,10 +19,10 @@ function LoginPage() {
 
   return (
     <div className="card max-w-[360px] mx-auto my-12 p-8 flex flex-col gap-4">
-      <h1 className="m-0">Login</h1>
+      <h1 className="m-0">{t('login:title')}</h1>
 
-      <button className="btn-primary" onClick={() => googleSign(signedInCallback)}>Google login</button>
-      <button className="btn-primary" onClick={() => facebookSign(signedInCallback)}>Facebook login</button>
+      <button className="btn-primary" onClick={() => googleSign(signedInCallback)}>{t('login:googleLogin')}</button>
+      <button className="btn-primary" onClick={() => facebookSign(signedInCallback)}>{t('login:facebookLogin')}</button>
     </div>
   );
 }

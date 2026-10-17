@@ -1,0 +1,15 @@
+{
+  "cancelled": "Checkout was cancelled - you can try again from your offers.",
+  "scanInstruction": "Scan this code at an Omniva parcel machine to drop off your toy.",
+  "currentStatus": "Current status: {{status}}",
+  "awaitingFirstScan": "awaiting first scan",
+  "paymentUnconfirmed": "We couldn't confirm your payment yet - this can happen if the confirmation is still catching up.",
+  "checking": "checking...",
+  "recheckPayment": "I already paid - check again",
+  "recheckNotPaid": "Stripe shows this payment hasn't gone through yet. If you completed checkout, give it a minute and try again.",
+  "recheckFailed": "Couldn't check right now - please try again shortly.",
+  "confirmingTip": "Confirming your tip...",
+  "thanksForTip": "Thanks so much for the tip!",
+  "noBarcodeYet": "Register your shipment on Omniva's own site, then save your barcode from your offers page to see it here as a QR code.",
+  "backToMyOffers": "Back to My Offers"
+}

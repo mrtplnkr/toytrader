@@ -1,0 +1,23 @@
+{
+  "appHeading": "Žaislų mainų programa",
+  "actionWords": ["mainykite", "keiskite", "pakeiskite", "apsikeiskite"],
+  "boredQuestion": "Pabodo <Old>jūsų seni</Old> žaislai ?",
+  "wellTradeThem": "Tuomet <Action>{{word}}</Action> juos !",
+  "discoverFun": " <Discover> Atraskite </Discover> <Fun> smagumą </Fun> <Trading> mainytis </Trading> , taip, kaip tai daro <GrownUps> SUAUGĘ </GrownUps> !",
+  "exceptToy4Toy": "Tik ne už pinigus, tiesiog {{word}} žaislas į žaislą",
+  "justLogin": "Tiesiog prisijunkite ir pradėkite žiūrėti kitų vaikų žaislus, kuriais galite keistis ir dalintis augant.",
+  "enjoy": "Smagiai !",
+  "asForParents": "o kaip tėvams :",
+  "enoughPlastic": "ar neturite pakankamai plastiko namuose ?",
+  "helpYoungsters": "padėkite savo vaikams parodyti nebenaudojamus žaislus, vietoj to, kad juos išmestų..",
+  "someoneAppreciate": "kažkas juos vis tiek įvertintų kaip naujus !",
+  "letThemTrade": "tad pirmyn, leiskite jiems keistis tarpusavyje!",
+  "learnSkills": "jie gali net išmokti naujų gyvenimo įgūdžių",
+  "learnReact": "Sužinoti apie React",
+  "donationThankYou": "Labai dėkojame už auką!",
+  "donationCancelled": "Auka atšaukta - jūs nebuvote nuskaičiuoti.",
+  "donationSupportPrompt": "Patinka ToyTrader? Galite jį paremti nedidele auka",
+  "redirecting": "nukreipiama...",
+  "aboutUs": "Apie mus",
+  "disclaimer": "Atsakomybės apribojimas"
+}

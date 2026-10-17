@@ -1,9 +1,11 @@
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBackspace } from "@fortawesome/free-solid-svg-icons";
+import { Trans, useTranslation } from "react-i18next";
 
 function DisclaimerPage() {
     const navigate = useNavigate();
+    const { t } = useTranslation();
 
     return (
         <>
@@ -14,35 +16,22 @@ function DisclaimerPage() {
             </div>
 
             <div className="card max-w-[600px] mx-auto p-6 text-left">
-                <h3>Disclaimer</h3>
+                <h3>{t('disclaimer:heading')}</h3>
 
-                <p><strong>Trades are between users, not with ToyTrader.</strong> ToyTrader only connects
-                    two people who agree to trade a toy - it is never a party to the trade itself, never
-                    inspects, holds, or ships either toy, and cannot guarantee the condition, safety, or
-                    accuracy of anything listed. Check age ratings, choking-hazard warnings, and condition
-                    yourself before agreeing to any trade, and have a parent or guardian involved for any
-                    trade made by a child.</p>
+                <p><strong>{t('disclaimer:p1Strong')}</strong> {t('disclaimer:p1Rest')}</p>
 
-                <p><strong>Shipping is handled entirely by Omniva.</strong> Users register and pay for
-                    their own shipments directly on Omniva's own site - ToyTrader has no business
-                    contract with Omniva, never creates a shipment on a user's behalf, and cannot verify
-                    that a barcode entered in the app corresponds to a real, successfully registered
-                    shipment. Omniva's own terms and liability apply to the physical delivery.</p>
+                <p><strong>{t('disclaimer:p2Strong')}</strong> {t('disclaimer:p2Rest')}</p>
 
-                <p><strong>Most information in the app is self-reported.</strong> Whether a toy was
-                    posted, received, or accurately described is reported by the users involved, not
-                    independently verified by ToyTrader. Toy ratings reflect individual users' opinions,
-                    not an endorsement by ToyTrader.</p>
+                <p><strong>{t('disclaimer:p3Strong')}</strong> {t('disclaimer:p3Rest')}</p>
 
-                <p><strong>The optional tip is a donation, not a fee for a service.</strong> It does not
-                    purchase insurance, a guarantee, or any right to a refund if a trade goes wrong.</p>
+                <p><strong>{t('disclaimer:p4Strong')}</strong> {t('disclaimer:p4Rest')}</p>
 
-                <p><strong>No warranty.</strong> ToyTrader is provided "as is," without warranty of any
-                    kind, and the developer is not liable for any loss, damage, or dispute arising from a
-                    trade, a shipment, or use of the app, to the fullest extent permitted by law.</p>
+                <p><strong>{t('disclaimer:p5Strong')}</strong> {t('disclaimer:p5Rest')}</p>
 
-                <p>If something has gone wrong with a specific trade, please use the{' '}
-                    <a href="/help">Help</a> page to report it.</p>
+                <p>
+                    {/* eslint-disable-next-line jsx-a11y/anchor-has-content -- Trans clones this element and fills in the translated link text at render */}
+                    <Trans i18nKey="disclaimer:p6" components={{ HelpLink: <a href="/help" /> }} />
+                </p>
             </div>
         </>
     );

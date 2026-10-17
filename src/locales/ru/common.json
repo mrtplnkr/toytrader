@@ -1,0 +1,13 @@
+{
+  "nav": {
+    "intro": "Главная",
+    "search": "Искать игрушки"
+  },
+  "toast": {
+    "actionFailedTitle": "Не удалось выполнить действие !",
+    "tryAgainLater": "Пожалуйста, попробуйте позже.",
+    "tryAgainLaterWithError": "Пожалуйста, попробуйте позже... {{error}}",
+    "pictureUploadFailedBody": "Попробуйте выбрать фото ещё раз.",
+    "photoUploadFailedTitle": "Не удалось загрузить фото"
+  }
+}

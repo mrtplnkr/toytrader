@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useContextSelector } from "use-context-selector";
+import { useTranslation } from "react-i18next";
 import { Store } from "react-notifications-component";
 import { v4 } from 'uuid';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -27,6 +28,7 @@ function notify(title: string, message: string, type: 'success' | 'danger') {
 
 function HelpPage() {
     const navigate = useNavigate();
+    const { t } = useTranslation();
     const offers = useContextSelector(GoodAppContext, (state: any) => state.offers);
     const toys = useContextSelector(GoodAppContext, (state: any) => state.toys);
 
@@ -37,7 +39,7 @@ function HelpPage() {
     const [uploading, setUploading] = useState(false);
     const [submitting, setSubmitting] = useState(false);
 
-    const toyTitle = (id: string) => toys.find((t: Toy) => t.id === id)?.title ?? 'a toy';
+    const toyTitle = (id: string) => toys.find((toy: Toy) => toy.id === id)?.title ?? t('help:aToy');
 
     const uploadPhoto = async (file: any) => {
         if (!file) return;
@@ -50,7 +52,7 @@ function HelpPage() {
             setPhotoFile(fileName);
             setPhotoPreviewUrl(url);
         } catch (err) {
-            notify("Photo upload failed", "Please try selecting the picture again.", "danger");
+            notify(t('common:toast.photoUploadFailedTitle'), t('common:toast.pictureUploadFailedBody'), "danger");
         } finally {
             setUploading(false);
         }
@@ -58,11 +60,11 @@ function HelpPage() {
 
     const onSubmit = async () => {
         if (!offerId) {
-            notify("Pick a trade", "Choose which trade this complaint is about.", "danger");
+            notify(t('help:pickTradeTitle'), t('help:pickTradeBody'), "danger");
             return;
         }
         if (!message.trim()) {
-            notify("Description required", "Please describe what went wrong.", "danger");
+            notify(t('help:descriptionRequiredTitle'), t('help:descriptionRequiredBody'), "danger");
             return;
         }
         const offer = offers.find((o: Offer) => o.id === offerId);
@@ -73,10 +75,10 @@ function HelpPage() {
         setSubmitting(true);
         try {
             await submitComplaint(offerId, reportedUid, message.trim(), photoFile);
-            notify("Complaint submitted", "We'll take a look - thanks for letting us know.", "success");
+            notify(t('help:submittedTitle'), t('help:submittedBody'), "success");
             navigate('/myOffers');
         } catch (err) {
-            notify("Unfortunately this action failed !", "Please try again later.", "danger");
+            notify(t('common:toast.actionFailedTitle'), t('common:toast.tryAgainLater'), "danger");
         } finally {
             setSubmitting(false);
         }
@@ -84,43 +86,47 @@ function HelpPage() {
 
     return (
         <>
-            <div style={{display: 'flex', flexDirection: 'column', margin: '1em 0'}}>
+            <div className="flex flex-col my-4">
                 <button id="backButton" onClick={() => navigate(-1)}>
                     <FontAwesomeIcon color="darkviolet" icon={faBackspace} />
                 </button>
             </div>
 
-            <h3>Report a problem with a trade</h3>
+            <h3>{t('help:heading')}</h3>
 
-            <div className="card" style={{display: 'flex', flexDirection: 'column', gap: '1em', maxWidth: '420px', margin: '0 auto', padding: '1.5em'}}>
-                <label style={{display: 'flex', flexDirection: 'column', gap: '0.25em'}}>
-                    Which trade?
+            <div className="card flex flex-col gap-4 max-w-[420px] mx-auto p-6">
+                <label className="flex flex-col gap-1">
+                    {t('help:whichTrade')}
                     <select value={offerId} onChange={(e) => setOfferId(e.target.value)}>
-                        <option value="" disabled>Select a trade...</option>
+                        <option value="" disabled>{t('help:selectTrade')}</option>
                         {offers.map((o: Offer) => (
                             <option key={o.id} value={o.id}>
-                                {toyTitle(o.toyOffered)} for {toyTitle(o.toyTargeted)} ({(o.offerCreated as Date).toDateString()})
+                                {t('help:tradeOption', {
+                                    toyOffered: toyTitle(o.toyOffered),
+                                    toyTargeted: toyTitle(o.toyTargeted),
+                                    date: (o.offerCreated as Date).toDateString(),
+                                })}
                             </option>
                         ))}
                     </select>
                 </label>
 
-                <label style={{display: 'flex', flexDirection: 'column', gap: '0.25em'}}>
-                    What happened?
+                <label className="flex flex-col gap-1">
+                    {t('help:whatHappened')}
                     <textarea rows={5} value={message} onChange={(e) => setMessage(e.target.value)}
-                        placeholder="Describe the problem with this trade..." />
+                        placeholder={t('help:describePlaceholder')} />
                 </label>
 
-                <label style={{display: 'flex', flexDirection: 'column', gap: '0.25em'}}>
-                    Photo evidence (optional)
+                <label className="flex flex-col gap-1">
+                    {t('help:photoEvidence')}
                     <input type="file" accept="image/*"
                         onChange={(e) => uploadPhoto(e.target.files != null ? e.target.files[0] : '')} />
                 </label>
-                {uploading && <p style={{fontSize: '0.85em', margin: 0}}>Uploading photo...</p>}
-                {photoPreviewUrl && <img src={photoPreviewUrl} alt="evidence" style={{width: '8em', borderRadius: 'var(--radius-sm)'}} />}
+                {uploading && <p className="text-[0.85em] m-0">{t('help:uploadingPhoto')}</p>}
+                {photoPreviewUrl && <img src={photoPreviewUrl} alt="evidence" className="w-[8em] rounded-sm" />}
 
-                <button className="btn-primary" disabled={submitting || uploading} onClick={onSubmit} style={{alignSelf: 'flex-end'}}>
-                    {submitting ? 'submitting...' : 'Submit complaint'}
+                <button className="btn-primary self-end" disabled={submitting || uploading} onClick={onSubmit}>
+                    {submitting ? t('help:submitting') : t('help:submit')}
                 </button>
             </div>
         </>

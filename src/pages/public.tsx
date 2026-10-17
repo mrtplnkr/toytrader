@@ -3,14 +3,14 @@ import { faFaceSmileBeam, faHeart, faSmileWink } from '@fortawesome/free-solid-s
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { Trans, useTranslation } from 'react-i18next';
 import logo from '../logo.svg';
 import { startDonationCheckout } from '../hooks/helper';
-
-const randomWord = ['trade', 'swap', 'switch', 'exchange']
 
 const DONATION_TIERS_EUR_CENTS = [300, 500, 1000];
 
 function PublicPage() {
+    const { t } = useTranslation();
     const [searchParams] = useSearchParams();
     const donationStatus = searchParams.get('donation');
 
@@ -27,42 +27,45 @@ function PublicPage() {
     };
 
     const randomSelect = () => {
-      return randomWord[Math.floor(Math.random() * randomWord.length)];
+      const actionWords = t('public:actionWords', { returnObjects: true }) as string[];
+      return actionWords[Math.floor(Math.random() * actionWords.length)];
     }
 
     return (
       <>
-        <h1 className="App-header">Toy Trader App</h1>
+        <h1 className="App-header">{t('public:appHeading')}</h1>
 
         <img src={logo} className="App-logo" alt="ToyTrader logo" />
-        
+
         <div id="intro">
           <h3>
-            Bored of <span style={{color: 'var(--color-primary)'}}>your old</span> toys ?
+            <Trans i18nKey="public:boredQuestion" components={{ Old: <span className="text-primary" /> }} />
           </h3>
-          <h2>Well, <span style={{color: 'var(--color-success)'}}>{randomSelect()}</span> them !</h2>
-          <div style={{fontSize: '1.5em'}}>
-            <span style={{fontWeight: 'bold'}}> Discover </span> the
-            <span style={{color: 'var(--color-primary)', fontWeight: 'bold' }}> fun </span>
-             of
-             <span style={{color: 'var(--color-success)', fontWeight: 'bold'}}> trading </span>
-             , just like the <span style={{fontWeight: 'bold'}}> GROWN UPS </span> do !
-             <div style={{fontSize: '0.8em', color: 'var(--color-text-dim)'}}>Except, not for money, just {randomSelect()} toy4toy</div>
+          <h2>
+            <Trans i18nKey="public:wellTradeThem" values={{ word: randomSelect() }} components={{ Action: <span className="text-success" /> }} />
+          </h2>
+          <div className="text-[1.5em]">
+            <Trans i18nKey="public:discoverFun" components={{
+              Discover: <span className="font-bold" />,
+              Fun: <span className="text-primary font-bold" />,
+              Trading: <span className="text-success font-bold" />,
+              GrownUps: <span className="font-bold" />,
+            }} />
+             <div className="text-[0.8em] text-text-dim">{t('public:exceptToy4Toy', { word: randomSelect() })}</div>
           </div>
-          <p style={{fontSize: '1.2em'}}>
-            Just login and start checking all them toys of other children
-             which you can swap and share as you grow.
+          <p className="text-[1.2em]">
+            {t('public:justLogin')}
           </p>
-          <p style={{color: 'var(--color-primary)', fontWeight: 'bold', fontSize: '1.5em'}}>Enjoy !</p>
+          <p className="text-primary font-bold text-[1.5em]">{t('public:enjoy')}</p>
         </div>
 
         <div id="parentIntro">
-          <p style={{fontSize: '1.4em'}}>as for the parents :</p>
-          <p style={{color: 'var(--color-success)', fontSize: '1.2em'}}>don't you have enough plastic at home ? <FontAwesomeIcon icon={faSmileWink} /></p>
-          <p style={{fontSize: '1.5em'}}>help your youngsters to showcase their unwanted toys instead of discarding them..</p>
-          <p style={{color: 'var(--color-primary)', fontSize: '1.3em'}}>someone would still appreciate them as new !</p>
-          <p style={{fontSize: '1.6em'}}>so go ahead, let them trade with each other!</p>
-          <p style={{fontSize: '1.3em'}}>they might as well learn new skills for life <FontAwesomeIcon icon={faFaceSmileBeam} /></p>
+          <p className="text-[1.4em]">{t('public:asForParents')}</p>
+          <p className="text-success text-[1.2em]">{t('public:enoughPlastic')} <FontAwesomeIcon icon={faSmileWink} /></p>
+          <p className="text-[1.5em]">{t('public:helpYoungsters')}</p>
+          <p className="text-primary text-[1.3em]">{t('public:someoneAppreciate')}</p>
+          <p className="text-[1.6em]">{t('public:letThemTrade')}</p>
+          <p className="text-[1.3em]">{t('public:learnSkills')} <FontAwesomeIcon icon={faFaceSmileBeam} /></p>
         </div>
 
         <a
@@ -71,22 +74,22 @@ function PublicPage() {
           target="_blank"
           rel="noopener noreferrer"
         >
-          Learn React
+          {t('public:learnReact')}
         </a>
 
-        <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5em', margin: '2em 0'}}>
+        <div className="flex flex-col items-center gap-2 my-8">
           {donationStatus === 'success' ?
-            <p style={{color: 'var(--color-primary)', fontSize: '1.2em'}}>
-              Thank you so much for the donation! <FontAwesomeIcon icon={faHeart} />
+            <p className="text-primary text-[1.2em]">
+              {t('public:donationThankYou')} <FontAwesomeIcon icon={faHeart} />
             </p>
           : donationStatus === 'cancel' ?
-            <p style={{color: 'var(--color-text-dim)'}}>Donation cancelled - no charge was made.</p>
+            <p className="text-text-dim">{t('public:donationCancelled')}</p>
           :
             <>
-              <p style={{fontSize: '0.95em', color: 'var(--color-text-dim)'}}>
-                Enjoying ToyTrader? You can support it with a small donation <FontAwesomeIcon icon={faHeart} />
+              <p className="text-[0.95em] text-text-dim">
+                {t('public:donationSupportPrompt')} <FontAwesomeIcon icon={faHeart} />
               </p>
-              <div style={{display: 'flex', gap: '0.75em'}}>
+              <div className="flex gap-3">
                 {DONATION_TIERS_EUR_CENTS.map((cents) => (
                   <button
                     key={cents}
@@ -94,7 +97,7 @@ function PublicPage() {
                     disabled={donatingCents !== undefined}
                     onClick={() => donate(cents)}
                   >
-                    {donatingCents === cents ? 'redirecting...' : `€${(cents / 100).toFixed(0)}`}
+                    {donatingCents === cents ? t('public:redirecting') : `€${(cents / 100).toFixed(0)}`}
                   </button>
                 ))}
               </div>
@@ -102,9 +105,9 @@ function PublicPage() {
           }
         </div>
 
-        <div style={{display: 'flex', gap: '1em', justifyContent: 'center', fontSize: '0.85em', margin: '1em 0'}}>
-          <a href="/about">About us</a>
-          <a href="/disclaimer">Disclaimer</a>
+        <div className="flex gap-4 justify-center text-[0.85em] my-4">
+          <a href="/about">{t('public:aboutUs')}</a>
+          <a href="/disclaimer">{t('public:disclaimer')}</a>
         </div>
       </>
     );
