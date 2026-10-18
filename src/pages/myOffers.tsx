@@ -26,7 +26,7 @@ interface HistoryItem {
     mySide: ShipmentSide;
     otherSide: ShipmentSide;
     isAccepted: boolean;
-    isMyTurnToPay: boolean;
+    canOfferTip: boolean;
     isMyTurnToRespond: boolean;
     canSubmitBarcode: boolean;
     canMarkPosted: boolean;
@@ -150,7 +150,6 @@ function MyOffersPage() {
             const mySide: ShipmentSide = isInitiator ? 'offer' : 'target';
             const otherSide: ShipmentSide = mySide === 'offer' ? 'target' : 'offer';
             const myPosted = mySide === 'offer' ? o.offerPosted : o.targetPosted;
-            const myShipmentPaid = mySide === 'offer' ? o.offerShipmentPaid : o.targetShipmentPaid;
             const myShipmentBarcode = mySide === 'offer' ? o.offerShipmentBarcode : o.targetShipmentBarcode;
             const myShipmentStatus = mySide === 'offer' ? o.offerShipmentStatus : o.targetShipmentStatus;
             // "My shipment was confirmed received" uses the SAME prefix as
@@ -186,10 +185,12 @@ function MyOffersPage() {
                 otherShippingPhone,
                 otherShippingParcelMachineLabel,
                 isAccepted: !!o.offerAccepted,
-                // The optional 1 EUR tip only becomes offerable after a
-                // successful trade - once the toy I shipped is confirmed
-                // received. Entirely voluntary - nothing else depends on it.
-                isMyTurnToPay: !!myReceived && !myShipmentPaid,
+                // The optional 1 EUR "buy me a coffee" tip is per *trade*,
+                // not per side: offerable once the whole trade has
+                // completed (both toys confirmed received) and I've left my
+                // own feedback, payable by either party. Entirely voluntary
+                // - nothing else depends on it.
+                canOfferTip: !!(o.offerReceived && o.targetReceived) && alreadyRated && !o.tipPaid,
                 isMyTurnToRespond: isReceiver && !o.offerAccepted,
                 canSubmitBarcode: !!o.offerAccepted && (!myShipmentBarcode || myShipmentStatus === 'RETURNED'),
                 // Posting is gated on the other side having also registered
@@ -415,10 +416,10 @@ function MyOffersPage() {
         }
     };
 
-    const payForShipment = async (offerId: string, side: ShipmentSide) => {
+    const payForShipment = async (offerId: string) => {
         try {
             setPayingId(offerId);
-            const { checkoutUrl } = await startShipmentCheckout(offerId, side);
+            const { checkoutUrl } = await startShipmentCheckout(offerId);
             window.location.href = checkoutUrl;
         } catch (err) {
             setPayingId(undefined);
@@ -604,6 +605,7 @@ function MyOffersPage() {
                                     {[1, 2, 3, 4, 5].map((n) => (
                                         <button
                                             key={n}
+                                            aria-label={t('myOffers:rateStarsLabel', { count: n })}
                                             className="bg-transparent border-none cursor-pointer p-0 text-[1.4em]"
                                             onClick={() => setStarsByOfferId((prev) => ({...prev, [x.id]: n}))}
                                         >
@@ -625,7 +627,7 @@ function MyOffersPage() {
                                     <button onClick={() => dismissRatingPrompt(x.id)}>{t('myOffers:skip')}</button>
                                 </div>
                             </div>}
-                        {x.isMyTurnToPay && !dismissedTipIds.has(x.id) &&
+                        {x.canOfferTip && !dismissedTipIds.has(x.id) &&
                             <div className="flex flex-col gap-2 items-center">
                                 <p className="text-[0.8em] text-text-dim m-0 text-center">
                                     {t('myOffers:tipPrompt')}
@@ -634,7 +636,7 @@ function MyOffersPage() {
                                     <button
                                         className="btn-primary"
                                         disabled={payingId === x.id}
-                                        onClick={() => payForShipment(x.id, x.mySide)}
+                                        onClick={() => payForShipment(x.id)}
                                     >
                                         {payingId === x.id ? t('myOffers:redirectingToPayment') : t('myOffers:leaveTip')}
                                     </button>

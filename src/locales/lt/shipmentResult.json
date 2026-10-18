@@ -8,8 +8,8 @@
   "recheckPayment": "Jau apmokėjau - patikrinti dar kartą",
   "recheckNotPaid": "Stripe rodo, kad šis mokėjimas dar neįvyko. Jei atlikote apmokėjimą, palaukite minutę ir bandykite vėl.",
   "recheckFailed": "Nepavyko patikrinti dabar - bandykite dar kartą po kurio laiko.",
-  "confirmingTip": "Patvirtinamas jūsų arbatpinigis...",
-  "thanksForTip": "Labai dėkojame už arbatpinigį!",
+  "confirmingTip": "Patvirtinama jūsų kava...",
+  "thanksForTip": "Labai dėkojame už kavą!",
   "noBarcodeYet": "Užregistruokite savo siuntą Omniva svetainėje, tuomet įrašykite brūkšninį kodą savo pasiūlymų puslapyje, kad jį pamatytumėte čia kaip QR kodą.",
   "backToMyOffers": "Atgal į Mano pasiūlymus"
 }

@@ -17,11 +17,14 @@ export interface Offer {
     targetPosted?: Date;
     targetReceived?: Date;
 
-    // Our own optional 1 EUR tip - offerable per side, only once that side's
-    // shipment is confirmed received by the other party. Entirely voluntary -
+    // Our own optional 1 EUR "buy me a coffee" tip - per *trade*, not per
+    // side: offerable once the whole trade has completed (both toys
+    // received) and the viewing user has left their own feedback, payable
+    // by either party, first to pay closes it for both. Entirely voluntary -
     // nothing else in the trade depends on this being paid.
-    offerShipmentPaid?: Date;
-    offerShipmentStripeSessionId?: string;
+    tipPaid?: Date;
+    tipStripeSessionId?: string;
+    tipPaidByUid?: string;
 
     // Self-reported: the user registers their own shipment directly on
     // Omniva's site (no business contract needed for that) and enters the
@@ -32,8 +35,6 @@ export interface Offer {
     offerShipmentStatus?: string;
     offerShipmentStatusUpdatedAt?: Date;
 
-    targetShipmentPaid?: Date;
-    targetShipmentStripeSessionId?: string;
     targetShipmentBarcode?: string;
     targetShipmentToySize?: string;
     targetShipmentStatus?: string;

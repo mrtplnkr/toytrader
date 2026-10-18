@@ -30,8 +30,9 @@ function ShipmentResultPage() {
     const offer: Offer | undefined = offers.find((o: Offer) => o.id === offerId);
     const barcode = offer && side ?
         (side === 'offer' ? offer.offerShipmentBarcode : offer.targetShipmentBarcode) : undefined;
-    const paid = offer && side ?
-        !!(side === 'offer' ? offer.offerShipmentPaid : offer.targetShipmentPaid) : false;
+    // The tip is per-trade now, not per-side - unlike barcode/shipmentStatus
+    // above, this doesn't depend on `side` at all.
+    const paid = !!offer?.tipPaid;
     const shipmentStatus = offer && side ?
         (side === 'offer' ? offer.offerShipmentStatus : offer.targetShipmentStatus) : undefined;
 
@@ -63,11 +64,11 @@ function ShipmentResultPage() {
     }, [status, paid]);
 
     const onRecheckPayment = async () => {
-        if (!offerId || !side) return;
+        if (!offerId) return;
         setRechecking(true);
         setRecheckResult(undefined);
         try {
-            const { paid: nowPaid } = await recheckShipmentPayment(offerId, side);
+            const { paid: nowPaid } = await recheckShipmentPayment(offerId);
             if (nowPaid) {
                 await refresh();
             } else {

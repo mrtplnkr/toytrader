@@ -2,7 +2,7 @@ import * as path from "path";
 import { test, expect, Page } from "@playwright/test";
 import { signInWithFakeGoogle } from "./helpers/auth";
 import { addToy } from "./helpers/toys";
-import { markShipmentPaid } from "./helpers/adminSeed";
+import { markTipPaid, getUidByEmail } from "./helpers/adminSeed";
 
 const FIXTURE_IMAGE = path.join(__dirname, "fixtures", "toy.png");
 
@@ -18,16 +18,18 @@ async function registerOmnivaBarcode(page: Page, barcode: string) {
   await expect(page.getByRole("button", { name: "View my QR code" })).toBeVisible();
 }
 
-test("two users trade toys: register with Omniva, ship, receive, and leave the optional tip", async ({ browser }) => {
+test("two users trade toys: register with Omniva, ship, receive, rate, and leave the optional tip", async ({ browser }) => {
   const runId = Date.now();
+  const aliceEmail = `alice-${runId}@example.com`;
+  const bobEmail = `bob-${runId}@example.com`;
 
   const aliceContext = await browser.newContext();
   const bobContext = await browser.newContext();
   const alice = await aliceContext.newPage();
   const bob = await bobContext.newPage();
 
-  await signInWithFakeGoogle(alice, { email: `alice-${runId}@example.com`, displayName: "Alice" });
-  await signInWithFakeGoogle(bob, { email: `bob-${runId}@example.com`, displayName: "Bob" });
+  await signInWithFakeGoogle(alice, { email: aliceEmail, displayName: "Alice" });
+  await signInWithFakeGoogle(bob, { email: bobEmail, displayName: "Bob" });
 
   await addToy(alice, `Alice's Robot ${runId}`, FIXTURE_IMAGE);
   await addToy(bob, `Bob's Dinosaur ${runId}`, FIXTURE_IMAGE);
@@ -75,49 +77,64 @@ test("two users trade toys: register with Omniva, ship, receive, and leave the o
   await alice.getByRole("button", { name: "Mark my toy as dropped off" }).click();
   await expect(alice.getByText(/the requested.*toy was posted/)).toBeVisible();
 
-  // Bob confirms he received the toy Alice shipped - this is what makes
-  // Alice's side of the trade "successful" and unlocks her optional tip.
+  // Bob confirms he received the toy Alice shipped.
   await bob.getByRole("button", { name: "refresh" }).click();
   await bob.getByRole("button", { name: "Mark the other toy as received" }).click();
   await expect(bob.getByText(/the requested.*toy was posted.*received on/)).toBeVisible();
 
-  await alice.getByRole("button", { name: "refresh" }).click();
+  // The optional tip is now per-trade, not per-side - it only unlocks once
+  // BOTH directions of the trade have completed, so Bob posts and Alice
+  // receives his own shipment (toyOffered, his Dinosaur) too.
+  await bob.getByRole("button", { name: "refresh" }).click();
+  await bob.getByRole("button", { name: "Mark my toy as dropped off" }).click();
+  await expect(bob.getByText(/the offered.*toy was posted/)).toBeVisible();
 
-  // Alice's optional 1 EUR tip only becomes offerable now, after her
-  // shipment is confirmed received - not upfront. There's no real Stripe test key
-  // available, so the checkout-session creation call is mocked at the
-  // network layer - everything else (auth, Firestore, the UI reacting to
-  // it) is real. The mock also seeds Firestore exactly as the real
-  // stripeWebhook function would once payment succeeds, via the Admin SDK
-  // against the emulator.
+  await alice.getByRole("button", { name: "refresh" }).click();
+  await alice.getByRole("button", { name: "Mark the other toy as received" }).click();
+  await expect(alice.getByText(/the offered.*toy was posted.*received on/)).toBeVisible();
+
+  // The tip is also gated on the viewer's own feedback having been
+  // recorded - Alice rates the toy she received (Bob's Dinosaur) before the
+  // tip prompt becomes available to her.
+  await alice.getByRole("button", { name: /Rate 5 star/ }).click();
+  await alice.getByRole("button", { name: "Submit rating" }).click();
+  await expect(alice.getByRole("button", { name: "Submit rating" })).toBeHidden();
+
+  // Alice's optional "buy me a coffee" tip only becomes offerable now, after
+  // the whole trade is complete and she's left her rating - not upfront.
+  // There's no real Stripe test key available, so the checkout-session
+  // creation call is mocked at the network layer - everything else (auth,
+  // Firestore, the UI reacting to it) is real. The mock also seeds
+  // Firestore exactly as the real stripeWebhook function would once payment
+  // succeeds, via the Admin SDK against the emulator.
   let capturedOfferId: string | undefined;
-  let capturedSide: string | undefined;
+  const aliceUid = await getUidByEmail(aliceEmail);
 
   await alice.route("**/startShipmentCheckout", async (route) => {
     const body = route.request().postDataJSON();
     capturedOfferId = body.data.offerId;
-    capturedSide = body.data.side;
 
-    await markShipmentPaid(capturedOfferId!, capturedSide as "offer" | "target");
+    await markTipPaid(capturedOfferId!, aliceUid);
 
     await route.fulfill({
       status: 200,
       contentType: "application/json",
       body: JSON.stringify({
         result: {
-          checkoutUrl: `/shipment/result?offerId=${capturedOfferId}&side=${capturedSide}&status=success`,
+          checkoutUrl: `/shipment/result?offerId=${capturedOfferId}&status=success`,
         },
       }),
     });
   });
 
-  await alice.getByRole("button", { name: /Leave a 1 EUR tip/ }).click();
+  await alice.getByRole("button", { name: /Buy me a coffee/ }).click();
   await alice.waitForURL("**/shipment/result*");
 
   expect(capturedOfferId).toBeTruthy();
 
-  // The QR code shows Alice's own previously self-entered barcode, not
-  // anything generated by payment.
-  await expect(alice.locator("svg")).toBeVisible();
-  await expect(alice.getByText("ALICE-TEST-BARCODE")).toBeVisible();
+  // The tip redirect no longer carries `side` (it's per-trade, not
+  // per-side), so this lands on the payment-confirmation branch rather than
+  // the barcode/QR view - that view is still reachable separately via
+  // "View my QR code", untouched by this change.
+  await expect(alice.getByText("Thanks so much for the coffee!")).toBeVisible();
 });

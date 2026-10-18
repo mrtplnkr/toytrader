@@ -5,7 +5,6 @@ import {getApps, initializeApp} from "firebase-admin/app";
 import {getFirestore, FieldValue, Firestore} from "firebase-admin/firestore";
 import type Stripe from "stripe";
 import {getStripe, stripeSecretKey, stripeWebhookSecret} from "./stripe";
-import {ShipmentSide} from "./omniva";
 
 if (getApps().length === 0) {
   initializeApp();
@@ -21,18 +20,18 @@ const appBaseUrl = defineString("APP_BASE_URL", {default: "http://localhost:3000
 
 interface StartShipmentCheckoutRequest {
   offerId: string;
-  side: ShipmentSide;
 }
 
 /**
- * Callable that starts a Stripe Checkout session for an optional 1 EUR tip
- * to ToyTrader. Nothing in the trade depends on this being paid - it's only
- * offerable per side, once that side's own shipment has been confirmed
- * received by the other party, i.e. only after a successful trade, not
- * upfront. Omniva registration/shipping itself is handled entirely by the
- * user on Omniva's own site (see submitOmnivaBarcode in helper.ts) - this
- * app has no business contract with Omniva and never calls their API to
- * create or charge for a shipment.
+ * Callable that starts a Stripe Checkout session for an optional 1 EUR
+ * "buy me a coffee" tip to ToyTrader. Nothing in the trade depends on this
+ * being paid - it's per *trade*, not per side: offerable by either party
+ * once the whole trade has completed (both toys confirmed received), not
+ * upfront, and first to pay closes it for both sides. Omniva
+ * registration/shipping itself is handled entirely by the user on Omniva's
+ * own site (see submitOmnivaBarcode in helper.ts) - this app has no
+ * business contract with Omniva and never calls their API to create or
+ * charge for a shipment.
  */
 export const startShipmentCheckout = onCall<StartShipmentCheckoutRequest>(
   {region: REGION, secrets: [stripeSecretKey]},
@@ -42,9 +41,9 @@ export const startShipmentCheckout = onCall<StartShipmentCheckoutRequest>(
       throw new HttpsError("unauthenticated", "Must be signed in.");
     }
 
-    const {offerId, side} = request.data ?? {};
-    if (!offerId || (side !== "offer" && side !== "target")) {
-      throw new HttpsError("invalid-argument", "offerId and side ('offer'|'target') are required.");
+    const {offerId} = request.data ?? {};
+    if (!offerId) {
+      throw new HttpsError("invalid-argument", "offerId is required.");
     }
 
     const db = getFirestore();
@@ -55,29 +54,19 @@ export const startShipmentCheckout = onCall<StartShipmentCheckoutRequest>(
     }
     const offer = offerSnap.data() ?? {};
 
-    const expectedUid = side === "offer" ? offer.userInitiated : offer.userReceived;
-    if (expectedUid !== uid) {
-      throw new HttpsError(
-        "permission-denied",
-        "You are not the party responsible for this side of the trade."
-      );
+    if (offer.userInitiated !== uid && offer.userReceived !== uid) {
+      throw new HttpsError("permission-denied", "You are not a party to this trade.");
     }
 
-    // "My shipment succeeded" = the toy on my side was confirmed received by
-    // the other party - offerReceived tracks toyOffered's receipt (the
-    // initiator's shipment), targetReceived tracks toyTargeted's (the
-    // receiver's shipment), so each side checks its own same-prefixed field.
-    const receivedField = side === "offer" ? "offerReceived" : "targetReceived";
-    if (!offer[receivedField]) {
+    if (!offer.offerReceived || !offer.targetReceived) {
       throw new HttpsError(
         "failed-precondition",
-        "This shipment hasn't been confirmed received yet - the optional tip " +
-        "only becomes available after a successful trade."
+        "This trade hasn't fully completed yet - the optional tip only becomes " +
+        "available once both toys have been confirmed received."
       );
     }
 
-    const paidField = `${side}ShipmentPaid`;
-    if (offer[paidField]) {
+    if (offer.tipPaid) {
       throw new HttpsError("already-exists", "This tip has already been paid.");
     }
 
@@ -94,20 +83,20 @@ export const startShipmentCheckout = onCall<StartShipmentCheckoutRequest>(
         },
         quantity: 1,
       }],
-      metadata: {offerId, side, uid},
+      metadata: {offerId, uid},
       success_url:
-        `${baseUrl}/shipment/result?offerId=${offerId}&side=${side}&status=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${baseUrl}/shipment/result?offerId=${offerId}&side=${side}&status=cancel`,
+        `${baseUrl}/shipment/result?offerId=${offerId}&status=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${baseUrl}/shipment/result?offerId=${offerId}&status=cancel`,
     });
 
-    await offerRef.update({[`${side}ShipmentStripeSessionId`]: session.id});
+    await offerRef.update({tipStripeSessionId: session.id});
 
     return {checkoutUrl: session.url};
   }
 );
 
 /**
- * Marks one side of an offer's optional tip as paid. Idempotent (no-ops if
+ * Marks an offer's shared, per-trade tip as paid. Idempotent (no-ops if
  * already paid) and shared between the webhook and recheckShipmentPayment,
  * so a missed/delayed webhook can be recovered from without duplicating
  * this logic or double-charging anyone - Stripe is only ever charged once
@@ -117,7 +106,7 @@ export const startShipmentCheckout = onCall<StartShipmentCheckoutRequest>(
 async function finalizeShipmentPayment(
   db: Firestore,
   offerId: string,
-  side: ShipmentSide
+  payerUid: string
 ): Promise<{alreadyProcessed: boolean}> {
   const offerRef = db.collection("offers").doc(offerId);
   const offerSnap = await offerRef.get();
@@ -127,15 +116,14 @@ async function finalizeShipmentPayment(
   }
 
   const offer = offerSnap.data() ?? {};
-  const paidField = `${side}ShipmentPaid`;
 
-  if (offer[paidField]) {
+  if (offer.tipPaid) {
     // Stripe can redeliver webhook events, and recheckShipmentPayment can
     // race with a webhook that just fired - already processed, no-op.
     return {alreadyProcessed: true};
   }
 
-  await offerRef.update({[paidField]: FieldValue.serverTimestamp()});
+  await offerRef.update({tipPaid: FieldValue.serverTimestamp(), tipPaidByUid: payerUid});
   return {alreadyProcessed: false};
 }
 
@@ -182,22 +170,21 @@ export const stripeWebhook = onRequest(
     }
 
     const offerId = session.metadata?.offerId;
-    const side = session.metadata?.side as ShipmentSide | undefined;
+    const payerUid = session.metadata?.uid;
 
-    if (!offerId || (side !== "offer" && side !== "target")) {
+    if (!offerId || !payerUid) {
       logger.error("Missing/invalid metadata on checkout session", session.id);
       res.status(200).send("ignored - missing metadata");
       return;
     }
 
-    await finalizeShipmentPayment(getFirestore(), offerId, side);
+    await finalizeShipmentPayment(getFirestore(), offerId, payerUid);
     res.status(200).send("ok");
   }
 );
 
 interface RecheckShipmentPaymentRequest {
   offerId: string;
-  side: ShipmentSide;
 }
 
 /**
@@ -215,9 +202,9 @@ export const recheckShipmentPayment = onCall<RecheckShipmentPaymentRequest>(
       throw new HttpsError("unauthenticated", "Must be signed in.");
     }
 
-    const {offerId, side} = request.data ?? {};
-    if (!offerId || (side !== "offer" && side !== "target")) {
-      throw new HttpsError("invalid-argument", "offerId and side ('offer'|'target') are required.");
+    const {offerId} = request.data ?? {};
+    if (!offerId) {
+      throw new HttpsError("invalid-argument", "offerId is required.");
     }
 
     const db = getFirestore();
@@ -228,19 +215,15 @@ export const recheckShipmentPayment = onCall<RecheckShipmentPaymentRequest>(
     }
     const offer = offerSnap.data() ?? {};
 
-    const expectedUid = side === "offer" ? offer.userInitiated : offer.userReceived;
-    if (expectedUid !== uid) {
-      throw new HttpsError(
-        "permission-denied",
-        "You are not the party responsible for this side of the trade."
-      );
+    if (offer.userInitiated !== uid && offer.userReceived !== uid) {
+      throw new HttpsError("permission-denied", "You are not a party to this trade.");
     }
 
-    if (offer[`${side}ShipmentPaid`]) {
+    if (offer.tipPaid) {
       return {paid: true};
     }
 
-    const sessionId = offer[`${side}ShipmentStripeSessionId`];
+    const sessionId = offer.tipStripeSessionId;
     if (!sessionId) {
       throw new HttpsError("failed-precondition", "No checkout session found for this tip yet.");
     }
@@ -252,7 +235,7 @@ export const recheckShipmentPayment = onCall<RecheckShipmentPaymentRequest>(
       return {paid: false};
     }
 
-    await finalizeShipmentPayment(db, offerId, side);
+    await finalizeShipmentPayment(db, offerId, uid);
     return {paid: true};
   }
 );

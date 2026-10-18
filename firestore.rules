@@ -24,15 +24,15 @@ service cloud.firestore {
          request.auth.uid == resource.data.userReceived ||
          request.auth.token.admin == true);
       allow create: if request.auth.uid != null && !isBanned(database, request.auth.uid);
-      // Only the service-fee payment fields stay server-only (verified via
-      // Stripe webhook/recheck). Barcode/terminal/size/status are now
+      // Only the tip payment fields stay server-only (verified via Stripe
+      // webhook/recheck) - the tip is per-trade now, not per-side, so a
+      // single shared set of fields. Barcode/terminal/size/status are
       // self-reported by the user who manually registered their own
       // shipment on Omniva's site - same trust model as offerAccepted/
       // offerPosted/offerReceived, which have always been client-writable.
       allow update: if request.auth.uid != null &&
         !request.resource.data.diff(resource.data).affectedKeys().hasAny([
-          'offerShipmentPaid', 'offerShipmentStripeSessionId',
-          'targetShipmentPaid', 'targetShipmentStripeSessionId'
+          'tipPaid', 'tipStripeSessionId', 'tipPaidByUid'
         ]) &&
         validBarcodeOrAbsent(request.resource.data, 'offerShipmentBarcode') &&
         validBarcodeOrAbsent(request.resource.data, 'targetShipmentBarcode');

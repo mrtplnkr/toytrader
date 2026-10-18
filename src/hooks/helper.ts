@@ -211,14 +211,15 @@ export const submitRating = async (offerId: string, side: ShipmentSide, toyId: s
 };
 
 const startShipmentCheckoutCallable = httpsCallable<
-    { offerId: string, side: ShipmentSide },
+    { offerId: string },
     { checkoutUrl: string }
 >(functions, "startShipmentCheckout");
 
-// Charges an optional 1 EUR tip to ToyTrader - only callable once the
-// backend confirms this side's shipment was received by the other party.
-export const startShipmentCheckout = async (offerId: string, side: ShipmentSide) => {
-    const result = await startShipmentCheckoutCallable({ offerId, side });
+// Charges an optional 1 EUR "buy me a coffee" tip to ToyTrader - per trade,
+// not per side, only callable once the backend confirms the whole trade has
+// completed (both toys confirmed received).
+export const startShipmentCheckout = async (offerId: string) => {
+    const result = await startShipmentCheckoutCallable({ offerId });
     return result.data;
 };
 
@@ -253,15 +254,15 @@ export const submitOmnivaBarcode = async (
 };
 
 const recheckShipmentPaymentCallable = httpsCallable<
-    { offerId: string, side: ShipmentSide },
+    { offerId: string },
     { paid: boolean }
 >(functions, "recheckShipmentPayment");
 
 // Recovery path if the Stripe webhook never processed a successful payment -
 // looks up the real Stripe session status and reconciles Firestore. Never
 // creates a new charge.
-export const recheckShipmentPayment = async (offerId: string, side: ShipmentSide) => {
-    const result = await recheckShipmentPaymentCallable({ offerId, side });
+export const recheckShipmentPayment = async (offerId: string) => {
+    const result = await recheckShipmentPaymentCallable({ offerId });
     return result.data;
 };
 
