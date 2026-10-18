@@ -233,6 +233,24 @@ function MyOffersPage() {
         try {
             setRespondingId(offerId);
             await updateOffer(offerId);
+
+            // Nothing stops a toy from being offered or targeted by several
+            // competing offers at once before any of them is accepted (see
+            // isToyCommittedElsewhere in list.tsx, which only guards the
+            // toy *you're* offering, not the one you're asking for) - now
+            // that one of them has won, a toy can only physically go to one
+            // trade, so auto-decline every other still-pending offer that
+            // shares either of this trade's two toys.
+            const acceptedOffer = offers.find((o: Offer) => o.id === offerId);
+            if (acceptedOffer) {
+                const theseToys = [acceptedOffer.toyOffered, acceptedOffer.toyTargeted];
+                const competingOfferIds = offers
+                    .filter((o: Offer) => o.id !== offerId && !o.offerAccepted &&
+                        (theseToys.includes(o.toyOffered) || theseToys.includes(o.toyTargeted)))
+                    .map((o: Offer) => o.id);
+                await Promise.all(competingOfferIds.map((id: string) => declineOffer(id)));
+            }
+
             await refresh();
         } catch (err) {
             notifyError(err as Error);
