@@ -1,10 +1,12 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: ['./src/**/*.{js,jsx,ts,tsx}'],
-  // Preflight (the global browser-default reset) is left off until every
-  // page has been migrated - see the Tailwind migration plan. Enabling it
-  // early would visibly change not-yet-migrated pages immediately, since it
-  // applies globally rather than only to elements using Tailwind classes.
+  // Tested enabling this on 2026-10-18 (now that Tailwind actually reaches
+  // the page - see the craco fix): real regressions. Headings (h1/h3) lose
+  // their size/weight, paragraph margins collapse, links lose their
+  // color/underline, and buttons shrink - none of these elements carry
+  // explicit Tailwind classes compensating for Preflight's reset. Needs a
+  // real pass adding those classes before this can go on safely.
   corePlugins: {
     preflight: false,
   },
