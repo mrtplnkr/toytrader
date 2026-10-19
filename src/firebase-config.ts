@@ -13,9 +13,8 @@ import { getMessaging, isSupported as isMessagingSupported, Messaging } from "fi
 // Messaging > Web Push certificates in the Firebase Console - the CLI has no
 // command for this, it's a one-time manual step). Safe to commit: this is
 // the PUBLIC key, same trust level as the rest of this file's config -
-// Firebase's infra holds the private half. Replace the placeholder once
-// generated; getToken() will fail until a real key is here.
-export const VAPID_KEY = "REPLACE_WITH_REAL_VAPID_KEY";
+// Firebase's infra holds the private half.
+export const VAPID_KEY = "BPYWeiqxJjRjgoom9QvFdox0ABNIY_JuAM-KRReqmwcQuVfNyou3Si6n8txBb7sCmbqTroglE5ZE_xJpNWmYeXM";
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
