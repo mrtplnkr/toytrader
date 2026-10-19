@@ -18,12 +18,16 @@ jobs:
         id: build
         continue-on-error: true
         run: npm ci --loglevel verbose > npm-ci-output.log 2>&1 && npm run build >> npm-ci-output.log 2>&1
-      - name: Upload build log on failure
+      - name: Print node/npm versions on failure
         if: steps.build.outcome == 'failure'
-        uses: actions/upload-artifact@v4
-        with:
-          name: npm-ci-output
-          path: npm-ci-output.log
+        run: |
+          echo "::error::NODE=$(node --version) NPM=$(npm --version) OS=$(uname -a)"
+      - name: Emit build log as annotations on failure
+        if: steps.build.outcome == 'failure'
+        run: |
+          tail -c 3000 npm-ci-output.log | while IFS= read -r line; do
+            echo "::error::$line"
+          done
       - name: Fail job if build failed
         if: steps.build.outcome == 'failure'
         run: exit 1
