@@ -18,5 +18,14 @@
   "missingInfoTitle": "Missing info",
   "missingInfoBody": "Name, phone, and a parcel machine are all required.",
   "shippingSavedTitle": "Shipping info saved !",
-  "shippingSavedBody": "You can now share this with trade partners from My Offers."
+  "shippingSavedBody": "You can now share this with trade partners from My Offers.",
+  "notificationsHeading": "Notifications",
+  "notificationsDescription": "Get notified about new trade offers, acceptances, shipping updates, and ratings - even when ToyTrader isn't open.",
+  "enableNotifications": "Enable notifications",
+  "notificationsAlreadyEnabled": "Notifications are enabled on this device.",
+  "notificationsBlocked": "Notifications are blocked for this site - you can re-enable them in your browser's site settings.",
+  "notificationsEnabledTitle": "Notifications enabled !",
+  "notificationsEnabledBody": "You'll now get notified about trade activity on this device.",
+  "notificationsDeniedTitle": "Notifications not enabled",
+  "notificationsDeniedBody": "You can turn them on later from your browser's site settings."
 }

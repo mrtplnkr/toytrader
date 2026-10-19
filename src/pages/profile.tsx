@@ -8,7 +8,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBackspace } from "@fortawesome/free-solid-svg-icons";
 import { Store } from "react-notifications-component";
 import { auth, storage } from "../firebase-config";
-import { getShippingProfile, ParcelMachine, saveShippingProfile } from "../hooks/helper";
+import { getShippingProfile, notificationsSupported, ParcelMachine, requestNotificationPermission, saveShippingProfile } from "../hooks/helper";
 import ParcelMachinePicker from "../components/parcelMachinePicker";
 
 const notify = (title: string, message: string, type: 'success' | 'danger') => {
@@ -44,6 +44,29 @@ function ProfilePage() {
     const [shippingMachineLabel, setShippingMachineLabel] = useState<string | undefined>();
     const [shippingCountryCode, setShippingCountryCode] = useState<string | undefined>();
     const [savingShipping, setSavingShipping] = useState(false);
+
+    const [notificationPermission, setNotificationPermission] = useState<NotificationPermission | undefined>(
+        notificationsSupported() ? Notification.permission : undefined
+    );
+    const [enablingNotifications, setEnablingNotifications] = useState(false);
+
+    const onEnableNotifications = async () => {
+        setEnablingNotifications(true);
+        try {
+            const result = await requestNotificationPermission();
+            if (result === "granted") {
+                setNotificationPermission("granted");
+                notify(t('profile:notificationsEnabledTitle'), t('profile:notificationsEnabledBody'), "success");
+            } else if (result === "denied") {
+                setNotificationPermission("denied");
+                notify(t('profile:notificationsDeniedTitle'), t('profile:notificationsDeniedBody'), "danger");
+            }
+        } catch (err) {
+            notify(t('common:toast.actionFailedTitle'), t('common:toast.tryAgainLater'), "danger");
+        } finally {
+            setEnablingNotifications(false);
+        }
+    };
 
     useEffect(() => {
         getShippingProfile().then((profile) => {
@@ -175,6 +198,24 @@ function ProfilePage() {
                     {savingShipping ? t('profile:saving') : t('profile:saveShippingInfo')}
                 </button>
             </div>
+
+            {notificationPermission !== undefined &&
+                <>
+                    <h3>{t('profile:notificationsHeading')}</h3>
+                    <div className="card flex flex-col items-center gap-3 max-w-[360px] mx-auto p-6">
+                        {notificationPermission === "granted" ?
+                            <p className="m-0 text-text-dim">{t('profile:notificationsAlreadyEnabled')}</p>
+                        : notificationPermission === "denied" ?
+                            <p className="m-0 text-text-dim">{t('profile:notificationsBlocked')}</p>
+                        :
+                            <>
+                                <p className="m-0 text-[0.9em] text-text-dim">{t('profile:notificationsDescription')}</p>
+                                <button className="btn-primary" disabled={enablingNotifications} onClick={onEnableNotifications}>
+                                    {enablingNotifications ? t('profile:saving') : t('profile:enableNotifications')}
+                                </button>
+                            </>}
+                    </div>
+                </>}
         </>
     );
 }

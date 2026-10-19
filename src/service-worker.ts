@@ -1,5 +1,7 @@
 /// <reference lib="webworker" />
 
+import { initializeApp } from 'firebase/app';
+import { getMessaging, onBackgroundMessage } from 'firebase/messaging/sw';
 import { clientsClaim } from 'workbox-core';
 import { ExpirationPlugin } from 'workbox-expiration';
 import { createHandlerBoundToURL, precacheAndRoute } from 'workbox-precaching';
@@ -9,6 +11,31 @@ import { StaleWhileRevalidate } from 'workbox-strategies';
 declare const self: ServiceWorkerGlobalScope;
 
 clientsClaim();
+
+// Deliberately a separate, minimal Firebase init from src/firebase-config.ts
+// rather than importing it - that file calls getAnalytics() unconditionally
+// at module load, which needs `window` and throws in a service worker's
+// context. Only messaging is needed here. These values are the same public,
+// safe-to-commit config already in firebase-config.ts (see CLAUDE.md).
+const messagingApp = initializeApp({
+  apiKey: "AIzaSyAnTyORfOZdmU8GqK7MRof2aAy2JUgTPKM",
+  authDomain: "toystrader-a494f.firebaseapp.com",
+  projectId: "toystrader-a494f",
+  storageBucket: "toystrader-a494f.appspot.com",
+  messagingSenderId: "267868385149",
+  appId: "1:267868385149:web:96d5672eabeba4b4efe614",
+});
+const messaging = getMessaging(messagingApp);
+
+// Shown when a push arrives while no tab has focus - a foreground message
+// (tab open and focused) is handled instead by onForegroundMessage in
+// src/hooks/helper.ts, which shows the app's normal in-app toast.
+onBackgroundMessage(messaging, (payload) => {
+  self.registration.showNotification(payload.notification?.title ?? 'ToyTrader', {
+    body: payload.notification?.body,
+    icon: '/logo192.png',
+  });
+});
 
 // Precaches every asset the build process generates. The __WB_MANIFEST
 // placeholder is replaced at build time by the InjectManifest webpack

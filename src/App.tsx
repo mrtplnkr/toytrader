@@ -23,8 +23,9 @@ import { Toy } from "./types/toy";
 import { Offer } from "./types/offer";
 import { Rating } from "./types/rating";
 import { GoodAppContext } from "./hooks/context";
-import { checkIsAdmin, getOfferList, getRatingList, getToyList, logOff } from "./hooks/helper";
+import { checkIsAdmin, getOfferList, getRatingList, getToyList, logOff, onForegroundMessage } from "./hooks/helper";
 import { diffAndNotifyShipmentStatus } from "./hooks/shipmentNotifications";
+import { Store } from "react-notifications-component";
 import HistoryPage from "./pages/inPost";
 import MyOffersPage from "./pages/myOffers";
 import ShipmentResultPage from "./pages/shipmentResult";
@@ -80,6 +81,25 @@ function StateProvider({children}: any) {
       window.removeEventListener("focus", getData);
     };
   }, [getData]);
+
+  // A push notification that arrives while this tab is open and focused
+  // doesn't auto-show as an OS notification (that only happens via the
+  // service worker when the tab isn't focused) - show it as the same
+  // in-app toast every other notification in this app uses.
+  useEffect(() => {
+    onForegroundMessage((title, body) => {
+      Store.addNotification({
+        title,
+        message: body,
+        type: "info",
+        insert: "top",
+        container: "top-right",
+        animationIn: ["animate__animated", "animate__fadeIn"],
+        animationOut: ["animate__animated", "animate__fadeOut"],
+        dismiss: { duration: 5000 },
+      });
+    });
+  }, []);
 
   return (
     <GoodAppContext.Provider value={{toys, offers, ratings, refresh: getData, signOut}}>

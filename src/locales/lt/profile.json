@@ -18,5 +18,14 @@
   "missingInfoTitle": "Trūksta informacijos",
   "missingInfoBody": "Vardas, telefonas ir paštomatas yra būtini.",
   "shippingSavedTitle": "Siuntimo informacija išsaugota !",
-  "shippingSavedBody": "Dabar galite pasidalinti šia informacija su mainų partneriais iš „Mano pasiūlymai“."
+  "shippingSavedBody": "Dabar galite pasidalinti šia informacija su mainų partneriais iš „Mano pasiūlymai“.",
+  "notificationsHeading": "Pranešimai",
+  "notificationsDescription": "Gaukite pranešimus apie naujus mainų pasiūlymus, priėmimus, siuntimo naujienas ir įvertinimus - net kai ToyTrader neatidaryta.",
+  "enableNotifications": "Įjungti pranešimus",
+  "notificationsAlreadyEnabled": "Pranešimai šiame įrenginyje įjungti.",
+  "notificationsBlocked": "Pranešimai šiai svetainei užblokuoti - galite juos vėl įjungti naršyklės svetainės nustatymuose.",
+  "notificationsEnabledTitle": "Pranešimai įjungti !",
+  "notificationsEnabledBody": "Dabar gausite pranešimus apie mainų veiklą šiame įrenginyje.",
+  "notificationsDeniedTitle": "Pranešimai neįjungti",
+  "notificationsDeniedBody": "Galite juos įjungti vėliau naršyklės svetainės nustatymuose."
 }

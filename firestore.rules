@@ -64,6 +64,15 @@ service cloud.firestore {
       // own ${side}Shipping* fields instead (see /offers above).
       allow read, write: if request.auth.uid != null && request.auth.uid == uid;
     }
+    match /fcmTokens/{token} {
+      // One doc per push-notification registration token (a user can have
+      // several, one per device/browser). Only the owning user can register
+      // or remove their own tokens - sending (functions/src/notifications.ts)
+      // happens via the Admin SDK, which bypasses rules entirely.
+      allow read, delete: if request.auth.uid != null && request.auth.uid == resource.data.uid;
+      allow create: if request.auth.uid != null && request.auth.uid == request.resource.data.uid;
+      allow update: if false;
+    }
     match /omnivaCache/{docId} {
       allow read: if request.auth.uid != null;
       allow write: if false;
@@ -88,10 +97,10 @@ service cloud.firestore {
     // being bypassed - mail was openly readable, ratings openly writable).
  		match /{collectionName}/{doc}{
       allow read : if request.auth.uid != null &&
-        !(collectionName in ['mail', 'complaints', 'offers', 'shippingProfiles']);
+        !(collectionName in ['mail', 'complaints', 'offers', 'shippingProfiles', 'fcmTokens']);
       allow write : if request.auth.uid != null &&
         !(collectionName in ['offers', 'mail', 'ratings', 'bannedUsers', 'toys', 'complaints',
-          'shippingProfiles', 'omnivaCache']);
+          'shippingProfiles', 'omnivaCache', 'fcmTokens']);
     }
   }
   //match /databases/{database}/documents {

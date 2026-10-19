@@ -5,8 +5,17 @@ import { connectAuthEmulator, getAuth, FacebookAuthProvider, GoogleAuthProvider 
 import { connectFirestoreEmulator, getFirestore } from "firebase/firestore";
 import { connectStorageEmulator, getStorage } from "firebase/storage";
 import { connectFunctionsEmulator, getFunctions } from "firebase/functions";
+import { getMessaging, isSupported as isMessagingSupported, Messaging } from "firebase/messaging";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
+
+// The public half of the Web Push certificate (Project Settings > Cloud
+// Messaging > Web Push certificates in the Firebase Console - the CLI has no
+// command for this, it's a one-time manual step). Safe to commit: this is
+// the PUBLIC key, same trust level as the rest of this file's config -
+// Firebase's infra holds the private half. Replace the placeholder once
+// generated; getToken() will fail until a real key is here.
+export const VAPID_KEY = "REPLACE_WITH_REAL_VAPID_KEY";
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
@@ -31,6 +40,19 @@ export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 export const functions = getFunctions(app, "europe-west1");
+
+// Messaging needs a browser capability check (isSupported() - Safari has
+// historically had gaps) before it's safe to call getMessaging() at all, so
+// this is lazy/on-demand rather than initialized eagerly like the exports
+// above - callers (src/hooks/helper.ts) await this instead of importing a
+// plain instance.
+let messagingInstance: Messaging | null | undefined;
+export async function getMessagingIfSupported(): Promise<Messaging | null> {
+  if (messagingInstance === undefined) {
+    messagingInstance = (await isMessagingSupported()) ? getMessaging(app) : null;
+  }
+  return messagingInstance;
+}
 
 // Point the SDK at the local Firebase Emulator Suite instead of production
 // when explicitly opted in (see firebase.json for the emulator ports) -

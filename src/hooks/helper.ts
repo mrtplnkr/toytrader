@@ -2,7 +2,8 @@ import { FacebookAuthProvider, signInWithPopup, signOut, updateProfile } from "f
 import { addDoc, collection, deleteDoc, doc, DocumentData, getDoc, getDocs, or, query, setDoc, Timestamp, updateDoc, where } from "firebase/firestore";
 import { getDownloadURL, ref } from "firebase/storage";
 import { httpsCallable } from "firebase/functions";
-import { auth, db, facebookProvider, googleProvider, functions, storage } from "../firebase-config";
+import { getToken, onMessage } from "firebase/messaging";
+import { auth, db, facebookProvider, googleProvider, functions, storage, getMessagingIfSupported, VAPID_KEY } from "../firebase-config";
 import { Offer } from "../types/offer";
 import { Toy } from "../types/toy";
 import { Rating } from "../types/rating";
@@ -436,5 +437,41 @@ export const shareShippingInfo = async (offerId: string, side: ShipmentSide, pro
         [`${side}ShippingPhone`]: profile.phone,
         [`${side}ShippingParcelMachineId`]: profile.parcelMachineId,
         [`${side}ShippingParcelMachineLabel`]: profile.parcelMachineLabel,
+    });
+};
+
+// Push notifications (Firebase Cloud Messaging). Sending happens entirely
+// server-side (functions/src/notifications.ts, triggered off Firestore
+// writes) - the client's only job is registering a token for this
+// device/browser so the server has somewhere to send to.
+export const notificationsSupported = () => "Notification" in window;
+
+export const requestNotificationPermission = async (): Promise<"granted" | "denied" | "unsupported"> => {
+    if (!notificationsSupported()) return "unsupported";
+
+    const permission = await Notification.requestPermission();
+    if (permission !== "granted") return "denied";
+
+    const messaging = await getMessagingIfSupported();
+    const uid = auth.currentUser?.uid;
+    if (!messaging || !uid) return "unsupported";
+
+    const registration = await navigator.serviceWorker.ready;
+    const token = await getToken(messaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: registration });
+    await setDoc(doc(db, "fcmTokens", token), { uid, createdAt: Date.now() });
+
+    return "granted";
+};
+
+// FCM only auto-shows an OS notification via the service worker when the
+// tab isn't focused - a message that arrives while the tab IS open and
+// focused needs the app to display it itself. Feeds the same toast pattern
+// (react-notifications-component) already used throughout the app, rather
+// than a separate notification UI.
+export const onForegroundMessage = async (callback: (title: string, body: string) => void) => {
+    const messaging = await getMessagingIfSupported();
+    if (!messaging) return;
+    onMessage(messaging, (payload) => {
+        callback(payload.notification?.title ?? "ToyTrader", payload.notification?.body ?? "");
     });
 };
