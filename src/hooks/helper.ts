@@ -334,6 +334,13 @@ export const unbanUser = async (uid: string) => {
     await unbanUserCallable({ uid });
 };
 
+const removeToyCallable = httpsCallable<{ toyId: string }, { ok: boolean }>(functions, "removeToy");
+
+// Removes a single listing without banning its owner - see functions/src/admin.ts.
+export const removeToy = async (toyId: string) => {
+    await removeToyCallable({ toyId });
+};
+
 // Looks up a single offer directly by id, independent of getOfferList's
 // current-user scoping (that query is `where userReceived/userInitiated ==
 // uid`, so it only ever returns the signed-in user's own trades) - offers

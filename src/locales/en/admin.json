@@ -15,5 +15,10 @@
   "confirmBan": "Ban {{name}}? This disables their account and removes every toy they've listed.",
   "bannedTitle": "User banned",
   "bannedBody": "Removed {{count}} listing(s).",
+  "removeToy": "Remove toy",
+  "removing": "removing...",
+  "confirmRemoveToy": "Remove \"{{title}}\"? This only removes this listing - the poster's account is untouched.",
+  "toyRemovedTitle": "Toy removed",
+  "toyRemovedBody": "Removed \"{{title}}\".",
   "toyNoLongerListed": "a toy (no longer listed)"
 }

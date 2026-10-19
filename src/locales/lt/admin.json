@@ -15,5 +15,10 @@
   "confirmBan": "Blokuoti {{name}}? Tai išjungs jo paskyrą ir pašalins visus jo įkeltus žaislus.",
   "bannedTitle": "Naudotojas blokuotas",
   "bannedBody": "Pašalinta {{count}} skelbimas(ų).",
+  "removeToy": "Pašalinti žaislą",
+  "removing": "šalinama...",
+  "confirmRemoveToy": "Pašalinti \"{{title}}\"? Tai pašalins tik šį skelbimą - skelbėjo paskyra liks nepaliesta.",
+  "toyRemovedTitle": "Žaislas pašalintas",
+  "toyRemovedBody": "Pašalinta \"{{title}}\".",
   "toyNoLongerListed": "žaislas (jau nebeskelbiamas)"
 }

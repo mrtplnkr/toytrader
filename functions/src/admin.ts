@@ -85,6 +85,31 @@ export const unbanUser = onCall<UnbanUserRequest>(
   }
 );
 
+interface RemoveToyRequest {
+  toyId: string;
+}
+
+/**
+ * Removes a single listing without banning its owner - for a one-off bad
+ * listing where the whole account doesn't warrant a ban. Doesn't touch any
+ * offers referencing this toy, same as banUser's bulk toy deletion above.
+ */
+export const removeToy = onCall<RemoveToyRequest>(
+  {region: REGION},
+  async (request) => {
+    requireAdmin(request);
+
+    const {toyId} = request.data ?? {};
+    if (!toyId) {
+      throw new HttpsError("invalid-argument", "toyId is required.");
+    }
+
+    await getFirestore().collection("toys").doc(toyId).delete();
+
+    return {ok: true};
+  }
+);
+
 interface GetUserProfilesRequest {
   uids: string[];
 }

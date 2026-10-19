@@ -7,7 +7,7 @@ import { GoodAppContext } from "../hooks/context";
 import { Toy } from "../types/toy";
 import { Offer } from "../types/offer";
 import { Complaint } from "../types/complaint";
-import { banUser, getComplaintList, getOfferById, getUserProfiles } from "../hooks/helper";
+import { banUser, getComplaintList, getOfferById, getUserProfiles, removeToy } from "../hooks/helper";
 import adminEn from "../locales/en/admin.json";
 import adminLt from "../locales/lt/admin.json";
 import adminRu from "../locales/ru/admin.json";
@@ -58,6 +58,7 @@ function AdminPage() {
 
     const [profilesByUid, setProfilesByUid] = useState<Record<string, Profile>>({});
     const [banningUid, setBanningUid] = useState<string | undefined>();
+    const [removingToyId, setRemovingToyId] = useState<string | undefined>();
     const [complaints, setComplaints] = useState<Complaint[]>([]);
     const [offersByComplaint, setOffersByComplaint] = useState<Record<string, Offer | undefined>>({});
     const [recentCommits, setRecentCommits] = useState<RecentCommit[]>([]);
@@ -138,6 +139,22 @@ function AdminPage() {
         }
     };
 
+    const onRemoveToy = async (toy: Toy) => {
+        if (!window.confirm(t('admin:confirmRemoveToy', { title: toy.title }))) {
+            return;
+        }
+        try {
+            setRemovingToyId(toy.id);
+            await removeToy(toy.id);
+            notify(t('admin:toyRemovedTitle'), t('admin:toyRemovedBody', { title: toy.title }), "success");
+            await refresh();
+        } catch (err) {
+            notify(t('common:toast.actionFailedTitle'), (err as Error).message, "danger");
+        } finally {
+            setRemovingToyId(undefined);
+        }
+    };
+
     return (
         <>
             <details className="mb-6">
@@ -201,6 +218,9 @@ function AdminPage() {
                             <div className="font-bold">{toy.title}</div>
                             <div className="text-[0.85em] text-text-dim">{nameFor(toy.userId)}</div>
                         </div>
+                        <button className="btn-danger" disabled={removingToyId === toy.id} onClick={() => onRemoveToy(toy)}>
+                            {removingToyId === toy.id ? t('admin:removing') : t('admin:removeToy')}
+                        </button>
                         <button className="btn-danger" disabled={banningUid === toy.userId} onClick={() => onBan(toy.userId)}>
                             {banningUid === toy.userId ? t('admin:banning') : t('admin:banPoster')}
                         </button>
