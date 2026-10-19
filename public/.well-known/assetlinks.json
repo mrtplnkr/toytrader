@@ -1,0 +1,10 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "app.web.toystrader_a494f.twa",
+    "sha256_cert_fingerprints": [
+      "B7:90:0E:B3:9F:15:CD:1B:26:8F:88:8A:47:87:0A:82:93:43:9B:D8:3F:DD:36:27:30:F5:F8:BA:0E:C4:A1:41"
+    ]
+  }
+}]
