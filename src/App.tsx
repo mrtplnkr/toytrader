@@ -36,7 +36,7 @@ import AboutPage from "./pages/about";
 import DisclaimerPage from "./pages/disclaimer";
 import { User } from "firebase/auth";
 import { useTranslation } from "react-i18next";
-import { setLanguage, SupportedLanguage } from "./i18n";
+import LanguageSwitcher from "./components/languageSwitcher";
 
 // Code-split: only the one admin account ever needs this page's code, so
 // there's no reason it should be in everyone's initial bundle.
@@ -266,7 +266,7 @@ function App() {
 }
 
 function Layout() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
 
   return (
     <div>
@@ -284,15 +284,7 @@ function Layout() {
             </li>
           </ul>
 
-          <select
-            aria-label="Language"
-            value={i18n.language}
-            onChange={(e) => setLanguage(e.target.value as SupportedLanguage)}
-          >
-            <option value="en">EN</option>
-            <option value="lt">LT</option>
-            <option value="ru">RU</option>
-          </select>
+          <LanguageSwitcher />
 
           <Auth />
         </div>

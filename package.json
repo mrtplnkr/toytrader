@@ -16,6 +16,7 @@
     "@types/react": "^18.2.17",
     "@types/react-dom": "^18.2.7",
     "firebase": "^10.1.0",
+    "flag-icons": "^7.6.0",
     "i18next": "^23.11.5",
     "lint": "^0.8.19",
     "qrcode.react": "^4.2.0",
