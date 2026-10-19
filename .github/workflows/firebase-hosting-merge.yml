@@ -14,7 +14,19 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - run: npm ci && npm run build
+      - name: Install and build (captured for diagnostics)
+        id: build
+        continue-on-error: true
+        run: npm ci --loglevel verbose > npm-ci-output.log 2>&1 && npm run build >> npm-ci-output.log 2>&1
+      - name: Upload build log on failure
+        if: steps.build.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-ci-output
+          path: npm-ci-output.log
+      - name: Fail job if build failed
+        if: steps.build.outcome == 'failure'
+        run: exit 1
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
