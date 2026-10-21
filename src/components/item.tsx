@@ -1,6 +1,6 @@
-import { faShareNodes, faStar as faStarSolid, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { faChevronLeft, faChevronRight, faShareNodes, faStar as faStarSolid, faTrash, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { memo, MouseEvent } from "react";
+import { memo, MouseEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Toy } from "../types/toy";
 
@@ -15,8 +15,20 @@ interface Props extends Toy {
     // offers?: ToyOffer[];
 }
 
+interface MediaItem {
+    type: 'image' | 'video';
+    url: string;
+}
+
 function Item(props: Props) {
     const { t } = useTranslation();
+    const [lightboxIndex, setLightboxIndex] = useState<number | undefined>(undefined);
+
+    const media: MediaItem[] = [
+        ...(props.images ?? [props.file]).map((url) => ({ type: 'image' as const, url })),
+        ...(props.video ? [{ type: 'video' as const, url: props.video }] : []),
+    ];
+    const hasGallery = media.length > 1;
 
     const shareToy = (e: MouseEvent) => {
         e.stopPropagation();
@@ -34,6 +46,17 @@ function Item(props: Props) {
         window.open(fbShareUrl, '_blank', 'noopener,noreferrer');
     };
 
+    const openLightbox = (e: MouseEvent) => {
+        if (!hasGallery) return;
+        e.stopPropagation();
+        setLightboxIndex(0);
+    };
+
+    const step = (e: MouseEvent, delta: number) => {
+        e.stopPropagation();
+        setLightboxIndex((i) => ((i ?? 0) + delta + media.length) % media.length);
+    };
+
     return (
         <li>
             <div className="flex justify-between w-[90%]">
@@ -48,11 +71,41 @@ function Item(props: Props) {
             {!!props.ratingCount && <p className="text-sm text-text-dim m-0">
                 <FontAwesomeIcon icon={faStarSolid} /> {props.averageRating!.toFixed(1)} ({props.ratingCount})
             </p>}
-            <img alt={props.title} src={props.file} />
+            <div className="relative inline-block">
+                <img alt={props.title} src={props.file} onClick={openLightbox}
+                    className={hasGallery ? "cursor-pointer" : undefined} />
+                {hasGallery &&
+                    <span className="absolute bottom-1 right-1 bg-surface-raised/90 rounded-sm px-1.5 text-[0.75em]">
+                        {t('item:moreMedia', { count: media.length - 1 })}
+                    </span>}
+            </div>
             {props.wished != null && <div className="flex w-[90%] justify-between">
                 <button className="self-center" onClick={() => props.addRemoveWish(props)}>
                     {props.wished ? t('item:wished') : t('item:wish')}</button>
             </div>}
+
+            {lightboxIndex !== undefined &&
+                <div className="fixed inset-0 z-[1000] flex flex-col items-center justify-center gap-4 bg-bg/90 backdrop-blur-sm"
+                    onClick={(e) => { e.stopPropagation(); setLightboxIndex(undefined); }}>
+                    <button className="absolute top-4 right-4 text-2xl" onClick={(e) => { e.stopPropagation(); setLightboxIndex(undefined); }}
+                        title={t('item:close')}>
+                        <FontAwesomeIcon icon={faXmark} />
+                    </button>
+                    <div className="flex items-center gap-4 max-w-[90vw] max-h-[80vh]" onClick={(e) => e.stopPropagation()}>
+                        {media.length > 1 &&
+                            <button onClick={(e) => step(e, -1)} title={t('item:previous')}>
+                                <FontAwesomeIcon icon={faChevronLeft} size="2x" />
+                            </button>}
+                        {media[lightboxIndex].type === 'image' ?
+                            <img src={media[lightboxIndex].url} alt={props.title} className="max-w-[80vw] max-h-[75vh] object-contain" />
+                        :
+                            <video src={media[lightboxIndex].url} controls autoPlay className="max-w-[80vw] max-h-[75vh]" />}
+                        {media.length > 1 &&
+                            <button onClick={(e) => step(e, 1)} title={t('item:next')}>
+                                <FontAwesomeIcon icon={faChevronRight} size="2x" />
+                            </button>}
+                    </div>
+                </div>}
         </li>
     );
 }

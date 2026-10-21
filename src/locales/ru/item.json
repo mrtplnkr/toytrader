@@ -2,5 +2,9 @@
   "share": "Поделиться",
   "shareText": "Посмотри \"{{title}}\" в ToyTrader!",
   "wished": "в желаемом",
-  "wish": "хочу"
+  "wish": "хочу",
+  "moreMedia": "+{{count}}",
+  "close": "Закрыть",
+  "previous": "Назад",
+  "next": "Далее"
 }

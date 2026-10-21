@@ -2,5 +2,9 @@
   "share": "Share",
   "shareText": "Check out \"{{title}}\" on ToyTrader!",
   "wished": "wished",
-  "wish": "wish"
+  "wish": "wish",
+  "moreMedia": "+{{count}}",
+  "close": "Close",
+  "previous": "Previous",
+  "next": "Next"
 }

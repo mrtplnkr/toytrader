@@ -4,5 +4,22 @@
   "add": "Добавить",
   "imageUploadFailedTitle": "Не удалось загрузить изображение",
   "pictureRequiredTitle": "Требуется фото",
-  "pictureRequiredBody": "Пожалуйста, добавьте фото своей игрушки перед отправкой (подождите, пока оно загрузится)."
+  "pictureRequiredBody": "Пожалуйста, добавьте фото своей игрушки перед отправкой (подождите, пока оно загрузится).",
+  "setAsMain": "Сделать главным фото",
+  "mainPhoto": "Главное фото",
+  "removePhoto": "Удалить фото",
+  "maxImagesTitle": "Достигнут лимит фото",
+  "maxImagesBody": "Можно добавить до {{count}} фото на игрушку.",
+  "invalidImageTypeTitle": "Неверный файл",
+  "invalidImageTypeBody": "Пожалуйста, выберите файл изображения.",
+  "imageTooLargeTitle": "Фото слишком большое",
+  "imageTooLargeBody": "Фото должно быть не более {{maxMb}} МБ.",
+  "addVideo": "Добавить видео (необязательно)",
+  "removeVideo": "Удалить видео",
+  "uploadingVideo": "Загрузка видео...",
+  "videoUploadFailedTitle": "Не удалось загрузить видео",
+  "invalidVideoTypeTitle": "Неверный файл",
+  "invalidVideoTypeBody": "Пожалуйста, выберите видеофайл.",
+  "videoTooLargeTitle": "Видео слишком большое",
+  "videoTooLargeBody": "Видео должно быть не более {{maxMb}} МБ."
 }

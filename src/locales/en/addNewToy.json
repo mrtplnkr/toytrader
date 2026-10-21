@@ -4,5 +4,22 @@
   "add": "Add",
   "imageUploadFailedTitle": "Image upload failed",
   "pictureRequiredTitle": "Picture required",
-  "pictureRequiredBody": "Please add a picture of your toy before submitting (wait for it to finish uploading)."
+  "pictureRequiredBody": "Please add a picture of your toy before submitting (wait for it to finish uploading).",
+  "setAsMain": "Set as main photo",
+  "mainPhoto": "Main photo",
+  "removePhoto": "Remove photo",
+  "maxImagesTitle": "Maximum photos reached",
+  "maxImagesBody": "You can add up to {{count}} photos per toy.",
+  "invalidImageTypeTitle": "Invalid file",
+  "invalidImageTypeBody": "Please choose an image file.",
+  "imageTooLargeTitle": "Photo too large",
+  "imageTooLargeBody": "Photos must be {{maxMb}} MB or smaller.",
+  "addVideo": "Add a video (optional)",
+  "removeVideo": "Remove video",
+  "uploadingVideo": "Uploading video...",
+  "videoUploadFailedTitle": "Video upload failed",
+  "invalidVideoTypeTitle": "Invalid file",
+  "invalidVideoTypeBody": "Please choose a video file.",
+  "videoTooLargeTitle": "Video too large",
+  "videoTooLargeBody": "Videos must be {{maxMb}} MB or smaller."
 }

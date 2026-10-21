@@ -49,10 +49,17 @@ export const facebookSign = async (callback: any) => {
 
 export const toysCollectionRef = collection(db, "toys");
 
-export const addNewToy = async (title: string, file: string) => {
+// images: 1-3 Storage object names in upload order. mainImage: which one of
+// them is the thumbnail/main photo - stored in the legacy `file` field so
+// every existing reader (item.tsx, myOffers.tsx, admin.tsx, toyShareCard.ts,
+// bubbles.tsx) keeps working unchanged. video: optional single Storage
+// object name.
+export const addNewToy = async (title: string, images: string[], mainImage: string, video?: string) => {
     await addDoc(toysCollectionRef, {
         title,
-        file: file,
+        file: mainImage,
+        images,
+        ...(video ? { video } : {}),
         userId: auth.currentUser?.uid,
     });
 }
@@ -84,14 +91,22 @@ export const getToyList = async () => {
       // anything tracking a toy by position, e.g. list.tsx) would shuffle
       // on every refetch.
       const toyList: Toy[] = await Promise.all(dataList.map(async (d) => {
-        const filesFolderRef = ref(storage, `projectFiles/${d.file}`);
-        const url = await getDownloadURL(filesFolderRef);
+        // Pre-existing docs from before multi-image support have no
+        // `images` field - fall back to the single legacy `file`.
+        const rawImages: string[] = d.images && d.images.length > 0 ? d.images : [d.file];
+        const imageUrls = await Promise.all(rawImages.map((name: string) =>
+            getDownloadURL(ref(storage, `projectFiles/${name}`))
+        ));
+        const mainIndex = Math.max(0, rawImages.indexOf(d.file));
+        const video = d.video ? await getDownloadURL(ref(storage, `projectFiles/${d.video}`)) : undefined;
 
         return {
             id: d.id,
             userId: d.userId,
             title: d.title,
-            file: url,
+            file: imageUrls[mainIndex],
+            images: imageUrls,
+            video,
         };
       }));
       return toyList;

@@ -1,12 +1,29 @@
 rules_version = '2';
 
-// Craft rules based on data in your Firestore database
-// allow write: if firestore.get(
-//    /databases/(default)/documents/users/$(request.auth.uid)).data.isAdmin;
 service firebase.storage {
   match /b/{bucket}/o {
-    match /{allPaths=**} {
-      allow read, write: if request.auth.uid != null;
+    // Every upload in the app (toy photos/video, profile avatars, support
+    // and complaint photos - see CLAUDE.md) shares this one flat path with
+    // uuid filenames, so a single content-type-based size cap here covers
+    // all of them: images up to 8MB each, video up to 30MB - generous for
+    // a toy photo/short clip, but a real server-side backstop rather than
+    // relying on client-side checks alone (addNewToy.tsx mirrors these same
+    // limits before even starting the upload).
+    // No catch-all beyond this - every upload in the app already goes
+    // through projectFiles/ (confirmed: addNewToy.tsx, helper.ts, help.tsx,
+    // profile.tsx all use this exact path). A permissive `match
+    // /{allPaths=**}` alongside this would silently defeat the size/type
+    // check below - Storage rules grant access if ANY matching rule allows
+    // it (same OR-semantics gotcha as firestore.rules' catch-all, see
+    // CLAUDE.md), so a broader rule can't coexist with a narrower
+    // restriction on a path it also matches.
+    match /projectFiles/{fileName} {
+      allow read: if request.auth.uid != null;
+      allow write: if request.auth.uid != null &&
+        (
+          (request.resource.contentType.matches('image/.*') && request.resource.size < 8 * 1024 * 1024) ||
+          (request.resource.contentType.matches('video/.*') && request.resource.size < 30 * 1024 * 1024)
+        );
     }
   }
 }

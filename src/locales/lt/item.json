@@ -2,5 +2,9 @@
   "share": "Pasidalinti",
   "shareText": "Pažiūrėk \"{{title}}\" ToyTrader programoje!",
   "wished": "pageidauta",
-  "wish": "pageidauti"
+  "wish": "pageidauti",
+  "moreMedia": "+{{count}}",
+  "close": "Uždaryti",
+  "previous": "Ankstesnis",
+  "next": "Kitas"
 }

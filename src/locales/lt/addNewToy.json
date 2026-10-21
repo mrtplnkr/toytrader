@@ -4,5 +4,22 @@
   "add": "Pridėti",
   "imageUploadFailedTitle": "Nuotraukos įkelti nepavyko",
   "pictureRequiredTitle": "Reikalinga nuotrauka",
-  "pictureRequiredBody": "Prieš pateikdami, pridėkite savo žaislo nuotrauką (palaukite, kol ji baigs kelti)."
+  "pictureRequiredBody": "Prieš pateikdami, pridėkite savo žaislo nuotrauką (palaukite, kol ji baigs kelti).",
+  "setAsMain": "Nustatyti kaip pagrindinę nuotrauką",
+  "mainPhoto": "Pagrindinė nuotrauka",
+  "removePhoto": "Pašalinti nuotrauką",
+  "maxImagesTitle": "Pasiektas nuotraukų limitas",
+  "maxImagesBody": "Vienam žaislui galite pridėti iki {{count}} nuotraukų.",
+  "invalidImageTypeTitle": "Netinkamas failas",
+  "invalidImageTypeBody": "Pasirinkite paveikslėlio failą.",
+  "imageTooLargeTitle": "Nuotrauka per didelė",
+  "imageTooLargeBody": "Nuotraukos turi būti ne didesnės nei {{maxMb}} MB.",
+  "addVideo": "Pridėti vaizdo įrašą (neprivaloma)",
+  "removeVideo": "Pašalinti vaizdo įrašą",
+  "uploadingVideo": "Keliamas vaizdo įrašas...",
+  "videoUploadFailedTitle": "Vaizdo įrašo įkelti nepavyko",
+  "invalidVideoTypeTitle": "Netinkamas failas",
+  "invalidVideoTypeBody": "Pasirinkite vaizdo įrašo failą.",
+  "videoTooLargeTitle": "Vaizdo įrašas per didelis",
+  "videoTooLargeBody": "Vaizdo įrašai turi būti ne didesni nei {{maxMb}} MB."
 }
