@@ -42,10 +42,8 @@ yarn-error.log*
 extensions/*.env
 extensions/*.secret.local
 
-# Bubblewrap-generated Android/TWA wrapper project - a separate Gradle
-# toolchain, not part of the web app build, and holds the real Play Store
-# signing keystore (android.keystore) which must never reach git history,
-# even in a private repo - there's no way to "unleak" a signing key once
-# it's in history short of rotating it (losing it defeats the purpose of a
-# .gitignore entry added after the fact).
-/android-twa/
+# Bubblewrap-generated Android/TWA wrapper project (android-twa/) - a
+# separate Gradle toolchain, not part of the web app build. Its own
+# android-twa/.gitignore excludes node_modules/build output/the signing
+# keystore; everything else (source, gradle config, the generator script)
+# is tracked.

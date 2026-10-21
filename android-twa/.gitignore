@@ -1,0 +1,20 @@
+# Regenerable Gradle/npm artifacts - not useful to track, large, churns
+# constantly.
+node_modules/
+build/
+app/build/
+.gradle/
+*.aab
+*.apk
+*.apk.idsig
+
+# The actual Play Store signing key. Never belongs in git history, even in
+# a private repo - there's no way to "unleak" a signing key after the fact,
+# only rotate it (which means losing the ability to update the app under
+# its current listing unless Play App Signing is enrolled). Re-run
+# generate-project.js to create a fresh one if this is ever lost -
+# IMPORTANT: that means a working app build still requires the real key
+# backed up separately (password manager), since this .gitignore entry
+# means git alone can never restore it.
+android.keystore
+KEYSTORE_CREDENTIALS_DO_NOT_COMMIT.txt
