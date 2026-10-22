@@ -34,6 +34,7 @@ import SplashScreen from "./components/splashScreen";
 import Bubbles from "./components/bubbles";
 import AboutPage from "./pages/about";
 import DisclaimerPage from "./pages/disclaimer";
+import PrivacyPage from "./pages/privacy";
 import { User } from "firebase/auth";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "./components/languageSwitcher";
@@ -180,6 +181,7 @@ function App() {
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/about" element={<AboutPage />} />
                 <Route path="/disclaimer" element={<DisclaimerPage />} />
+                <Route path="/privacy" element={<PrivacyPage />} />
                 <Route
                   path="/list"
                   element={

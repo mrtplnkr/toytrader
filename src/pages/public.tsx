@@ -108,6 +108,7 @@ function PublicPage() {
         <div className="flex gap-4 justify-center text-[0.85em] my-4">
           <a href="/about">{t('public:aboutUs')}</a>
           <a href="/disclaimer">{t('public:disclaimer')}</a>
+          <a href="/privacy">{t('public:privacy')}</a>
         </div>
       </>
     );
