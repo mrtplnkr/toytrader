@@ -15,6 +15,17 @@ jobs:
         with:
           node-version: '20'
       - run: npm ci && npm run build
+      - name: TEMP diagnostic - run firebase deploy directly to see the real error
+        continue-on-error: true
+        env:
+          FIREBASE_SERVICE_ACCOUNT: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_TOYSTRADER_A494F }}'
+        run: |
+          echo "$FIREBASE_SERVICE_ACCOUNT" > /tmp/sa.json
+          export GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa.json
+          npx firebase-tools deploy --only hosting --project toystrader-a494f --debug > /tmp/deploy-output.log 2>&1
+          echo "exit code: $?"
+          tail -c 4000 /tmp/deploy-output.log | while IFS= read -r line; do echo "::error::$line"; done
+          rm -f /tmp/sa.json
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
