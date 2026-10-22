@@ -22,6 +22,7 @@ jobs:
         run: |
           echo "$FIREBASE_SERVICE_ACCOUNT" > /tmp/sa.json
           export GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa.json
+          set +e
           npx firebase-tools deploy --only hosting --project toystrader-a494f --debug > /tmp/deploy-output.log 2>&1
           echo "exit code: $?"
           tail -c 4000 /tmp/deploy-output.log | while IFS= read -r line; do echo "::error::$line"; done
