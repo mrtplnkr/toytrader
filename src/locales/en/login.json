@@ -1,5 +1,24 @@
 {
   "title": "Login",
   "googleLogin": "Google login",
-  "facebookLogin": "Facebook login"
+  "facebookLogin": "Facebook login",
+  "or": "or",
+  "signIn": "Sign in",
+  "createAccount": "Create account",
+  "namePlaceholder": "Your name",
+  "emailPlaceholder": "Email",
+  "passwordPlaceholder": "Password",
+  "submitting": "Please wait...",
+  "forgotPassword": "Forgot password?",
+  "nameRequiredTitle": "Name required",
+  "nameRequiredBody": "Please enter a name to create your account.",
+  "emailRequiredTitle": "Email required",
+  "emailRequiredBody": "Please enter your email first, then tap \"Forgot password?\" again.",
+  "resetSentTitle": "Reset email sent",
+  "resetSentBody": "Check your inbox for a link to reset your password.",
+  "errorEmailInUse": "An account already exists with this email - try signing in instead.",
+  "errorInvalidEmail": "Please enter a valid email address.",
+  "errorWeakPassword": "Password must be at least 6 characters.",
+  "errorInvalidCredentials": "Incorrect email or password.",
+  "errorTooManyRequests": "Too many attempts - please try again later."
 }

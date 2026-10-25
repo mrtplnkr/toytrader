@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useContextSelector } from "use-context-selector";
 import { useTranslation } from "react-i18next";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCircleUser } from "@fortawesome/free-solid-svg-icons";
 import { auth } from "../firebase-config";
 import { GoodAppContext } from "../hooks/context";
 import { Toy } from "../types/toy";
@@ -50,8 +52,15 @@ function Auth() {
             {
               auth?.currentUser?.uid &&
               <>
-                <img alt={auth?.currentUser?.displayName??t('auth:noName')} className={greyUser ? 'opacity-10' : ''}
-                  src={auth?.currentUser?.photoURL??''} onClick={() => openMenu(s => !s)} />
+                {/* Email/password accounts have no photoURL (no profile
+                    for Firebase to pull one from, unlike Google/Facebook) -
+                    fall back to a generic icon instead of a broken <img>. */}
+                {auth?.currentUser?.photoURL ?
+                  <img alt={auth?.currentUser?.displayName??t('auth:noName')} className={greyUser ? 'opacity-10' : ''}
+                    src={auth.currentUser.photoURL} onClick={() => openMenu(s => !s)} />
+                :
+                  <FontAwesomeIcon icon={faCircleUser} size="2x" className={greyUser ? 'opacity-10 cursor-pointer self-end' : 'cursor-pointer self-end'}
+                    title={auth?.currentUser?.displayName??t('auth:noName')} onClick={() => openMenu(s => !s)} />}
                 {menu && <ul>
                   <li className="underline cursor-pointer"
                     onClick={() => { openMenu(x => !x); navigate('/profile'); }}>{auth.currentUser?.displayName}</li>

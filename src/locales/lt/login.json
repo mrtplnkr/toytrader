@@ -1,5 +1,24 @@
 {
   "title": "Prisijungti",
   "googleLogin": "Prisijungti su Google",
-  "facebookLogin": "Prisijungti su Facebook"
+  "facebookLogin": "Prisijungti su Facebook",
+  "or": "arba",
+  "signIn": "Prisijungti",
+  "createAccount": "Sukurti paskyrą",
+  "namePlaceholder": "Jūsų vardas",
+  "emailPlaceholder": "El. paštas",
+  "passwordPlaceholder": "Slaptažodis",
+  "submitting": "Prašome palaukti...",
+  "forgotPassword": "Pamiršote slaptažodį?",
+  "nameRequiredTitle": "Reikalingas vardas",
+  "nameRequiredBody": "Įveskite vardą, kad sukurtumėte paskyrą.",
+  "emailRequiredTitle": "Reikalingas el. paštas",
+  "emailRequiredBody": "Pirmiausia įveskite el. paštą, tada dar kartą paspauskite „Pamiršote slaptažodį?“.",
+  "resetSentTitle": "Laiškas išsiųstas",
+  "resetSentBody": "Patikrinkite savo pašto dėžutę - joje rasite nuorodą slaptažodžiui atkurti.",
+  "errorEmailInUse": "Paskyra su šiuo el. paštu jau egzistuoja - pabandykite prisijungti.",
+  "errorInvalidEmail": "Įveskite galiojantį el. pašto adresą.",
+  "errorWeakPassword": "Slaptažodį turi sudaryti bent 6 simboliai.",
+  "errorInvalidCredentials": "Neteisingas el. paštas arba slaptažodis.",
+  "errorTooManyRequests": "Per daug bandymų - pabandykite vėliau."
 }

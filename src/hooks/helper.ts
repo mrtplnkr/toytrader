@@ -1,4 +1,4 @@
-import { FacebookAuthProvider, signInWithPopup, signOut, updateProfile } from "firebase/auth";
+import { createUserWithEmailAndPassword, FacebookAuthProvider, sendPasswordResetEmail, signInWithEmailAndPassword, signInWithPopup, signOut, updateProfile } from "firebase/auth";
 import { addDoc, collection, deleteDoc, doc, DocumentData, getDoc, getDocs, or, query, setDoc, Timestamp, updateDoc, where } from "firebase/firestore";
 import { getDownloadURL, ref } from "firebase/storage";
 import { httpsCallable } from "firebase/functions";
@@ -45,6 +45,29 @@ export const facebookSign = async (callback: any) => {
         console.log('facebook signIn error' + (err as Error).message);
     }
     return true;
+};
+
+// Unlike googleSign/facebookSign, these deliberately let errors propagate
+// instead of swallowing/rewrapping them - login.tsx needs the real
+// err.code (auth/email-already-in-use, auth/wrong-password, ...) to show a
+// field-specific message instead of one generic failure toast.
+export const emailSignUp = async (email: string, password: string, displayName: string, callback: any) => {
+    const result = await createUserWithEmailAndPassword(auth, email, password);
+    // Unlike Google/Facebook, email/password sign-up has no profile to pull
+    // a name from - everything that reads currentUser.displayName elsewhere
+    // (auth.tsx's menu, admin.tsx's nameFor, ...) would otherwise show
+    // nothing for these accounts.
+    await updateProfile(result.user, { displayName });
+    callback(result.user);
+};
+
+export const emailSignIn = async (email: string, password: string, callback: any) => {
+    const result = await signInWithEmailAndPassword(auth, email, password);
+    callback(result.user);
+};
+
+export const resetPassword = async (email: string) => {
+    await sendPasswordResetEmail(auth, email);
 };
 
 export const toysCollectionRef = collection(db, "toys");

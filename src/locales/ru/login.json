@@ -1,5 +1,24 @@
 {
   "title": "Вход",
   "googleLogin": "Войти через Google",
-  "facebookLogin": "Войти через Facebook"
+  "facebookLogin": "Войти через Facebook",
+  "or": "или",
+  "signIn": "Войти",
+  "createAccount": "Создать аккаунт",
+  "namePlaceholder": "Ваше имя",
+  "emailPlaceholder": "Эл. почта",
+  "passwordPlaceholder": "Пароль",
+  "submitting": "Пожалуйста, подождите...",
+  "forgotPassword": "Забыли пароль?",
+  "nameRequiredTitle": "Нужно имя",
+  "nameRequiredBody": "Введите имя, чтобы создать аккаунт.",
+  "emailRequiredTitle": "Нужна эл. почта",
+  "emailRequiredBody": "Сначала введите эл. почту, затем снова нажмите «Забыли пароль?».",
+  "resetSentTitle": "Письмо отправлено",
+  "resetSentBody": "Проверьте почту - там ссылка для сброса пароля.",
+  "errorEmailInUse": "Аккаунт с такой эл. почтой уже существует - попробуйте войти.",
+  "errorInvalidEmail": "Введите корректный адрес эл. почты.",
+  "errorWeakPassword": "Пароль должен содержать не менее 6 символов.",
+  "errorInvalidCredentials": "Неверная эл. почта или пароль.",
+  "errorTooManyRequests": "Слишком много попыток - попробуйте позже."
 }
