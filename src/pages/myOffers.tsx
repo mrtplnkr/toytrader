@@ -12,12 +12,23 @@ import { Rating } from "../types/rating";
 import { ParcelMachine, ShipmentSide, ShippingPrice, declineOffer, getShippingPrice, getShippingProfile, markToyPosted, markToyReceived, saveShippingProfile, shareShippingInfo, startShipmentCheckout, submitOmnivaBarcode, submitRating, updateOffer } from "../hooks/helper";
 import { ShippingProfile } from "../types/shippingProfile";
 import ParcelMachinePicker from "../components/parcelMachinePicker";
-import { DEFAULT_TOY_SIZE, OMNIVA_PRICE_LIST_URL, OMNIVA_SEND_PARCEL_URL, TOY_SIZES, ToySize } from "../constants/omnivaPricing";
+import { DEFAULT_TOY_SIZE, OMNIVA_COUNTRIES, OMNIVA_PRICE_LIST_URL, OMNIVA_SEND_PARCEL_URL, TOY_SIZES, ToySize } from "../constants/omnivaPricing";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faStar as faStarSolid } from "@fortawesome/free-solid-svg-icons";
 import { faStar as faStarRegular } from "@fortawesome/free-regular-svg-icons";
 
-const newToy = 'https://images.thewest.com.au/publication/C-7139668/f9b8852d964a8de53d6089791d3e176fbb732976-16x9-x0y723w3000h1688.jpg';
+// Omniva's documented barcode length bounds (a real one is typically 13
+// chars, e.g. CC730129455EE) - mirrored in firestore.rules'
+// validBarcodeOrAbsent, which can't share this constant across languages.
+const MIN_BARCODE_LENGTH = 5;
+const MAX_BARCODE_LENGTH = 30;
+
+const COUNTRY_LABEL_KEYS: Record<typeof OMNIVA_COUNTRIES[number], string> = {
+    EE: 'myOffers:countryEstonia',
+    LV: 'myOffers:countryLatvia',
+    LT: 'myOffers:countryLithuania',
+};
+
 interface HistoryItem {
     id: string,
     toyIOffered: Toy;
@@ -44,15 +55,20 @@ interface HistoryItem {
 }
 
 function buildStatusHtml(t: TFunction, o: Offer, isInitiator: boolean, isReceiver: boolean, params: {
+    offeredToyUrl: string;
+    targetedToyUrl: string;
     myShipmentStatus?: string;
     myReceived?: Date;
     otherSideShipmentStatus?: string;
     otherSideReceived?: Date;
     otherSideShipmentBarcode?: string;
 }): string {
+    // "Your toy" means different things depending on perspective: for the
+    // initiator it's the one they offered (toyOffered); for the receiver
+    // it's the one that got targeted (toyTargeted, which is theirs).
     const createdLine = isInitiator ?
-        t('myOffers:status.offeredYourToy', { toyUrl: newToy, date: (o.offerCreated as Date).toDateString() }) :
-        t('myOffers:status.receivedOfferForYourToy', { toyUrl: newToy, date: (o.offerCreated as Date).toDateString() });
+        t('myOffers:status.offeredYourToy', { toyUrl: params.offeredToyUrl, date: (o.offerCreated as Date).toDateString() }) :
+        t('myOffers:status.receivedOfferForYourToy', { toyUrl: params.targetedToyUrl, date: (o.offerCreated as Date).toDateString() });
 
     const acceptedLine = o.offerAccepted ?
         t('myOffers:status.offerAccepted', { date: (o.offerAccepted as Date).toDateString() }) :
@@ -62,14 +78,14 @@ function buildStatusHtml(t: TFunction, o: Offer, isInitiator: boolean, isReceive
 
     const offeredLine = o.offerPosted ?
         (o.offerReceived ?
-            t('myOffers:status.offeredToyPostedAndReceived', { toyUrl: newToy, date: (o.offerReceived as Date).toDateString() }) :
-            t('myOffers:status.offeredToyPosted', { toyUrl: newToy })) :
+            t('myOffers:status.offeredToyPostedAndReceived', { toyUrl: params.offeredToyUrl, date: (o.offerReceived as Date).toDateString() }) :
+            t('myOffers:status.offeredToyPosted', { toyUrl: params.offeredToyUrl })) :
         t('myOffers:status.offeredToyNotSent');
 
     const targetLine = o.targetPosted ?
         (o.targetReceived ?
-            t('myOffers:status.requestedToyPostedAndReceived', { toyUrl: newToy, date: (o.targetReceived as Date).toDateString() }) :
-            t('myOffers:status.requestedToyPosted', { toyUrl: newToy })) :
+            t('myOffers:status.requestedToyPostedAndReceived', { toyUrl: params.targetedToyUrl, date: (o.targetReceived as Date).toDateString() }) :
+            t('myOffers:status.requestedToyPosted', { toyUrl: params.targetedToyUrl })) :
         t('myOffers:status.requestedToyNotSent');
 
     const myShipmentLine = params.myShipmentStatus && !params.myReceived ?
@@ -208,6 +224,7 @@ function MyOffersPage() {
                 toyToRate: toyIReceived,
                 toyIOffered,
                 status: buildStatusHtml(t, o, isInitiator, isReceiver, {
+                    offeredToyUrl: toyIOffered.file, targetedToyUrl: toyTargeted.file,
                     myShipmentStatus, myReceived, otherSideShipmentStatus, otherSideReceived, otherSideShipmentBarcode,
                 }),
                 toyTargeted,
@@ -409,11 +426,9 @@ function MyOffersPage() {
             notifyError(new Error(t('myOffers:enterBarcodeFirst')));
             return;
         }
-        // Omniva's own technical docs accept barcodes between 5 and 30
-        // characters (a real one is typically 13, e.g. CC730129455EE) -
-        // this doesn't verify the barcode is real, just catches obvious
-        // typos/junk before it's saved.
-        if (barcode.length < 5 || barcode.length > 30) {
+        // Doesn't verify the barcode is real, just catches obvious typos/junk
+        // before it's saved.
+        if (barcode.length < MIN_BARCODE_LENGTH || barcode.length > MAX_BARCODE_LENGTH) {
             notifyError(new Error(t('myOffers:invalidBarcode')));
             return;
         }
@@ -441,16 +456,7 @@ function MyOffersPage() {
             window.location.href = checkoutUrl;
         } catch (err) {
             setPayingId(undefined);
-            Store.addNotification({
-                title: t('common:toast.actionFailedTitle'),
-                message: (err as Error).message,
-                type: "danger",
-                insert: "top",
-                container: "top-right",
-                animationIn: ["animate__animated", "animate__fadeIn"],
-                animationOut: ["animate__animated", "animate__fadeOut"],
-                dismiss: { duration: 5000 },
-            });
+            notifyError(err as Error);
         }
     };
 
@@ -486,7 +492,7 @@ function MyOffersPage() {
                                 {t('myOffers:viewMyQrCode')}
                             </button>}
                         {x.myShipmentStatus === 'RETURNED' &&
-                            <p className="text-[0.8em] text-[#ff6b6b] m-0">
+                            <p className="text-[0.8em] text-danger m-0">
                                 {t('myOffers:shipmentReturned')}
                             </p>}
                         {x.isAccepted &&
@@ -541,9 +547,8 @@ function MyOffersPage() {
                                         onChange={(e) => onCountryChange(x.id, e.target.value)}
                                     >
                                         <option value="" disabled>{t('myOffers:selectEllipsis')}</option>
-                                        <option value="EE">{t('myOffers:countryEstonia')}</option>
-                                        <option value="LV">{t('myOffers:countryLatvia')}</option>
-                                        <option value="LT">{t('myOffers:countryLithuania')}</option>
+                                        {OMNIVA_COUNTRIES.map((code) =>
+                                            <option key={code} value={code}>{t(COUNTRY_LABEL_KEYS[code])}</option>)}
                                     </select>
                                 </label>
                                 <label className="flex items-center gap-2 text-[0.9em]">

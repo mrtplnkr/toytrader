@@ -20,6 +20,11 @@ export const OMNIVA_SEND_PARCEL_URL: Record<string, string> = {
     LT: 'https://mano.omniva.lt/parcel/baltics/new/?language=en',
 };
 
+// Single source of truth for which countries are supported - both URL maps
+// above must have an entry for every code here, and myOffers.tsx's country
+// picker is built from this list instead of its own hardcoded <option>s.
+export const OMNIVA_COUNTRIES = ['EE', 'LV', 'LT'] as const;
+
 export const TOY_SIZES = ['S', 'M', 'L', 'XL'] as const;
 export type ToySize = typeof TOY_SIZES[number];
 export const DEFAULT_TOY_SIZE: ToySize = 'S';
