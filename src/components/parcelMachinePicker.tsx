@@ -44,6 +44,10 @@ function ParcelMachinePicker({ value, onChange }: Props) {
         `${m.name} ${m.address}`.toLowerCase().includes(debouncedFilter.toLowerCase()));
 
     const selected = machines.find((m) => m.id === value);
+    // Once a machine's chosen, collapse to a confirmation line instead of
+    // also showing the empty search box above it - otherwise it looks like
+    // the picker is still waiting on a selection even after one's been made.
+    const editing = open || !selected;
 
     const selectMachine = (machine: ParcelMachine) => {
         onChange(machine);
@@ -92,25 +96,33 @@ function ParcelMachinePicker({ value, onChange }: Props) {
 
     return (
         <div className="relative flex flex-col gap-[0.4em] w-full max-w-[360px]">
-            <input
-                type="text"
-                placeholder={t('parcelMachinePicker:searchPlaceholder')}
-                value={filter}
-                onChange={(e) => { setFilter(e.target.value); setOpen(true); }}
-                onFocus={() => setOpen(true)}
-                // Delay so a click on a list item registers before the blur closes it.
-                onBlur={() => setTimeout(() => setOpen(false), 150)}
-            />
-            <button type="button" onClick={useMyLocation} disabled={locating} className="self-start text-[0.85em]">
-                {locating ? t('parcelMachinePicker:findingClosest') : t('parcelMachinePicker:useMyLocation')}
-            </button>
-            {locateError && <p className="text-[0.8em] text-danger m-0">{locateError}</p>}
-            {selected && !open &&
-                <p className="text-[0.85em] text-primary m-0">
-                    {t('parcelMachinePicker:selected', { name: selected.name, address: selected.address })}
-                    {nearestDistanceKm !== undefined && selected.id === value &&
-                        t('parcelMachinePicker:distanceAway', { km: nearestDistanceKm < 1 ? '<1' : nearestDistanceKm.toFixed(1) })}
-                </p>}
+            {selected && !editing ?
+                <p className="text-[0.85em] text-primary m-0 flex items-center gap-2 flex-wrap">
+                    <span>
+                        {t('parcelMachinePicker:selected', { name: selected.name, address: selected.address })}
+                        {nearestDistanceKm !== undefined && selected.id === value &&
+                            t('parcelMachinePicker:distanceAway', { km: nearestDistanceKm < 1 ? '<1' : nearestDistanceKm.toFixed(1) })}
+                    </span>
+                    <button type="button" className="text-[0.85em] text-text-dim underline" onClick={() => setOpen(true)}>
+                        {t('parcelMachinePicker:change')}
+                    </button>
+                </p>
+            :
+                <>
+                    <input
+                        type="text"
+                        placeholder={t('parcelMachinePicker:searchPlaceholder')}
+                        value={filter}
+                        onChange={(e) => { setFilter(e.target.value); setOpen(true); }}
+                        onFocus={() => setOpen(true)}
+                        // Delay so a click on a list item registers before the blur closes it.
+                        onBlur={() => setTimeout(() => setOpen(false), 150)}
+                    />
+                    <button type="button" onClick={useMyLocation} disabled={locating} className="self-start text-[0.85em]">
+                        {locating ? t('parcelMachinePicker:findingClosest') : t('parcelMachinePicker:useMyLocation')}
+                    </button>
+                    {locateError && <p className="text-[0.8em] text-danger m-0">{locateError}</p>}
+                </>}
             {open &&
                 <ul className="parcelMachineResults absolute top-full left-0 right-0 z-[2] bg-white text-black border border-[#ccc] rounded max-h-[220px] overflow-y-auto list-none m-0 py-[0.25em] px-0">
                     {filtered.length > 0 ? filtered.map((m) => (

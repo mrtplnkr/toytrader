@@ -3,6 +3,7 @@
   "findingClosest": "finding closest...",
   "useMyLocation": "📍 Use my location to find the closest one",
   "selected": "Selected: {{name}} — {{address}}",
+  "change": "Change",
   "distanceAway": " (~{{km}} km away)",
   "loading": "Loading parcel machines...",
   "noMatches": "No matches",

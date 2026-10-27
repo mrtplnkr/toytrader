@@ -3,6 +3,7 @@
   "findingClosest": "ieškoma artimiausio...",
   "useMyLocation": "📍 Naudoti mano vietą artimiausiam rasti",
   "selected": "Pasirinkta: {{name}} — {{address}}",
+  "change": "Keisti",
   "distanceAway": " (~{{km}} km atstumu)",
   "loading": "Kraunami paštomatai...",
   "noMatches": "Atitikmenų nerasta",
