@@ -1,4 +1,4 @@
-import { faChevronDown, faFlagCheckered, faHandshake, faRemove } from "@fortawesome/free-solid-svg-icons";
+import { faChevronDown, faChevronLeft, faChevronRight, faFlagCheckered, faHandshake, faRemove } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { memo, TouchEvent, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -93,7 +93,19 @@ function ToyDisplay(props: Props) {//TODO: change to NewOffer
                 title={selectedToy ? t('addNewOffer:proposeTrade') : t('addNewOffer:selectYourToyFirst')}>
                     <FontAwesomeIcon icon={faHandshake} />
             </button>
-            <button className="leftButton" onClick={() => props.nextToy(-1)} />
+            {/* The only on-screen indication this view can move between
+                toys at all used to be invisible full-height click zones
+                (no size, no icon) - arrow keys/touch swipe still work, but
+                nothing showed they existed. These give it a visible,
+                clickable affordance, same chevron pattern as item.tsx's
+                gallery lightbox. */}
+            <button
+                className="fixed top-1/2 left-4 -translate-y-1/2 z-[1] w-12 h-12 rounded-full bg-surface-raised/80 border border-border flex items-center justify-center text-text hover:bg-surface-raised"
+                onClick={() => props.nextToy(-1)}
+                title={t('addNewOffer:previousToy')}
+            >
+                <FontAwesomeIcon icon={faChevronLeft} />
+            </button>
             <div className="flex flex-col items-center justify-center h-full gap-2">
                 {/* Inline maxHeight overrides the shared ".largeOffer img { max-height: 100% }"
                     rule (by specificity) - otherwise the image alone fills this whole flex
@@ -101,7 +113,13 @@ function ToyDisplay(props: Props) {//TODO: change to NewOffer
                 <img alt={props.toy.title} src={props.toy.file} className="max-h-[80%] max-w-full" />
                 <p className="text-white text-[1.1em] m-0">{props.toy.title}</p>
             </div>
-            <button className="rightButton" onClick={() => props.nextToy(1)} />
+            <button
+                className="fixed top-1/2 right-4 -translate-y-1/2 z-[1] w-12 h-12 rounded-full bg-surface-raised/80 border border-border flex items-center justify-center text-text hover:bg-surface-raised"
+                onClick={() => props.nextToy(1)}
+                title={t('addNewOffer:nextToy')}
+            >
+                <FontAwesomeIcon icon={faChevronRight} />
+            </button>
             <button onClick={() => props.nextToy(undefined)}
                 className={'buttonFixedRight'}>
                     <FontAwesomeIcon icon={faRemove} />

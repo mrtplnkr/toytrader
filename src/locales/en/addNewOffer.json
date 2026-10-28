@@ -2,5 +2,7 @@
   "pickFirst": "👇 pick a toy first!",
   "pickToyToOffer": "👇 pick your toy to offer",
   "proposeTrade": "Propose this trade",
-  "selectYourToyFirst": "Select your toy above first"
+  "selectYourToyFirst": "Select your toy above first",
+  "previousToy": "Previous toy",
+  "nextToy": "Next toy"
 }

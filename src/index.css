@@ -127,18 +127,6 @@ input[type="text"]:focus {
   border-radius: var(--radius-sm);
 }
 
-.leftButton {
-  position: fixed;
-  top: 50%;
-  left: 3em;
-}
-
-.rightButton {
-  position: fixed;
-  top: 50%;
-  right: 3em;
-}
-
 .largeOffer {
   background: rgba(15, 17, 26, 0.96);
   position: fixed;
