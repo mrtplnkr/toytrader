@@ -56,19 +56,25 @@ function MyToysPage() {
 
     const movieDoc = doc(db, "toys", id);
     await deleteDoc(movieDoc)
-      .then(() => Store.addNotification({
-        title: t('myToys:removeSuccessTitle'),
-        message: t('myToys:removeSuccessBody'),
-        type: "success",
-        insert: "top",
-        container: "top-right",
-        animationIn: ["animated", "fadeIn"],
-        animationOut: ["animated", "fadeOut"],
-        dismiss: {
-          duration: 5000,
-          onScreen: true
-        }
-      }))
+      .then(async () => {
+        Store.addNotification({
+          title: t('myToys:removeSuccessTitle'),
+          message: t('myToys:removeSuccessBody'),
+          type: "success",
+          insert: "top",
+          container: "top-right",
+          animationIn: ["animated", "fadeIn"],
+          animationOut: ["animated", "fadeOut"],
+          dismiss: {
+            duration: 5000,
+            onScreen: true
+          }
+        });
+        // Without this, the deleted toy stays visible until the user
+        // manually refreshes or navigates away and back - context state
+        // isn't updated just by the Firestore write succeeding.
+        await refresh();
+      })
       .catch((e) =>
         Store.addNotification({
           title: t('common:toast.actionFailedTitle'),
