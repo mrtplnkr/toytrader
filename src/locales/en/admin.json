@@ -20,5 +20,14 @@
   "confirmRemoveToy": "Remove \"{{title}}\"? This only removes this listing - the poster's account is untouched.",
   "toyRemovedTitle": "Toy removed",
   "toyRemovedBody": "Removed \"{{title}}\".",
-  "toyNoLongerListed": "a toy (no longer listed)"
+  "toyNoLongerListed": "a toy (no longer listed)",
+  "alreadyBanned": "Already banned",
+  "bannedUsersHeading": "Admin - banned users",
+  "noBannedUsers": "No banned users.",
+  "bannedOn": "Banned on {{date}}",
+  "unban": "Unban",
+  "unbanning": "unbanning...",
+  "confirmUnban": "Unban {{name}}? This re-enables their account (any toys removed by the ban stay removed).",
+  "unbannedTitle": "User unbanned",
+  "unbannedBody": "{{name}} can sign in again."
 }

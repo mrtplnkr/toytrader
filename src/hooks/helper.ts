@@ -372,6 +372,27 @@ export const unbanUser = async (uid: string) => {
     await unbanUserCallable({ uid });
 };
 
+export interface BannedUser {
+    uid: string;
+    bannedAt?: Date;
+    reason?: string | null;
+}
+
+// Firestore rules allow any signed-in user to read bannedUsers (same
+// permissive-by-default model as toys/offers - see CLAUDE.md), but this is
+// only ever surfaced on the admin page.
+export const getBannedUsers = async (): Promise<BannedUser[]> => {
+    const snapshot = await getDocs(collection(db, "bannedUsers"));
+    return snapshot.docs.map((d) => {
+        const data = d.data();
+        return {
+            uid: d.id,
+            bannedAt: data.bannedAt ? (data.bannedAt as Timestamp).toDate() : undefined,
+            reason: data.reason,
+        };
+    });
+};
+
 const removeToyCallable = httpsCallable<{ toyId: string }, { ok: boolean }>(functions, "removeToy");
 
 // Removes a single listing without banning its owner - see functions/src/admin.ts.

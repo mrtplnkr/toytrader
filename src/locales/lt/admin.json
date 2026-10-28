@@ -20,5 +20,14 @@
   "confirmRemoveToy": "Pašalinti \"{{title}}\"? Tai pašalins tik šį skelbimą - skelbėjo paskyra liks nepaliesta.",
   "toyRemovedTitle": "Žaislas pašalintas",
   "toyRemovedBody": "Pašalinta \"{{title}}\".",
-  "toyNoLongerListed": "žaislas (jau nebeskelbiamas)"
+  "toyNoLongerListed": "žaislas (jau nebeskelbiamas)",
+  "alreadyBanned": "Jau blokuotas",
+  "bannedUsersHeading": "Administravimas - blokuoti naudotojai",
+  "noBannedUsers": "Blokuotų naudotojų nėra.",
+  "bannedOn": "Blokuotas {{date}}",
+  "unban": "Atblokuoti",
+  "unbanning": "atblokuojama...",
+  "confirmUnban": "Atblokuoti {{name}}? Tai vėl įjungs jo paskyrą (blokavimo metu pašalinti žaislai neatstatomi).",
+  "unbannedTitle": "Naudotojas atblokuotas",
+  "unbannedBody": "{{name}} vėl gali prisijungti."
 }

@@ -7,7 +7,7 @@ import { GoodAppContext } from "../hooks/context";
 import { Toy } from "../types/toy";
 import { Offer } from "../types/offer";
 import { Complaint } from "../types/complaint";
-import { banUser, getComplaintList, getOfferById, getUserProfiles, removeToy } from "../hooks/helper";
+import { banUser, BannedUser, getBannedUsers, getComplaintList, getOfferById, getUserProfiles, removeToy, unbanUser } from "../hooks/helper";
 import adminEn from "../locales/en/admin.json";
 import adminLt from "../locales/lt/admin.json";
 import adminRu from "../locales/ru/admin.json";
@@ -59,6 +59,8 @@ function AdminPage() {
     const [profilesByUid, setProfilesByUid] = useState<Record<string, Profile>>({});
     const [banningUid, setBanningUid] = useState<string | undefined>();
     const [removingToyId, setRemovingToyId] = useState<string | undefined>();
+    const [bannedUsers, setBannedUsers] = useState<BannedUser[]>([]);
+    const [unbanningUid, setUnbanningUid] = useState<string | undefined>();
     const [complaints, setComplaints] = useState<Complaint[]>([]);
     const [offersByComplaint, setOffersByComplaint] = useState<Record<string, Offer | undefined>>({});
     const [recentCommits, setRecentCommits] = useState<RecentCommit[]>([]);
@@ -89,6 +91,10 @@ function AdminPage() {
     }, []);
 
     useEffect(() => {
+        getBannedUsers().then(setBannedUsers).catch(() => setBannedUsers([]));
+    }, []);
+
+    useEffect(() => {
         Promise.all(complaints.map((c) => getOfferById(c.offerId)))
             .then((fetchedOffers) => {
                 const map: Record<string, Offer | undefined> = {};
@@ -102,6 +108,7 @@ function AdminPage() {
     useEffect(() => {
         const uids = new Set<string>(toys.map((t: Toy) => t.userId));
         complaints.forEach((c) => { uids.add(c.reporterUid); uids.add(c.reportedUid); });
+        bannedUsers.forEach((b) => uids.add(b.uid));
         if (!uids.size) return;
         getUserProfiles(Array.from(uids))
             .then((profiles) => {
@@ -111,7 +118,9 @@ function AdminPage() {
             })
             .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [toys.length, complaints.length]);
+    }, [toys.length, complaints.length, bannedUsers.length]);
+
+    const bannedUidSet = new Set(bannedUsers.map((b) => b.uid));
 
     const nameFor = (uid: string) => profilesByUid[uid]?.email ?? profilesByUid[uid]?.displayName ?? uid;
     const toyTitle = (id?: string) => (id && toys.find((toy: Toy) => toy.id === id)?.title) || t('admin:toyNoLongerListed');
@@ -131,11 +140,32 @@ function AdminPage() {
             setBanningUid(uid);
             const result = await banUser(uid);
             notify(t('admin:bannedTitle'), t('admin:bannedBody', { count: result.bannedToyCount }), "success");
+            // We already know this uid is now banned - no need for a round
+            // trip back to Firestore to find that out. Without this, a
+            // complaint's "Ban {name}" button stayed active and clickable
+            // even after that person was already banned.
+            setBannedUsers((prev) => [...prev, { uid, bannedAt: new Date() }]);
             await refresh();
         } catch (err) {
             notify(t('common:toast.actionFailedTitle'), (err as Error).message, "danger");
         } finally {
             setBanningUid(undefined);
+        }
+    };
+
+    const onUnban = async (uid: string) => {
+        if (!window.confirm(t('admin:confirmUnban', { name: nameFor(uid) }))) {
+            return;
+        }
+        try {
+            setUnbanningUid(uid);
+            await unbanUser(uid);
+            notify(t('admin:unbannedTitle'), t('admin:unbannedBody', { name: nameFor(uid) }), "success");
+            setBannedUsers((prev) => prev.filter((b) => b.uid !== uid));
+        } catch (err) {
+            notify(t('common:toast.actionFailedTitle'), (err as Error).message, "danger");
+        } finally {
+            setUnbanningUid(undefined);
         }
     };
 
@@ -192,10 +222,13 @@ function AdminPage() {
                                 </div>}
                             <div>{c.message}</div>
                             {c.photoFile && <img src={c.photoFile} alt="evidence" className="w-[8em] rounded-sm" />}
-                            <button className="btn-danger self-start"
-                                disabled={banningUid === c.reportedUid} onClick={() => onBan(c.reportedUid)}>
-                                {banningUid === c.reportedUid ? t('admin:banning') : t('admin:banUser', { name: nameFor(c.reportedUid) })}
-                            </button>
+                            {bannedUidSet.has(c.reportedUid) ?
+                                <p className="text-[0.85em] text-text-dim m-0">{t('admin:alreadyBanned')}</p>
+                            :
+                                <button className="btn-danger self-start"
+                                    disabled={banningUid === c.reportedUid} onClick={() => onBan(c.reportedUid)}>
+                                    {banningUid === c.reportedUid ? t('admin:banning') : t('admin:banUser', { name: nameFor(c.reportedUid) })}
+                                </button>}
                         </li>
                     );
                 })}
@@ -229,6 +262,27 @@ function AdminPage() {
             </ul>
             {toys.length === 0 && <p>{t('admin:noToysYet')}</p>}
             {toys.length > 0 && filteredToys.length === 0 && <p>{t('admin:noToysMatch', { query: toySearchQuery })}</p>}
+
+            <h3>{t('admin:bannedUsersHeading')}</h3>
+            {bannedUsers.length === 0 && <p>{t('admin:noBannedUsers')}</p>}
+            <ul id="bannedUsersList">
+                {bannedUsers.map((b) => (
+                    <li key={b.uid} className="flex items-center gap-4 mb-3">
+                        <div className="flex-1">
+                            <div className="font-bold">{nameFor(b.uid)}</div>
+                            {b.bannedAt &&
+                                <div className="text-[0.85em] text-text-dim">
+                                    {t('admin:bannedOn', { date: b.bannedAt.toDateString() })}
+                                </div>}
+                            {b.reason &&
+                                <div className="text-[0.85em] text-text-dim">{b.reason}</div>}
+                        </div>
+                        <button className="btn-primary" disabled={unbanningUid === b.uid} onClick={() => onUnban(b.uid)}>
+                            {unbanningUid === b.uid ? t('admin:unbanning') : t('admin:unban')}
+                        </button>
+                    </li>
+                ))}
+            </ul>
         </>
     );
 }
