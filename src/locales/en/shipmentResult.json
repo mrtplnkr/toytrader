@@ -1,6 +1,6 @@
 {
   "cancelled": "Checkout was cancelled - you can try again from your offers.",
-  "scanInstruction": "Scan this code at an Omniva parcel machine to drop off your toy.",
+  "scanInstruction": "Your Omniva tracking code, saved here for reference. To actually drop off your toy, use the confirmation Omniva gave you when you registered the shipment on their site (app, email, or printed label) - we can't confirm this code scans at the machine itself.",
   "currentStatus": "Current status: {{status}}",
   "awaitingFirstScan": "awaiting first scan",
   "paymentUnconfirmed": "We couldn't confirm your payment yet - this can happen if the confirmation is still catching up.",

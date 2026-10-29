@@ -1,6 +1,6 @@
 {
   "cancelled": "Apmokėjimas buvo atšauktas - galite bandyti vėl iš savo pasiūlymų.",
-  "scanInstruction": "Nuskaitykite šį kodą Omniva paštomate, kad paliktumėte savo žaislą.",
+  "scanInstruction": "Jūsų Omniva siuntos kodas, išsaugotas čia jūsų patogumui. Norėdami realiai palikti žaislą, naudokite patvirtinimą, kurį Omniva jums pateikė registruojant siuntą jų svetainėje (programėlėje, el. laiške ar spausdintoje etiketėje) - negalime patvirtinti, ar šis kodas nuskaitomas pačiame paštomate.",
   "currentStatus": "Dabartinė būsena: {{status}}",
   "awaitingFirstScan": "laukiama pirmo nuskaitymo",
   "paymentUnconfirmed": "Mums kol kas nepavyko patvirtinti jūsų mokėjimo - tai gali nutikti, jei patvirtinimas vis dar vėluoja.",
