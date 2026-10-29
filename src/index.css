@@ -106,6 +106,9 @@ button[type="submit"]:hover:not(:disabled),
 }
 
 input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="tel"],
 input[type="file"] {
   font: inherit;
   color: var(--color-text);
@@ -115,7 +118,10 @@ input[type="file"] {
   padding: 0.6em 0.8em;
 }
 
-input[type="text"]:focus {
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="tel"]:focus {
   outline: 2px solid var(--color-primary);
   outline-offset: 1px;
 }

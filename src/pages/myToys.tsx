@@ -24,6 +24,13 @@ function MyToysPage() {
   const toys = useContextSelector(GoodAppContext, (state: any) => state.toys);
   const offers = useContextSelector(GoodAppContext, (state: any) => state.offers);
   const ratings = useContextSelector(GoodAppContext, (state: any) => state.ratings);
+  // toys from context is the whole app's list (no per-user filtering at the
+  // data layer - see CLAUDE.md) - this page only ever cares about the
+  // signed-in user's own. Deriving it once here instead of inline fixes a
+  // real bug: the old code checked toys.length (the global count) to decide
+  // whether to show "no toys yet", so that empty state only ever appeared
+  // if literally every user's toy list was empty, not just this user's.
+  const myToys = toys.filter((x: Toy) => x.userId === auth.currentUser?.uid);
 
   const toyRatingStats = (toyId: string) => {
     const toyRatings = ratings.filter((r: Rating) => r.toyId === toyId);
@@ -102,10 +109,10 @@ function MyToysPage() {
         </div>
 
         <ul id="toyList">
-          {toys.length > 0 ? toys.filter((x: Toy) => x.userId === auth.currentUser?.uid).map((x: Toy) => {
+          {myToys.length > 0 ? myToys.map((x: Toy) => {
             return (
               <div key={x.id}>
-                <Item {...toys.find((o: Toy) => x.id === o.id)} deleteItem={deleteItem} {...toyRatingStats(x.id)} />
+                <Item {...x} deleteItem={deleteItem} {...toyRatingStats(x.id)} />
                 <div className="text-[0.9em] text-text-dim">
                   {countOffers(offers, x.id) ?
                     <div>
@@ -118,7 +125,7 @@ function MyToysPage() {
                 </div>
               </div>
             )
-          }) : <div>you haven't added anything yet</div>}
+          }) : <div>{t('myToys:noToysYet')}</div>}
         </ul>
     </>
   );

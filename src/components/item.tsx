@@ -71,11 +71,15 @@ function Item(props: Props) {
             {!!props.ratingCount && <p className="text-sm text-text-dim m-0">
                 <FontAwesomeIcon icon={faStarSolid} /> {props.averageRating!.toFixed(1)} ({props.ratingCount})
             </p>}
-            <div className="relative inline-block">
+            <div className="relative inline-block w-full">
                 <img alt={props.title} src={props.file} onClick={openLightbox}
                     className={hasGallery ? "cursor-pointer" : undefined} />
                 {hasGallery &&
-                    <span className="absolute bottom-1 right-1 bg-surface-raised/90 rounded-sm px-1.5 text-[0.75em]">
+                    // Inset enough to clear the image's own rounded corner
+                    // (bottom-1/right-1 sat right on top of the curve,
+                    // making the badge look clipped) and padded enough on
+                    // both axes to read as a pill rather than a cramped tag.
+                    <span className="absolute bottom-2 right-2 bg-bg/85 text-text rounded-full px-2 py-0.5 text-[0.75em] font-medium shadow">
                         {t('item:moreMedia', { count: media.length - 1 })}
                     </span>}
             </div>

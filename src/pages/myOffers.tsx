@@ -510,12 +510,14 @@ function MyOffersPage() {
                                             {/* eslint-disable-next-line jsx-a11y/anchor-has-content -- Trans clones this element and fills in the translated link text at render */}
                                             <Trans i18nKey="myOffers:noShippingInfoYet" components={{ ProfileLink: <a href="/profile" /> }} />
                                         </p>
-                                        <input type="text" placeholder={t('myOffers:yourNamePlaceholder')}
-                                            value={shippingSetupName[x.id] ?? ''}
-                                            onChange={(e) => setShippingSetupName((prev) => ({...prev, [x.id]: e.target.value}))} />
-                                        <input type="tel" placeholder={t('myOffers:yourPhonePlaceholder')}
-                                            value={shippingSetupPhone[x.id] ?? ''}
-                                            onChange={(e) => setShippingSetupPhone((prev) => ({...prev, [x.id]: e.target.value}))} />
+                                        <div className="flex gap-2 w-full">
+                                            <input type="text" placeholder={t('myOffers:yourNamePlaceholder')} className="flex-1 min-w-0"
+                                                value={shippingSetupName[x.id] ?? ''}
+                                                onChange={(e) => setShippingSetupName((prev) => ({...prev, [x.id]: e.target.value}))} />
+                                            <input type="tel" placeholder={t('myOffers:yourPhonePlaceholder')} className="flex-1 min-w-0"
+                                                value={shippingSetupPhone[x.id] ?? ''}
+                                                onChange={(e) => setShippingSetupPhone((prev) => ({...prev, [x.id]: e.target.value}))} />
+                                        </div>
                                         <ParcelMachinePicker
                                             value={shippingSetupMachine[x.id]?.id}
                                             onChange={(machine) => setShippingSetupMachine((prev) => ({...prev, [x.id]: machine}))}
