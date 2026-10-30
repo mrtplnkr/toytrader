@@ -1,6 +1,7 @@
 import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {getApps, initializeApp} from "firebase-admin/app";
 import {getFirestore, FieldValue} from "firebase-admin/firestore";
+import {deleteProjectFiles, toyFileNames} from "./storageCleanup";
 
 if (getApps().length === 0) {
   initializeApp();
@@ -51,11 +52,13 @@ export async function deleteAllDataFor(uid: string): Promise<DataDeletionResult>
   const batch = db.batch();
   let toysDeleted = 0;
   let toysKept = 0;
+  const fileNamesToDelete: string[] = [];
   theirToys.docs.forEach((d) => {
     if (tradedToyIds.has(d.id)) {
       toysKept++;
     } else {
       batch.delete(d.ref);
+      fileNamesToDelete.push(...toyFileNames(d.data()));
       toysDeleted++;
     }
   });
@@ -77,6 +80,11 @@ export async function deleteAllDataFor(uid: string): Promise<DataDeletionResult>
   }
 
   await batch.commit();
+
+  const complaintPhotos = theirComplaints.docs
+    .map((d) => d.data().photoFile)
+    .filter((f): f is string => !!f);
+  await deleteProjectFiles([...fileNamesToDelete, ...complaintPhotos]);
 
   return {toysDeleted, toysKept};
 }

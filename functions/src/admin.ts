@@ -2,6 +2,7 @@ import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {getApps, initializeApp} from "firebase-admin/app";
 import {getAuth} from "firebase-admin/auth";
 import {getFirestore, FieldValue} from "firebase-admin/firestore";
+import {deleteProjectFiles, toyFileNames} from "./storageCleanup";
 
 if (getApps().length === 0) {
   initializeApp();
@@ -56,6 +57,9 @@ export const banUser = onCall<BanUserRequest>(
     theirToys.forEach((doc) => batch.delete(doc.ref));
     await batch.commit();
 
+    const fileNames = theirToys.docs.flatMap((d) => toyFileNames(d.data()));
+    await deleteProjectFiles(fileNames);
+
     return {bannedToyCount: theirToys.size};
   }
 );
@@ -104,7 +108,13 @@ export const removeToy = onCall<RemoveToyRequest>(
       throw new HttpsError("invalid-argument", "toyId is required.");
     }
 
-    await getFirestore().collection("toys").doc(toyId).delete();
+    const toyRef = getFirestore().collection("toys").doc(toyId);
+    const toySnap = await toyRef.get();
+    const toyData = toySnap.data();
+    await toyRef.delete();
+    if (toyData) {
+      await deleteProjectFiles(toyFileNames(toyData));
+    }
 
     return {ok: true};
   }

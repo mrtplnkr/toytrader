@@ -1,11 +1,11 @@
-import { deleteDoc, doc } from "firebase/firestore";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Trans, useTranslation } from "react-i18next";
-import { auth, db } from "../firebase-config";
+import { auth } from "../firebase-config";
 import Item from "../components/item";
 import { Offer } from "../types/offer";
 import { GoodAppContext } from "../hooks/context";
+import { deleteToy } from "../hooks/helper";
 import { useContextSelector } from "use-context-selector";
 import { Store } from "react-notifications-component";
 import { Toy } from "../types/toy";
@@ -61,8 +61,7 @@ function MyToysPage() {
       return;
     }
 
-    const movieDoc = doc(db, "toys", id);
-    await deleteDoc(movieDoc)
+    await deleteToy(id)
       .then(async () => {
         Store.addNotification({
           title: t('myToys:removeSuccessTitle'),

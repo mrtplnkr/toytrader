@@ -1,6 +1,6 @@
 import { createUserWithEmailAndPassword, FacebookAuthProvider, sendPasswordResetEmail, signInWithEmailAndPassword, signInWithPopup, signOut, updateProfile } from "firebase/auth";
 import { addDoc, collection, deleteDoc, doc, DocumentData, getDoc, getDocs, or, query, setDoc, Timestamp, updateDoc, where } from "firebase/firestore";
-import { getDownloadURL, ref } from "firebase/storage";
+import { deleteObject, getDownloadURL, ref } from "firebase/storage";
 import { httpsCallable } from "firebase/functions";
 import { getToken, onMessage } from "firebase/messaging";
 import { auth, db, facebookProvider, googleProvider, functions, storage, getMessagingIfSupported, VAPID_KEY } from "../firebase-config";
@@ -137,6 +137,27 @@ export const getToyList = async () => {
       console.error(err);
       return [];
     }
+};
+
+// Deletes a toy's Firestore doc and its associated Storage images/video -
+// without this, "deleting" a toy only hid it; the actual files stayed in
+// Storage forever (nothing else in the app ever deleted a Storage object).
+// Re-reads the raw doc rather than taking a Toy from app state, since a
+// Toy already in state has its images/video fields resolved to download
+// URLs (see getToyList above), not the raw filenames a Storage ref needs.
+export const deleteToy = async (toyId: string) => {
+    const toyDocRef = doc(db, "toys", toyId);
+    const snap = await getDoc(toyDocRef);
+    const data = snap.data();
+
+    await deleteDoc(toyDocRef);
+
+    if (!data) return;
+    const rawImages: string[] = data.images && data.images.length > 0 ? data.images : [data.file];
+    const fileNames = data.video ? [...rawImages, data.video] : rawImages;
+    await Promise.allSettled(
+        fileNames.map((name: string) => deleteObject(ref(storage, `projectFiles/${name}`)))
+    );
 };
 
 export const toyOffersCollectionRef = collection(db, "offers");

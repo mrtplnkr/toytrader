@@ -19,11 +19,16 @@ service firebase.storage {
     // restriction on a path it also matches.
     match /projectFiles/{fileName} {
       allow read: if request.auth.uid != null;
-      allow write: if request.auth.uid != null &&
+      allow create, update: if request.auth.uid != null &&
         (
           (request.resource.contentType.matches('image/.*') && request.resource.size < 8 * 1024 * 1024) ||
           (request.resource.contentType.matches('video/.*') && request.resource.size < 30 * 1024 * 1024)
         );
+      // Split out from the create/update rule above: request.resource is
+      // null on a delete, so the contentType/size checks there always fail
+      // for one - without this, deleteObject() calls (toy delete/ban/data
+      // deletion cleanup) are silently rejected.
+      allow delete: if request.auth.uid != null;
     }
   }
 }
