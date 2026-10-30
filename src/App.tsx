@@ -15,6 +15,7 @@ import './App.css';
 import Auth from './components/auth';
 import AddNew from "./pages/addNewToy";
 import ProfilePage from "./pages/profile";
+import DeleteDataPage from "./pages/deleteData";
 import { auth } from "./firebase-config";
 import MyToysPage from "./pages/myToys";
 import { ReactNotifications } from "react-notifications-component";
@@ -235,6 +236,14 @@ function App() {
                   element={
                     <RequireAuth>
                       <ProfilePage />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/deleteData"
+                  element={
+                    <RequireAuth>
+                      <DeleteDataPage />
                     </RequireAuth>
                   }
                 />

@@ -1,0 +1,23 @@
+{
+  "dataHeading": "Ištrinti mano duomenis",
+  "dataIntro": "Tai negrįžtamai ištrins žemiau išvardintus duomenis. Jūsų paskyra liks atidaryta ir galėsite iškart toliau naudotis ToyTrader.",
+  "itemToys": "Žaislų skelbimus, kurie nėra susiję su jokiais mainais (vykstančiais ar praėjusiais)",
+  "itemShipping": "Jūsų išsaugotą siuntimo informaciją (vardą, telefoną, pageidaujamą paštomatą)",
+  "itemNotifications": "Jūsų pranešimų registracijas šiame ir visuose kituose įrenginiuose",
+  "itemRatings": "Įvertinimus, kuriuos palikote kitiems vartotojams",
+  "itemComplaints": "Jūsų pateiktus skundus",
+  "keptNote": "Siekiant išsaugoti kito mainų dalyvio istoriją, su mainais susiję žaislų skelbimai ir siuntimo kontaktiniai duomenys nėra visiškai ištrinami - jūsų vardas ir telefonas pašalinami iš tų mainų, tačiau pats mainų įrašas išlieka.",
+  "confirmData": "Ištrinti savo duomenis? Šio veiksmo nebus galima atšaukti.",
+  "deleteDataButton": "Ištrinti mano duomenis",
+  "deleting": "Trinama...",
+  "successTitle": "Duomenys ištrinti",
+  "successBody": "Pašalinta {{deleted}} skelbimas(-ai) bei jūsų siuntimo informacija, įvertinimai ir skundai. {{kept}} su mainais susijęs(-ę) skelbimas(-ai) buvo paliktas(-i).",
+  "doneNote": "Atlikta - galite saugiai palikti šį puslapį.",
+  "accountHeading": "Ištrinti mano paskyrą",
+  "accountIntro": "Tai ištrins viską, kas išvardinta aukščiau, ir negrįžtamai ištrins jūsų ToyTrader paskyrą - būsite iškart atjungti ir nebegalėsite su ja prisijungti.",
+  "accountKeptNote": "Kaip ir aukščiau, su mainais susiję žaislų skelbimai ir siuntimo kontaktiniai duomenys lieka (pašalinus jūsų vardą ir telefoną), kad nebūtų prarasta kito mainų dalyvio istorija.",
+  "confirmAccount": "Ištrinti savo paskyrą? Būsite atjungti, o šio veiksmo nebus galima atšaukti.",
+  "deleteAccountButton": "Ištrinti mano paskyrą",
+  "accountDeletedTitle": "Paskyra ištrinta",
+  "accountDeletedBody": "Jūsų ToyTrader paskyra ir duomenys buvo pašalinti."
+}

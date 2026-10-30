@@ -54,6 +54,9 @@ import publicRu from '../locales/ru/public.json';
 import privacyEn from '../locales/en/privacy.json';
 import privacyLt from '../locales/lt/privacy.json';
 import privacyRu from '../locales/ru/privacy.json';
+import deleteDataEn from '../locales/en/deleteData.json';
+import deleteDataLt from '../locales/lt/deleteData.json';
+import deleteDataRu from '../locales/ru/deleteData.json';
 
 export const SUPPORTED_LANGUAGES = ['en', 'lt', 'ru'] as const;
 export type SupportedLanguage = typeof SUPPORTED_LANGUAGES[number];
@@ -89,7 +92,7 @@ i18next
     ns: [
       'common', 'login', 'auth', 'about', 'disclaimer', 'item', 'parcelMachinePicker',
       'myToys', 'inPost', 'list', 'shipmentResult', 'help', 'addNewToy', 'addNewOffer', 'profile',
-      'myOffers', 'public', 'privacy',
+      'myOffers', 'public', 'privacy', 'deleteData',
     ],
     defaultNS: 'common',
     resources: {
@@ -98,21 +101,21 @@ i18next
         item: itemEn, parcelMachinePicker: parcelMachinePickerEn, myToys: myToysEn, inPost: inPostEn,
         list: listEn, shipmentResult: shipmentResultEn, help: helpEn, addNewToy: addNewToyEn,
         addNewOffer: addNewOfferEn, profile: profileEn, myOffers: myOffersEn, public: publicEn,
-        privacy: privacyEn,
+        privacy: privacyEn, deleteData: deleteDataEn,
       },
       lt: {
         common: commonLt, login: loginLt, auth: authLt, about: aboutLt, disclaimer: disclaimerLt,
         item: itemLt, parcelMachinePicker: parcelMachinePickerLt, myToys: myToysLt, inPost: inPostLt,
         list: listLt, shipmentResult: shipmentResultLt, help: helpLt, addNewToy: addNewToyLt,
         addNewOffer: addNewOfferLt, profile: profileLt, myOffers: myOffersLt, public: publicLt,
-        privacy: privacyLt,
+        privacy: privacyLt, deleteData: deleteDataLt,
       },
       ru: {
         common: commonRu, login: loginRu, auth: authRu, about: aboutRu, disclaimer: disclaimerRu,
         item: itemRu, parcelMachinePicker: parcelMachinePickerRu, myToys: myToysRu, inPost: inPostRu,
         list: listRu, shipmentResult: shipmentResultRu, help: helpRu, addNewToy: addNewToyRu,
         addNewOffer: addNewOfferRu, profile: profileRu, myOffers: myOffersRu, public: publicRu,
-        privacy: privacyRu,
+        privacy: privacyRu, deleteData: deleteDataRu,
       },
     },
     interpolation: { escapeValue: false },

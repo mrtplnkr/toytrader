@@ -1,0 +1,23 @@
+{
+  "dataHeading": "Delete my data",
+  "dataIntro": "This permanently deletes the data listed below. Your account stays open and you can keep using ToyTrader right after.",
+  "itemToys": "Toy listings that aren't part of any trade (active or past)",
+  "itemShipping": "Your saved shipping info (name, phone, preferred parcel machine)",
+  "itemNotifications": "Your push notification registrations, on this and every other device",
+  "itemRatings": "Ratings you've given to other traders",
+  "itemComplaints": "Complaints you've filed",
+  "keptNote": "To preserve the other trader's history, toy listings and shipping contact details tied to a trade aren't deleted outright - your name and phone are cleared from those trades, but the trade record itself stays.",
+  "confirmData": "Delete your data? This can't be undone.",
+  "deleteDataButton": "Delete my data",
+  "deleting": "Deleting...",
+  "successTitle": "Data deleted",
+  "successBody": "Removed {{deleted}} listing(s) plus your shipping info, ratings, and complaints. {{kept}} listing(s) tied to a trade were kept.",
+  "doneNote": "Done - you can safely leave this page.",
+  "accountHeading": "Delete my account",
+  "accountIntro": "This deletes everything listed above and permanently deletes your ToyTrader account - you'll be signed out immediately and won't be able to sign back in with it.",
+  "accountKeptNote": "As above, toy listings and shipping contact details tied to a trade stay (with your name and phone removed) so the other trader's history isn't lost.",
+  "confirmAccount": "Delete your account? You'll be signed out and this can't be undone.",
+  "deleteAccountButton": "Delete my account",
+  "accountDeletedTitle": "Account deleted",
+  "accountDeletedBody": "Your ToyTrader account and data have been removed."
+}

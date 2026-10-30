@@ -216,6 +216,14 @@ function ProfilePage() {
                             </>}
                     </div>
                 </>}
+
+            <h3>{t('profile:dangerZoneHeading')}</h3>
+            <div className="card flex flex-col items-center gap-3 max-w-[360px] mx-auto p-6">
+                <p className="m-0 text-[0.9em] text-text-dim">{t('profile:dangerZoneDescription')}</p>
+                <button className="btn-danger" onClick={() => navigate('/deleteData')}>
+                    {t('profile:deleteMyData')}
+                </button>
+            </div>
         </>
     );
 }

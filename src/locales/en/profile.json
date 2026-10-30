@@ -27,5 +27,8 @@
   "notificationsEnabledTitle": "Notifications enabled !",
   "notificationsEnabledBody": "You'll now get notified about trade activity on this device.",
   "notificationsDeniedTitle": "Notifications not enabled",
-  "notificationsDeniedBody": "You can turn them on later from your browser's site settings."
+  "notificationsDeniedBody": "You can turn them on later from your browser's site settings.",
+  "dangerZoneHeading": "Your data",
+  "dangerZoneDescription": "Delete some of your data while keeping your account, or delete your account entirely.",
+  "deleteMyData": "Delete my data or account"
 }

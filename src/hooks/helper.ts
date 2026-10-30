@@ -400,6 +400,30 @@ export const removeToy = async (toyId: string) => {
     await removeToyCallable({ toyId });
 };
 
+const deleteMyDataCallable = httpsCallable<void, { toysDeleted: number, toysKept: number }>(functions, "deleteMyData");
+
+// Self-service: deletes everything that's safely the caller's alone (toy
+// listings not tied to any trade, shipping profile, push tokens, ratings
+// given, complaints filed), anonymizes their shipping name/phone on any
+// offer instead of deleting the trade record itself, and leaves the
+// Firebase Auth account untouched - see functions/src/deleteMyData.ts.
+export const deleteMyData = async () => {
+    const result = await deleteMyDataCallable();
+    return result.data;
+};
+
+const deleteMyAccountCallable = httpsCallable<void, { toysDeleted: number, toysKept: number }>(functions, "deleteMyAccount");
+
+// Same data deletion as deleteMyData, plus permanently deletes the caller's
+// Firebase Auth account - see functions/src/deleteMyAccount.ts. The
+// caller's existing ID token isn't revoked by this (Firebase doesn't do
+// that on user deletion), so the UI must sign out right after this
+// resolves rather than relying on the account being gone server-side.
+export const deleteMyAccount = async () => {
+    const result = await deleteMyAccountCallable();
+    return result.data;
+};
+
 // Looks up a single offer directly by id, independent of getOfferList's
 // current-user scoping (that query is `where userReceived/userInitiated ==
 // uid`, so it only ever returns the signed-in user's own trades) - offers
