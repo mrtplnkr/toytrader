@@ -8,6 +8,7 @@
   "collectShipping": "Siuntimo duomenis, kuriais nusprendžiate pasidalinti su mainų partneriu, kai mainai patvirtinami: vardą, telefono numerį ir pasirinktą paštomato vietą.",
   "collectPayment": "Mokėjimo patvirtinimą, jei sumokate neprivalomą arbatpinigį - Stripe tiesiogiai apdoroja jūsų kortelės duomenis, mes niekada nematome ir nesaugome kortelės numerio, tik mokėjimo patvirtinimo nuorodą.",
   "collectDevice": "Pagrindinę naudojimo analitiką ir stumiamų pranešimų įrenginio žymenį, jei pasirenkate įjungti pranešimus.",
+  "collectLocation": "Jūsų įrenginio tikslią vietą - tik jei paspaudžiate „Naudoti mano vietą“, norėdami rasti artimiausią paštomatą. Ji apdorojama tiesiogiai jūsų įrenginyje atstumams apskaičiuoti ir niekada nesiunčiama į mūsų serverius bei niekur nesaugoma.",
   "useHeading": "Kaip naudojame",
   "useP1": "Šią informaciją naudojame mainų paslaugai teikti: rodyti žaislų skelbimus, suderinti ir sekti mainų pasiūlymus, leisti susirašinėti ir vertinti mainų partnerius, siųsti siuntimo būsenos el. laiškus bei pranešimus, kuriuos esate pasirinkę gauti, atsakyti į pagalbos užklausas ir vykdyti moderavimą prieš piktnaudžiavimą (pavyzdžiui, blokuoti paskyrą, kuri kartotinai pažeidžia mūsų taisykles).",
   "shareHeading": "Su kuo dalijamės",

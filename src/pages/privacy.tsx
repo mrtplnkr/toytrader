@@ -28,6 +28,7 @@ function PrivacyPage() {
                     <li>{t('privacy:collectShipping')}</li>
                     <li>{t('privacy:collectPayment')}</li>
                     <li>{t('privacy:collectDevice')}</li>
+                    <li>{t('privacy:collectLocation')}</li>
                 </ul>
 
                 <h4 className="font-bold mt-4 mb-1">{t('privacy:useHeading')}</h4>

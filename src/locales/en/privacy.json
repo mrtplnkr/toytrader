@@ -8,6 +8,7 @@
   "collectShipping": "Shipping details you choose to share with a trade partner once a trade is accepted: your name, phone number, and chosen parcel-machine location.",
   "collectPayment": "Payment confirmation if you pay the optional tip - Stripe processes your card details directly and we never see or store your card number, only a payment confirmation reference.",
   "collectDevice": "Basic usage analytics, and a push-notification device token if you choose to enable notifications.",
+  "collectLocation": "Your device's precise location, only if you tap \"Use my location\" to find the nearest parcel machine - this is processed entirely on your device to compute distances and is never sent to our servers or stored anywhere.",
   "useHeading": "How we use it",
   "useP1": "We use this information to operate the trading service: showing toy listings, matching and tracking trade offers, letting you message and rate trade partners, sending shipping-status emails and notifications you've opted into, responding to help requests, and moderating abuse (for example, disabling an account that repeatedly violates our rules).",
   "shareHeading": "Who we share it with",
