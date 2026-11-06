@@ -21,7 +21,6 @@ function ShipmentResultPage() {
     const side = (searchParams.get('side') as ShipmentSide | null) ?? undefined;
     const status = searchParams.get('status');
 
-    const refresh = useContextSelector(GoodAppContext, (state: any) => state.refresh);
     const offers = useContextSelector(GoodAppContext, (state: any) => state.offers);
 
     const [rechecking, setRechecking] = useState(false);
@@ -37,10 +36,11 @@ function ShipmentResultPage() {
         (side === 'offer' ? offer.offerShipmentStatus : offer.targetShipmentStatus) : undefined;
 
     // Payment confirmation came back from Stripe (status=success) but the
-    // webhook hasn't caught up to mark it paid yet - poll briefly, same
-    // fallback-to-manual-recheck pattern as before, just targeting the
-    // payment flag instead of a barcode (barcode is now entered separately
-    // by the user, not generated automatically after payment).
+    // webhook hasn't caught up to mark it paid yet - `offers` is a live
+    // Firestore listener (App.tsx), so `paid` above flips to true on its
+    // own the instant the webhook's write lands, no refetch needed. This
+    // just bounds how long to show "confirming..." before falling back to
+    // the manual recheck button, in case the webhook never arrives.
     const [polling, setPolling] = useState(status === 'success' && !paid);
 
     useEffect(() => {
@@ -49,18 +49,8 @@ function ShipmentResultPage() {
             return;
         }
 
-        let attempts = 0;
-        const interval = setInterval(async () => {
-            attempts += 1;
-            await refresh();
-            if (attempts >= POLL_ATTEMPTS) {
-                clearInterval(interval);
-                setPolling(false);
-            }
-        }, POLL_DELAY_MS);
-
-        return () => clearInterval(interval);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        const timeout = setTimeout(() => setPolling(false), POLL_ATTEMPTS * POLL_DELAY_MS);
+        return () => clearTimeout(timeout);
     }, [status, paid]);
 
     const onRecheckPayment = async () => {
@@ -69,9 +59,9 @@ function ShipmentResultPage() {
         setRecheckResult(undefined);
         try {
             const { paid: nowPaid } = await recheckShipmentPayment(offerId);
-            if (nowPaid) {
-                await refresh();
-            } else {
+            // offers is a live listener - if this function just paid it
+            // server-side, `paid` above flips to true on its own.
+            if (!nowPaid) {
                 setRecheckResult('not-paid');
             }
         } catch (err) {

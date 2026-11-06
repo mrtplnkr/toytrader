@@ -1,6 +1,5 @@
 {
   "heading": "All your toys",
-  "refresh": "refresh",
   "addYourToy": "add your toy",
   "noToysYet": "You haven't added any toys yet.",
   "offersNotice": "You have <OfferLink>{{count}} offer(s)</OfferLink> on this toy - accept or decline them from My Offers.",

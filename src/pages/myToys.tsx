@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Trans, useTranslation } from "react-i18next";
 import { auth } from "../firebase-config";
@@ -14,12 +13,6 @@ import { Rating } from "../types/rating";
 function MyToysPage() {
   let navigate = useNavigate();
   const { t } = useTranslation();
-
-  const refresh = useContextSelector(GoodAppContext, (state: any) => state.refresh);
-
-  useEffect(() => {
-    refresh();
-  }, [refresh]);
 
   const toys = useContextSelector(GoodAppContext, (state: any) => state.toys);
   const offers = useContextSelector(GoodAppContext, (state: any) => state.offers);
@@ -76,10 +69,8 @@ function MyToysPage() {
             onScreen: true
           }
         });
-        // Without this, the deleted toy stays visible until the user
-        // manually refreshes or navigates away and back - context state
-        // isn't updated just by the Firestore write succeeding.
-        await refresh();
+        // toys is a live Firestore listener (App.tsx) - no explicit refetch
+        // needed, the deleted toy disappears from the list on its own.
       })
       .catch((e) =>
         Store.addNotification({
@@ -102,8 +93,7 @@ function MyToysPage() {
     <>
         <h3>{t('myToys:heading')}</h3>
 
-        <div className="flex justify-between mb-6">
-          <button onClick={() => refresh()}>{t('myToys:refresh')}</button>
+        <div className="flex justify-end mb-6">
           <button className="btn-primary" onClick={() => navigate('/addNew')}>{t('myToys:addYourToy')}</button>
         </div>
 

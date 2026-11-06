@@ -50,11 +50,6 @@ function notify(title: string, message: string, type: 'success' | 'danger') {
 function AdminPage() {
     const { t } = useTranslation();
     const toys = useContextSelector(GoodAppContext, (state: any) => state.toys);
-    const refresh = useContextSelector(GoodAppContext, (state: any) => state.refresh);
-
-    useEffect(() => {
-        refresh();
-    }, [refresh]);
 
     const [profilesByUid, setProfilesByUid] = useState<Record<string, Profile>>({});
     const [banningUid, setBanningUid] = useState<string | undefined>();
@@ -145,7 +140,9 @@ function AdminPage() {
             // complaint's "Ban {name}" button stayed active and clickable
             // even after that person was already banned.
             setBannedUsers((prev) => [...prev, { uid, bannedAt: new Date() }]);
-            await refresh();
+            // toys is a live Firestore listener (App.tsx) - the banned
+            // user's listings disappear on their own once banUser's
+            // server-side deletion lands.
         } catch (err) {
             notify(t('common:toast.actionFailedTitle'), (err as Error).message, "danger");
         } finally {
@@ -177,7 +174,6 @@ function AdminPage() {
             setRemovingToyId(toy.id);
             await removeToy(toy.id);
             notify(t('admin:toyRemovedTitle'), t('admin:toyRemovedBody', { title: toy.title }), "success");
-            await refresh();
         } catch (err) {
             notify(t('common:toast.actionFailedTitle'), (err as Error).message, "danger");
         } finally {

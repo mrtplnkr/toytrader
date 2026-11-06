@@ -1,5 +1,5 @@
 import { createUserWithEmailAndPassword, FacebookAuthProvider, sendPasswordResetEmail, signInWithEmailAndPassword, signInWithPopup, signOut, updateProfile } from "firebase/auth";
-import { addDoc, collection, deleteDoc, doc, DocumentData, getDoc, getDocs, or, query, setDoc, Timestamp, updateDoc, where } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, DocumentData, getDoc, getDocs, onSnapshot, or, query, setDoc, Timestamp, Unsubscribe, updateDoc, where } from "firebase/firestore";
 import { deleteObject, getDownloadURL, ref } from "firebase/storage";
 import { httpsCallable } from "firebase/functions";
 import { getToken, onMessage } from "firebase/messaging";
@@ -96,46 +96,42 @@ export const addNewOffer = async (toyOffered: string, toyTargeted: string, userR
     });
 }
 
-export const getToyList = async () => {
-    try {
-        const q = query(toysCollectionRef)
-        const querySnapshot = await getDocs(q);
+// Real-time instead of one-shot: on Firestore's pay-as-you-go pricing, a
+// periodic getDocs() poll bills every document on every poll regardless of
+// whether anything changed. onSnapshot() bills the same as one getDocs()
+// call to attach, then only bills documents that actually change - and
+// pushes them to every open tab instantly instead of on the next poll.
+export const subscribeToys = (onChange: (toys: Toy[]) => void): Unsubscribe => {
+    return onSnapshot(query(toysCollectionRef), async (snapshot) => {
+        const dataList: DocumentData[] = snapshot.docs.map((d) => ({...d.data(), id: d.id}));
 
-        const dataList: DocumentData[] = [];
-        querySnapshot.forEach((doc) => {
-            dataList.push({...doc.data(), id: doc.id});
-      });
+        // Returning (not pushing) from each mapped promise keeps the result
+        // array in dataList's original order regardless of which
+        // getDownloadURL call resolves first - pushing inside the callback
+        // ordered by resolution time instead, so the list's order (and
+        // anything tracking a toy by position, e.g. list.tsx) would shuffle
+        // on every update.
+        const toyList: Toy[] = await Promise.all(dataList.map(async (d) => {
+            // Pre-existing docs from before multi-image support have no
+            // `images` field - fall back to the single legacy `file`.
+            const rawImages: string[] = d.images && d.images.length > 0 ? d.images : [d.file];
+            const imageUrls = await Promise.all(rawImages.map((name: string) =>
+                getDownloadURL(ref(storage, `projectFiles/${name}`))
+            ));
+            const mainIndex = Math.max(0, rawImages.indexOf(d.file));
+            const video = d.video ? await getDownloadURL(ref(storage, `projectFiles/${d.video}`)) : undefined;
 
-      // Returning (not pushing) from each mapped promise keeps the result
-      // array in dataList's original order regardless of which
-      // getDownloadURL call resolves first - pushing inside the callback
-      // ordered by resolution time instead, so the list's order (and
-      // anything tracking a toy by position, e.g. list.tsx) would shuffle
-      // on every refetch.
-      const toyList: Toy[] = await Promise.all(dataList.map(async (d) => {
-        // Pre-existing docs from before multi-image support have no
-        // `images` field - fall back to the single legacy `file`.
-        const rawImages: string[] = d.images && d.images.length > 0 ? d.images : [d.file];
-        const imageUrls = await Promise.all(rawImages.map((name: string) =>
-            getDownloadURL(ref(storage, `projectFiles/${name}`))
-        ));
-        const mainIndex = Math.max(0, rawImages.indexOf(d.file));
-        const video = d.video ? await getDownloadURL(ref(storage, `projectFiles/${d.video}`)) : undefined;
-
-        return {
-            id: d.id,
-            userId: d.userId,
-            title: d.title,
-            file: imageUrls[mainIndex],
-            images: imageUrls,
-            video,
-        };
-      }));
-      return toyList;
-    } catch (err) {
-      console.error(err);
-      return [];
-    }
+            return {
+                id: d.id,
+                userId: d.userId,
+                title: d.title,
+                file: imageUrls[mainIndex],
+                images: imageUrls,
+                video,
+            };
+        }));
+        onChange(toyList);
+    }, (err) => console.error(err));
 };
 
 // Deletes a toy's Firestore doc and its associated Storage images/video -
@@ -161,28 +157,27 @@ export const deleteToy = async (toyId: string) => {
 
 export const toyOffersCollectionRef = collection(db, "offers");
 
-export const getOfferList = async (userId: string) => {
-    try {
+// See subscribeToys above for why this is onSnapshot rather than a poll.
+export const subscribeOffers = (userId: string, onChange: (offers: Offer[]) => void): Unsubscribe => {
+    const toq = query(toyOffersCollectionRef,
+        or(where('userReceived', "==", userId), where('userInitiated', "==", userId)));
+
+    // Firestore Timestamp fields (written server-side via serverTimestamp(),
+    // e.g. the Stripe webhook's writes) come back as Timestamp instances.
+    // Fields written client-side via Date.now() (offerCreated, offerAccepted,
+    // offerPosted/Received, targetPosted/Received) come back as plain
+    // numbers instead - treating every value as Timestamp-shaped produced
+    // "Invalid Date" for those. Handle both shapes.
+    const toDate = (data: DocumentData, field: string) => {
+        const value = data[field];
+        if (value === undefined || value === null) return undefined;
+        if (value instanceof Timestamp) return value.toDate();
+        if (typeof value === 'number') return new Date(value);
+        return new Timestamp(value.seconds, value.nanoseconds).toDate();
+    };
+
+    return onSnapshot(toq, (qs) => {
         const offers: Offer[] = [];
-
-        const toq = query(toyOffersCollectionRef, 
-            or(where('userReceived', "==", userId), where('userInitiated', "==", userId)));
-        const qs = await getDocs(toq);
-
-        // Firestore Timestamp fields (written server-side via serverTimestamp(),
-        // e.g. the Stripe webhook's writes) come back as Timestamp instances.
-        // Fields written client-side via Date.now() (offerCreated, offerAccepted,
-        // offerPosted/Received, targetPosted/Received) come back as plain
-        // numbers instead - treating every value as Timestamp-shaped produced
-        // "Invalid Date" for those. Handle both shapes.
-        const toDate = (data: DocumentData, field: string) => {
-            const value = data[field];
-            if (value === undefined || value === null) return undefined;
-            if (value instanceof Timestamp) return value.toDate();
-            if (typeof value === 'number') return new Date(value);
-            return new Timestamp(value.seconds, value.nanoseconds).toDate();
-        };
-
         qs.forEach((doc: any) => {
             const data = doc.data();
             offers.push({...data, id: doc.id,
@@ -198,13 +193,8 @@ export const getOfferList = async (userId: string) => {
                 targetShipmentStatusUpdatedAt: toDate(data, 'targetShipmentStatusUpdatedAt'),
             });
         });
-
-        console.log('offers received', offers);
-        return offers;
-    } catch (err) {
-      console.error(err);
-      return [];
-    }
+        onChange(offers);
+    }, (err) => console.error(err));
 };
 
 export const updateOffer = async (id: string) => {
@@ -237,26 +227,22 @@ const ratingsCollectionRef = collection(db, "ratings");
 // One rating per receipt event - doc id doubles as "has this already been
 // rated" (no query needed), and as the Firestore rule's self-attribution
 // check (raterUid must match the signed-in user).
-export const getRatingList = async (): Promise<Rating[]> => {
-    try {
-        const ratings: Rating[] = [];
-        const querySnapshot = await getDocs(query(ratingsCollectionRef));
-        querySnapshot.forEach((doc) => {
-            const data = doc.data();
-            ratings.push({
-                id: doc.id,
+// See subscribeToys above for why this is onSnapshot rather than a poll.
+export const subscribeRatings = (onChange: (ratings: Rating[]) => void): Unsubscribe => {
+    return onSnapshot(query(ratingsCollectionRef), (snapshot) => {
+        const ratings: Rating[] = snapshot.docs.map((d) => {
+            const data = d.data();
+            return {
+                id: d.id,
                 offerId: data.offerId,
                 toyId: data.toyId,
                 raterUid: data.raterUid,
                 stars: data.stars,
                 createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : new Date(data.createdAt),
-            });
+            };
         });
-        return ratings;
-    } catch (err) {
-        console.error(err);
-        return [];
-    }
+        onChange(ratings);
+    }, (err) => console.error(err));
 };
 
 export const submitRating = async (offerId: string, side: ShipmentSide, toyId: string, stars: number) => {

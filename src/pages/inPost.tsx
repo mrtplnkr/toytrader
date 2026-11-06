@@ -15,11 +15,6 @@ function HistoryPage() {
   const { t } = useTranslation();
 
   const toys = useContextSelector(GoodAppContext, (state: any) => state.toys);
-  const refresh = useContextSelector(GoodAppContext, (state: any) => state.refresh);
-
-  useEffect(() => {
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const [myWishedItems, setMyWishedItems] = useState<any[]>(localStorage.getItem('wishListItems') ? JSON.parse(localStorage.getItem('wishListItems')!) : []);
 
@@ -44,7 +39,6 @@ function HistoryPage() {
           <button id="addButton" onClick={() => navigate('/addNew')}>
             <FontAwesomeIcon color="darkviolet" icon={faCirclePlus} />
           </button>
-          <button className="self-start" onClick={() => refresh()}>{t('inPost:refresh')}</button>
         </div>
 
         <ul id="toyList">

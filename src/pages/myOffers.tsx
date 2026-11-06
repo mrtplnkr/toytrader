@@ -110,12 +110,6 @@ function MyOffersPage() {
     let navigate = useNavigate();
     const { t } = useTranslation();
 
-    const refresh = useContextSelector(GoodAppContext, (state: any) => state.refresh);
-
-    useEffect(() => {
-      refresh();
-    }, [refresh]);
-
     const toys = useContextSelector(GoodAppContext, (state: any) => state.toys);
     const offers = useContextSelector(GoodAppContext, (state: any) => state.offers);
     const ratings = useContextSelector(GoodAppContext, (state: any) => state.ratings);
@@ -267,8 +261,6 @@ function MyOffersPage() {
                     .map((o: Offer) => o.id);
                 await Promise.all(competingOfferIds.map((id: string) => declineOffer(id)));
             }
-
-            await refresh();
         } catch (err) {
             notifyError(err as Error);
         } finally {
@@ -280,7 +272,6 @@ function MyOffersPage() {
         try {
             setRespondingId(offerId);
             await declineOffer(offerId);
-            await refresh();
         } catch (err) {
             notifyError(err as Error);
         } finally {
@@ -295,7 +286,6 @@ function MyOffersPage() {
         try {
             setRespondingId(offerId);
             await declineOffer(offerId);
-            await refresh();
         } catch (err) {
             notifyError(err as Error);
         } finally {
@@ -307,7 +297,6 @@ function MyOffersPage() {
         try {
             setMarkingId(offerId);
             await markToyPosted(offerId, side);
-            await refresh();
         } catch (err) {
             notifyError(err as Error);
         } finally {
@@ -319,7 +308,6 @@ function MyOffersPage() {
         try {
             setMarkingId(offerId);
             await markToyReceived(offerId, side);
-            await refresh();
         } catch (err) {
             notifyError(err as Error);
         } finally {
@@ -333,7 +321,6 @@ function MyOffersPage() {
         try {
             setSubmittingRatingId(offerId);
             await submitRating(offerId, side, toyId, stars);
-            await refresh();
         } catch (err) {
             notifyError(err as Error);
         } finally {
@@ -354,7 +341,6 @@ function MyOffersPage() {
         try {
             setSharingShippingId(offerId);
             await shareShippingInfo(offerId, side, myShippingProfile);
-            await refresh();
         } catch (err) {
             notifyError(err as Error);
         } finally {
@@ -385,7 +371,6 @@ function MyOffersPage() {
             await saveShippingProfile(profile);
             await shareShippingInfo(offerId, side, profile);
             setMyShippingProfile(profile);
-            await refresh();
         } catch (err) {
             notifyError(err as Error);
         } finally {
@@ -441,7 +426,6 @@ function MyOffersPage() {
                 selectedSizeByOfferId[offerId] ?? DEFAULT_TOY_SIZE
             );
             setBarcodeInputByOfferId((prev) => ({...prev, [offerId]: ''}));
-            await refresh();
         } catch (err) {
             notifyError(err as Error);
         } finally {
@@ -464,8 +448,7 @@ function MyOffersPage() {
     <>
         <h3>{t('myOffers:heading')}</h3>
 
-        <div className="flex justify-between mb-6">
-          <button onClick={() => refresh()}>{t('myOffers:refresh')}</button>
+        <div className="flex justify-end mb-6">
           <button className="btn-primary" onClick={() => navigate('/addNew')}>{t('myOffers:addYourToy')}</button>
         </div>
 

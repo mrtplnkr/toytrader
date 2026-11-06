@@ -19,12 +19,12 @@ import DeleteDataPage from "./pages/deleteData";
 import { auth } from "./firebase-config";
 import MyToysPage from "./pages/myToys";
 import { ReactNotifications } from "react-notifications-component";
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { Toy } from "./types/toy";
 import { Offer } from "./types/offer";
 import { Rating } from "./types/rating";
 import { GoodAppContext } from "./hooks/context";
-import { checkIsAdmin, getOfferList, getRatingList, getToyList, logOff, onForegroundMessage } from "./hooks/helper";
+import { checkIsAdmin, logOff, onForegroundMessage, subscribeOffers, subscribeRatings, subscribeToys } from "./hooks/helper";
 import { diffAndNotifyShipmentStatus } from "./hooks/shipmentNotifications";
 import { Store } from "react-notifications-component";
 import HistoryPage from "./pages/inPost";
@@ -36,7 +36,7 @@ import Bubbles from "./components/bubbles";
 import AboutPage from "./pages/about";
 import DisclaimerPage from "./pages/disclaimer";
 import PrivacyPage from "./pages/privacy";
-import { User } from "firebase/auth";
+import { onAuthStateChanged, User } from "firebase/auth";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "./components/languageSwitcher";
 
@@ -44,66 +44,69 @@ import LanguageSwitcher from "./components/languageSwitcher";
 // there's no reason it should be in everyone's initial bundle.
 const AdminPage = lazy(() => import("./pages/admin"));
 
-// getToyList/getRatingList are full, unscoped collection reads - on
-// Firestore's pay-as-you-go pricing every document in each collection is a
-// billed read, every single call, whether or not anything changed. Any
-// actual mutation already triggers an immediate refresh() of its own (see
-// CLAUDE.md), so this background poll only exists to pick up *other*
-// users' concurrent changes - which doesn't need near-real-time freshness,
-// hence the long interval rather than something snappier.
-const BACKGROUND_REFRESH_INTERVAL_MS = 5 * 60_000;
-// Floor between focus-triggered refetches, independent of the interval
-// above - without this, rapidly alt-tabbing (or the OAuth-popup focus
-// storm the guard below already accounts for) re-runs all three reads on
-// every single focus event.
-const MIN_MS_BETWEEN_FOCUS_REFRESHES = 60_000;
-
 function StateProvider({children}: any) {
   const [toys, setToys] = useState<Toy[]>([])
   const [offers, setOffers] = useState<Offer[]>([]);
   const [ratings, setRatings] = useState<Rating[]>([]);
+  // Used only by diffAndNotifyShipmentStatus's before/after comparison, not
+  // by rendering - a ref so updating it doesn't itself trigger a re-render.
   const prevOffersRef = useRef<Offer[]>([]);
-  const lastFetchedAtRef = useRef(0);
 
   const signOut = async () => {
     await logOff();
-    setOffers([]);
   };
 
-  const getData = useCallback(async() => {
-    // Guard against running while signed out - the interval and the window
-    // "focus" listener below both fire unconditionally, and an OAuth popup
-    // opening/closing (e.g. Facebook sign-in) triggers focus events on
-    // this window multiple times before auth.currentUser is set, which
-    // was hammering Firestore with doomed, erroring calls during the
-    // exact window the sign-in popup is trying to complete.
-    const uid = auth.currentUser?.uid;
-    if (!uid) return;
-
-    lastFetchedAtRef.current = Date.now();
-    setToys(await getToyList());
-    setRatings(await getRatingList());
-    const newOffers = await getOfferList(uid);
-    if (prevOffersRef.current.length > 0) {
-      diffAndNotifyShipmentStatus(uid, prevOffersRef.current, newOffers);
-    }
-    prevOffersRef.current = newOffers;
-    setOffers(newOffers);
-  }, []);
-
-  const getDataOnFocus = useCallback(() => {
-    if (Date.now() - lastFetchedAtRef.current < MIN_MS_BETWEEN_FOCUS_REFRESHES) return;
-    getData();
-  }, [getData]);
-
+  // toys/ratings/offers are now real-time Firestore listeners rather than a
+  // poll - see subscribeToys/subscribeRatings/subscribeOffers in helper.ts
+  // for why (billed reads only on actual document changes instead of a
+  // full re-read of every document on a timer). This effect's job is just
+  // the subscribe/unsubscribe lifecycle: (re)attach all three whenever the
+  // signed-in user changes, and tear everything down on sign-out so a
+  // stale listener doesn't keep running (and erroring on permission-denied)
+  // after the session that authorized it ends.
   useEffect(() => {
-    const interval = setInterval(getData, BACKGROUND_REFRESH_INTERVAL_MS);
-    window.addEventListener("focus", getDataOnFocus);
+    let unsubToys: (() => void) | undefined;
+    let unsubRatings: (() => void) | undefined;
+    let unsubOffers: (() => void) | undefined;
+    // onSnapshot fires immediately with the current state on attach, the
+    // same way the very first poll used to - skip diffing/notifying on
+    // that first emission per (re)subscription, same as the old
+    // `prevOffersRef.current.length > 0` guard did.
+    let isFirstOffersSnapshot = true;
+
+    const unsubAuth = onAuthStateChanged(auth, (user) => {
+      unsubToys?.();
+      unsubRatings?.();
+      unsubOffers?.();
+
+      if (!user) {
+        setToys([]);
+        setRatings([]);
+        setOffers([]);
+        prevOffersRef.current = [];
+        return;
+      }
+
+      unsubToys = subscribeToys(setToys);
+      unsubRatings = subscribeRatings(setRatings);
+      isFirstOffersSnapshot = true;
+      unsubOffers = subscribeOffers(user.uid, (newOffers) => {
+        if (!isFirstOffersSnapshot) {
+          diffAndNotifyShipmentStatus(user.uid, prevOffersRef.current, newOffers);
+        }
+        isFirstOffersSnapshot = false;
+        prevOffersRef.current = newOffers;
+        setOffers(newOffers);
+      });
+    });
+
     return () => {
-      clearInterval(interval);
-      window.removeEventListener("focus", getDataOnFocus);
+      unsubAuth();
+      unsubToys?.();
+      unsubRatings?.();
+      unsubOffers?.();
     };
-  }, [getData, getDataOnFocus]);
+  }, []);
 
   // A push notification that arrives while this tab is open and focused
   // doesn't auto-show as an OS notification (that only happens via the
@@ -125,7 +128,7 @@ function StateProvider({children}: any) {
   }, []);
 
   return (
-    <GoodAppContext.Provider value={{toys, offers, ratings, refresh: getData, signOut}}>
+    <GoodAppContext.Provider value={{toys, offers, ratings, signOut}}>
       {children}
     </GoodAppContext.Provider>
   )

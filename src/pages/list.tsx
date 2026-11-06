@@ -23,7 +23,6 @@ function ListPage() {
   const toys = useContextSelector(GoodAppContext, (state: any) => state.toys);
   const offers = useContextSelector(GoodAppContext, (state: any) => state.offers);
   const ratings = useContextSelector(GoodAppContext, (state: any) => state.ratings);
-  const refresh = useContextSelector(GoodAppContext, (state: any) => state.refresh);
 
   const toyRatingStats = (toyId: string) => {
     const toyRatings = ratings.filter((r: Rating) => r.toyId === toyId);
@@ -31,10 +30,6 @@ function ListPage() {
     const averageRating = toyRatings.reduce((sum: number, r: Rating) => sum + r.stars, 0) / toyRatings.length;
     return { averageRating, ratingCount: toyRatings.length };
   };
-
-  useEffect(() => {
-    refresh();
-  }, [refresh]);
 
   const [myWishedItems, setMyWishedItems] = useState<any[]>([]);
 
@@ -51,10 +46,10 @@ function ListPage() {
       }
   };
 
-  // Tracked by id, not array position - toys re-fetch periodically (App.tsx's
-  // 60s polling) and the array's order isn't guaranteed stable across
-  // fetches, so an index into it could silently end up pointing at a
-  // different toy than the one actually being viewed.
+  // Tracked by id, not array position - toys is a live Firestore listener
+  // (App.tsx) and the array's order isn't guaranteed stable across updates,
+  // so an index into it could silently end up pointing at a different toy
+  // than the one actually being viewed.
   // Seeded from ?toyId=... so a shared toy link (see item.tsx's shareToy)
   // opens straight into that toy's full-screen view - toys may not have
   // loaded yet at this point, but toyBeingDisplayed below re-resolves
@@ -147,7 +142,6 @@ function ListPage() {
           <button id="addButton" onClick={() => navigate('/addNew')}>
             <FontAwesomeIcon color="darkviolet" icon={faCirclePlus} />
           </button>
-          <button className="self-start" onClick={() => refresh()}>{t('list:refresh')}</button>
         </div>
 
         <ul id="toyList">
