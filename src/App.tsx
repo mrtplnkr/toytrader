@@ -44,11 +44,26 @@ import LanguageSwitcher from "./components/languageSwitcher";
 // there's no reason it should be in everyone's initial bundle.
 const AdminPage = lazy(() => import("./pages/admin"));
 
+// getToyList/getRatingList are full, unscoped collection reads - on
+// Firestore's pay-as-you-go pricing every document in each collection is a
+// billed read, every single call, whether or not anything changed. Any
+// actual mutation already triggers an immediate refresh() of its own (see
+// CLAUDE.md), so this background poll only exists to pick up *other*
+// users' concurrent changes - which doesn't need near-real-time freshness,
+// hence the long interval rather than something snappier.
+const BACKGROUND_REFRESH_INTERVAL_MS = 5 * 60_000;
+// Floor between focus-triggered refetches, independent of the interval
+// above - without this, rapidly alt-tabbing (or the OAuth-popup focus
+// storm the guard below already accounts for) re-runs all three reads on
+// every single focus event.
+const MIN_MS_BETWEEN_FOCUS_REFRESHES = 60_000;
+
 function StateProvider({children}: any) {
   const [toys, setToys] = useState<Toy[]>([])
   const [offers, setOffers] = useState<Offer[]>([]);
   const [ratings, setRatings] = useState<Rating[]>([]);
   const prevOffersRef = useRef<Offer[]>([]);
+  const lastFetchedAtRef = useRef(0);
 
   const signOut = async () => {
     await logOff();
@@ -56,15 +71,16 @@ function StateProvider({children}: any) {
   };
 
   const getData = useCallback(async() => {
-    // Guard against running while signed out - the 60s interval and the
-    // window "focus" listener below both fire unconditionally, and an
-    // OAuth popup opening/closing (e.g. Facebook sign-in) triggers focus
-    // events on this window multiple times before auth.currentUser is set,
-    // which was hammering Firestore with doomed, erroring calls during the
+    // Guard against running while signed out - the interval and the window
+    // "focus" listener below both fire unconditionally, and an OAuth popup
+    // opening/closing (e.g. Facebook sign-in) triggers focus events on
+    // this window multiple times before auth.currentUser is set, which
+    // was hammering Firestore with doomed, erroring calls during the
     // exact window the sign-in popup is trying to complete.
     const uid = auth.currentUser?.uid;
     if (!uid) return;
 
+    lastFetchedAtRef.current = Date.now();
     setToys(await getToyList());
     setRatings(await getRatingList());
     const newOffers = await getOfferList(uid);
@@ -75,14 +91,19 @@ function StateProvider({children}: any) {
     setOffers(newOffers);
   }, []);
 
+  const getDataOnFocus = useCallback(() => {
+    if (Date.now() - lastFetchedAtRef.current < MIN_MS_BETWEEN_FOCUS_REFRESHES) return;
+    getData();
+  }, [getData]);
+
   useEffect(() => {
-    const interval = setInterval(getData, 60_000);
-    window.addEventListener("focus", getData);
+    const interval = setInterval(getData, BACKGROUND_REFRESH_INTERVAL_MS);
+    window.addEventListener("focus", getDataOnFocus);
     return () => {
       clearInterval(interval);
-      window.removeEventListener("focus", getData);
+      window.removeEventListener("focus", getDataOnFocus);
     };
-  }, [getData]);
+  }, [getData, getDataOnFocus]);
 
   // A push notification that arrives while this tab is open and focused
   // doesn't auto-show as an OS notification (that only happens via the
