@@ -18,39 +18,38 @@ export const checkStatus = async () => {
         return e;
     });
 }
+// Like emailSignUp/emailSignIn below, these let errors propagate as-is
+// (not swallowed, not rewrapped) - login.tsx needs the real err.code to
+// show a specific message, and needs to know a popup failed at all. A
+// first-time Facebook authorization's extra "Continue as X" consent step
+// is a known trigger for signInWithPopup to reject (often
+// auth/popup-closed-by-user even though the user didn't close anything) -
+// previously this was caught and silently discarded here, with no await/
+// catch at the call site either, so the user just landed back on /login
+// with zero feedback and no indication to just try again.
 export const googleSign = async (callback: any) => {
-    try {
-        const user = await signInWithPopup(auth, googleProvider);
-        callback(user);
-    } catch (err) {
-        throw new Error('google signIn error' + (err as Error).message);
-    }
-    return true;
+    const result = await signInWithPopup(auth, googleProvider);
+    callback(result.user);
 };
 export const facebookSign = async (callback: any) => {
-    try {
-        const result = await signInWithPopup(auth, facebookProvider);
-        // Firebase doesn't reliably populate photoURL for Facebook sign-in -
-        // Facebook's Graph API requires the OAuth access token to fetch the
-        // profile picture, which Firebase doesn't do automatically. Fetch it
-        // ourselves using the token from this sign-in and persist it.
-        const credential = FacebookAuthProvider.credentialFromResult(result);
-        if (credential?.accessToken) {
-            await updateProfile(result.user, {
-                photoURL: `https://graph.facebook.com/me/picture?type=large&access_token=${credential.accessToken}`,
-            });
-        }
-        callback(result.user);
-    } catch (err) {
-        console.log('facebook signIn error' + (err as Error).message);
+    const result = await signInWithPopup(auth, facebookProvider);
+    // Firebase doesn't reliably populate photoURL for Facebook sign-in -
+    // Facebook's Graph API requires the OAuth access token to fetch the
+    // profile picture, which Firebase doesn't do automatically. Fetch it
+    // ourselves using the token from this sign-in and persist it.
+    const credential = FacebookAuthProvider.credentialFromResult(result);
+    if (credential?.accessToken) {
+        await updateProfile(result.user, {
+            photoURL: `https://graph.facebook.com/me/picture?type=large&access_token=${credential.accessToken}`,
+        });
     }
-    return true;
+    callback(result.user);
 };
 
-// Unlike googleSign/facebookSign, these deliberately let errors propagate
-// instead of swallowing/rewrapping them - login.tsx needs the real
-// err.code (auth/email-already-in-use, auth/wrong-password, ...) to show a
-// field-specific message instead of one generic failure toast.
+// Unlike the (former) googleSign/facebookSign, these deliberately let
+// errors propagate instead of swallowing/rewrapping them - login.tsx needs
+// the real err.code (auth/email-already-in-use, auth/wrong-password, ...)
+// to show a field-specific message instead of one generic failure toast.
 export const emailSignUp = async (email: string, password: string, displayName: string, callback: any) => {
     const result = await createUserWithEmailAndPassword(auth, email, password);
     // Unlike Google/Facebook, email/password sign-up has no profile to pull

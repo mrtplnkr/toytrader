@@ -73,6 +73,19 @@ function LoginPage() {
     }
   };
 
+  // Shared by both social buttons - signInWithPopup can reject for reasons
+  // that have nothing to do with the user actually cancelling (a first-time
+  // Facebook authorization's extra consent step is a known trigger), so
+  // without this the popup just silently closes and the user lands back
+  // here with no idea what happened or that trying again usually works.
+  const onSocialSignIn = async (signIn: (callback: any) => Promise<void>) => {
+    try {
+      await signIn(signedInCallback);
+    } catch (err) {
+      notify(t('common:toast.actionFailedTitle'), authErrorMessage(err), "danger");
+    }
+  };
+
   const onForgotPassword = async () => {
     if (!email) {
       notify(t('login:emailRequiredTitle'), t('login:emailRequiredBody'), "danger");
@@ -90,8 +103,8 @@ function LoginPage() {
     <div className="card max-w-[360px] mx-auto my-12 p-8 flex flex-col gap-4">
       <h1 className="m-0">{t('login:title')}</h1>
 
-      <button className="btn-primary" onClick={() => googleSign(signedInCallback)}>{t('login:googleLogin')}</button>
-      <button className="btn-primary" onClick={() => facebookSign(signedInCallback)}>{t('login:facebookLogin')}</button>
+      <button className="btn-primary" onClick={() => onSocialSignIn(googleSign)}>{t('login:googleLogin')}</button>
+      <button className="btn-primary" onClick={() => onSocialSignIn(facebookSign)}>{t('login:facebookLogin')}</button>
 
       <div className="flex items-center gap-2 text-text-dim text-[0.85em]">
         <hr className="flex-1" /> {t('login:or')} <hr className="flex-1" />
