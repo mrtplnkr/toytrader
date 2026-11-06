@@ -284,7 +284,10 @@ function Layout() {
       <Bubbles />
       <div className="relative z-10">
         <div className="navBar">
-          <Link className="brand" to="/">ToyTrader</Link>
+          <Link className="brand" to="/">
+            <img src="/logo192.png" alt="" className="brandLogo" />
+            <span className="brandWord">Toy<span className="brandAccent">Trader</span></span>
+          </Link>
 
           <ul className="navigation">
             <li>

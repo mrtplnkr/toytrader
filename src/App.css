@@ -21,10 +21,33 @@ header {
 }
 
 .navBar .brand {
-  font-weight: 700;
-  font-size: 1.1em;
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
   color: var(--color-text);
   text-decoration: none;
+}
+
+.navBar .brandLogo {
+  width: 1.9em;
+  height: 1.9em;
+  border-radius: 30%;
+  transition: transform 0.2s ease;
+}
+
+.navBar .brand:hover .brandLogo {
+  transform: rotate(-8deg) scale(1.05);
+}
+
+.navBar .brandWord {
+  font-family: 'Baloo 2', var(--font-display, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
+  font-weight: 800;
+  font-size: 1.4em;
+  letter-spacing: -0.01em;
+}
+
+.navBar .brandAccent {
+  color: var(--color-gold);
 }
 
 .navigation {
