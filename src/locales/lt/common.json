@@ -3,6 +3,9 @@
     "intro": "Pradžia",
     "search": "Ieškoti žaislų"
   },
+  "languageSwitcher": {
+    "ariaLabel": "Kalba"
+  },
   "toast": {
     "actionFailedTitle": "Nepavyko atlikti veiksmo !",
     "tryAgainLater": "Bandykite vėliau.",

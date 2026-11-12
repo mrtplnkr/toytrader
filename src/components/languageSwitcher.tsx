@@ -12,7 +12,7 @@ const LANGUAGES: { code: SupportedLanguage, label: string, flag: string }[] = [
 ];
 
 function LanguageSwitcher() {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -49,7 +49,7 @@ function LanguageSwitcher() {
     <div ref={containerRef} className="relative">
       <button
         type="button"
-        aria-label="Language"
+        aria-label={t('common:languageSwitcher.ariaLabel')}
         aria-haspopup="listbox"
         aria-expanded={open}
         onClick={() => setOpen((s) => !s)}

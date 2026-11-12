@@ -3,6 +3,9 @@
     "intro": "Intro",
     "search": "Search for toys"
   },
+  "languageSwitcher": {
+    "ariaLabel": "Language"
+  },
   "toast": {
     "actionFailedTitle": "Unfortunately this action failed !",
     "tryAgainLater": "Please try again later.",

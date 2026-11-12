@@ -3,6 +3,9 @@
     "intro": "Главная",
     "search": "Искать игрушки"
   },
+  "languageSwitcher": {
+    "ariaLabel": "Язык"
+  },
   "toast": {
     "actionFailedTitle": "Не удалось выполнить действие !",
     "tryAgainLater": "Пожалуйста, попробуйте позже.",
