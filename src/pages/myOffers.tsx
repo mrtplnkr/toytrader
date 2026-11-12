@@ -9,7 +9,7 @@ import { GoodAppContext } from "../hooks/context";
 import { useContextSelector } from "use-context-selector";
 import { Toy } from "../types/toy";
 import { Rating } from "../types/rating";
-import { ParcelMachine, ShipmentSide, ShippingPrice, declineOffer, getShippingPrice, getShippingProfile, markToyPosted, markToyReceived, saveShippingProfile, shareShippingInfo, startShipmentCheckout, submitOmnivaBarcode, submitRating, updateOffer } from "../hooks/helper";
+import { ParcelMachine, ShipmentSide, ShippingPrice, declineOffer, getShippingPrice, getShippingProfile, getTradePartnerNames, markToyPosted, markToyReceived, saveShippingProfile, shareShippingInfo, startShipmentCheckout, submitOmnivaBarcode, submitRating, updateOffer } from "../hooks/helper";
 import { ShippingProfile } from "../types/shippingProfile";
 import ParcelMachinePicker from "../components/parcelMachinePicker";
 import { DEFAULT_TOY_SIZE, OMNIVA_COUNTRIES, OMNIVA_PRICE_LIST_URL, OMNIVA_SEND_PARCEL_URL, TOY_SIZES, ToySize } from "../constants/omnivaPricing";
@@ -54,7 +54,7 @@ interface HistoryItem {
     otherShippingParcelMachineLabel?: string;
 }
 
-function buildStatusHtml(t: TFunction, o: Offer, isInitiator: boolean, isReceiver: boolean, params: {
+function buildStatusHtml(t: TFunction, o: Offer, isInitiator: boolean, isReceiver: boolean, partnerName: string, params: {
     offeredToyUrl: string;
     targetedToyUrl: string;
     myShipmentStatus?: string;
@@ -68,34 +68,43 @@ function buildStatusHtml(t: TFunction, o: Offer, isInitiator: boolean, isReceive
     // it's the one that got targeted (toyTargeted, which is theirs).
     const createdLine = isInitiator ?
         t('myOffers:status.offeredYourToy', { toyUrl: params.offeredToyUrl, date: (o.offerCreated as Date).toDateString() }) :
-        t('myOffers:status.receivedOfferForYourToy', { toyUrl: params.targetedToyUrl, date: (o.offerCreated as Date).toDateString() });
+        t('myOffers:status.receivedOfferForYourToy', { name: partnerName, toyUrl: params.targetedToyUrl, date: (o.offerCreated as Date).toDateString() });
 
     const acceptedLine = o.offerAccepted ?
-        t('myOffers:status.offerAccepted', { date: (o.offerAccepted as Date).toDateString() }) :
+        (isInitiator ?
+            t('myOffers:status.partnerAcceptedOffer', { name: partnerName, date: (o.offerAccepted as Date).toDateString() }) :
+            t('myOffers:status.youAcceptedOffer', { date: (o.offerAccepted as Date).toDateString() })) :
         isReceiver ?
         t('myOffers:status.yourTurnToRespond') :
-        t('myOffers:status.waitingForAcceptance');
+        t('myOffers:status.waitingForAcceptance', { name: partnerName });
 
+    // toyOffered always ships from the initiator - "my action" when I'm the
+    // initiator, otherwise it's the other side's action and gets named.
     const offeredLine = o.offerPosted ?
         (o.offerReceived ?
-            t('myOffers:status.offeredToyPostedAndReceived', { toyUrl: params.offeredToyUrl, date: (o.offerReceived as Date).toDateString() }) :
-            t('myOffers:status.offeredToyPosted', { toyUrl: params.offeredToyUrl })) :
-        t('myOffers:status.offeredToyNotSent');
+            t(isInitiator ? 'myOffers:status.offeredToyPostedAndReceived' : 'myOffers:status.partnerOfferedToyPostedAndReceived',
+                { name: partnerName, toyUrl: params.offeredToyUrl, date: (o.offerReceived as Date).toDateString() }) :
+            t(isInitiator ? 'myOffers:status.offeredToyPosted' : 'myOffers:status.partnerOfferedToyPosted',
+                { name: partnerName, toyUrl: params.offeredToyUrl })) :
+        t(isInitiator ? 'myOffers:status.offeredToyNotSent' : 'myOffers:status.partnerOfferedToyNotSent', { name: partnerName });
 
+    // toyTargeted always ships from the receiver - reversed from above.
     const targetLine = o.targetPosted ?
         (o.targetReceived ?
-            t('myOffers:status.requestedToyPostedAndReceived', { toyUrl: params.targetedToyUrl, date: (o.targetReceived as Date).toDateString() }) :
-            t('myOffers:status.requestedToyPosted', { toyUrl: params.targetedToyUrl })) :
-        t('myOffers:status.requestedToyNotSent');
+            t(isReceiver ? 'myOffers:status.requestedToyPostedAndReceived' : 'myOffers:status.partnerRequestedToyPostedAndReceived',
+                { name: partnerName, toyUrl: params.targetedToyUrl, date: (o.targetReceived as Date).toDateString() }) :
+            t(isReceiver ? 'myOffers:status.requestedToyPosted' : 'myOffers:status.partnerRequestedToyPosted',
+                { name: partnerName, toyUrl: params.targetedToyUrl })) :
+        t(isReceiver ? 'myOffers:status.requestedToyNotSent' : 'myOffers:status.partnerRequestedToyNotSent', { name: partnerName });
 
     const myShipmentLine = params.myShipmentStatus && !params.myReceived ?
         t('myOffers:status.yourShipmentStatus', { status: params.myShipmentStatus }) : '';
 
     const otherShipmentLine = params.otherSideShipmentStatus && !params.otherSideReceived ?
-        t('myOffers:status.otherShipmentStatus', { status: params.otherSideShipmentStatus }) :
+        t('myOffers:status.otherShipmentStatus', { name: partnerName, status: params.otherSideShipmentStatus }) :
         (params.otherSideShipmentBarcode || params.otherSideReceived) ?
         '' :
-        t('myOffers:status.otherNotRegistered');
+        t('myOffers:status.otherNotRegistered', { name: partnerName });
 
     return `<li>${createdLine}</li>
             <li>${acceptedLine}</li>
@@ -127,6 +136,7 @@ function MyOffersPage() {
     const [submittingRatingId, setSubmittingRatingId] = useState<string | undefined>();
     const [dismissedRatingIds, setDismissedRatingIds] = useState<Set<string>>(new Set());
     const [dismissedTipIds, setDismissedTipIds] = useState<Set<string>>(new Set());
+    const [partnerNamesByUid, setPartnerNamesByUid] = useState<Record<string, string>>({});
     const [myShippingProfile, setMyShippingProfile] = useState<ShippingProfile | undefined>();
     const [sharingShippingId, setSharingShippingId] = useState<string | undefined>();
     // Inline fallback for a user placing their first trade with no saved
@@ -141,6 +151,25 @@ function MyOffersPage() {
     }, []);
 
     useEffect(() => {
+        const uid = auth.currentUser?.uid;
+        const partnerUids = new Set<string>();
+        offers.forEach((o: Offer) => {
+            if (o.userInitiated === uid) partnerUids.add(o.userReceived);
+            else if (o.userReceived === uid) partnerUids.add(o.userInitiated);
+        });
+        const uidsToResolve = Array.from(partnerUids).filter((id) => !(id in partnerNamesByUid));
+        if (uidsToResolve.length === 0) return;
+        getTradePartnerNames(uidsToResolve)
+            .then((names) => setPartnerNamesByUid((prev) => ({ ...prev, ...names })))
+            .catch(() => {});
+    // partnerNamesByUid is a dependency on purpose, not an oversight - it's
+    // what lets uidsToResolve correctly shrink to empty once names come
+    // back, instead of re-requesting the same already-resolved uids every
+    // time this effect happens to re-run (e.g. a live offers update
+    // unrelated to the partner uids involved).
+    }, [offers, partnerNamesByUid]);
+
+    useEffect(() => {
         let history:HistoryItem[] = [];
         const uid = auth.currentUser?.uid;
 
@@ -148,6 +177,9 @@ function MyOffersPage() {
             const isInitiator = o.userInitiated === uid;
             const isReceiver = o.userReceived === uid;
             if (!isInitiator && !isReceiver) return;
+
+            const partnerUid = isInitiator ? o.userReceived : o.userInitiated;
+            const partnerName = partnerNamesByUid[partnerUid] ?? t('myOffers:tradePartnerFallback');
 
             // Defensive: a referenced toy can go missing (e.g. deleted before
             // the delete-time guard in myToys.tsx existed, or any other stale
@@ -217,7 +249,7 @@ function MyOffersPage() {
                 canRate: !!otherSideReceived && !alreadyRated,
                 toyToRate: toyIReceived,
                 toyIOffered,
-                status: buildStatusHtml(t, o, isInitiator, isReceiver, {
+                status: buildStatusHtml(t, o, isInitiator, isReceiver, partnerName, {
                     offeredToyUrl: toyIOffered.file, targetedToyUrl: toyTargeted.file,
                     myShipmentStatus, myReceived, otherSideShipmentStatus, otherSideReceived, otherSideShipmentBarcode,
                 }),
@@ -225,7 +257,7 @@ function MyOffersPage() {
             });
         });
         setHistory(history);
-    }, [offers, toys, ratings, t]);
+    }, [offers, toys, ratings, t, partnerNamesByUid]);
 
     const notifyError = (err: Error) => {
         Store.addNotification({

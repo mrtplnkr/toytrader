@@ -111,26 +111,39 @@ export const subscribeToys = (onChange: (toys: Toy[]) => void): Unsubscribe => {
         // ordered by resolution time instead, so the list's order (and
         // anything tracking a toy by position, e.g. list.tsx) would shuffle
         // on every update.
-        const toyList: Toy[] = await Promise.all(dataList.map(async (d) => {
-            // Pre-existing docs from before multi-image support have no
-            // `images` field - fall back to the single legacy `file`.
-            const rawImages: string[] = d.images && d.images.length > 0 ? d.images : [d.file];
-            const imageUrls = await Promise.all(rawImages.map((name: string) =>
-                getDownloadURL(ref(storage, `projectFiles/${name}`))
-            ));
-            const mainIndex = Math.max(0, rawImages.indexOf(d.file));
-            const video = d.video ? await getDownloadURL(ref(storage, `projectFiles/${d.video}`)) : undefined;
+        // Each toy is resolved independently and failures are caught per-toy
+        // (skipping just that toy) rather than left to reject the whole
+        // Promise.all - the old one-shot getToyList had a top-level
+        // try/catch for exactly this (e.g. a toy referencing a Storage
+        // object that's since been deleted); without an equivalent here, a
+        // single broken toy would throw inside this async snapshot
+        // callback, and since nothing calls onChange in that case, every
+        // other toy - and every future update - silently stops refreshing.
+        const resolved = await Promise.all(dataList.map(async (d): Promise<Toy | undefined> => {
+            try {
+                // Pre-existing docs from before multi-image support have no
+                // `images` field - fall back to the single legacy `file`.
+                const rawImages: string[] = d.images && d.images.length > 0 ? d.images : [d.file];
+                const imageUrls = await Promise.all(rawImages.map((name: string) =>
+                    getDownloadURL(ref(storage, `projectFiles/${name}`))
+                ));
+                const mainIndex = Math.max(0, rawImages.indexOf(d.file));
+                const video = d.video ? await getDownloadURL(ref(storage, `projectFiles/${d.video}`)) : undefined;
 
-            return {
-                id: d.id,
-                userId: d.userId,
-                title: d.title,
-                file: imageUrls[mainIndex],
-                images: imageUrls,
-                video,
-            };
+                return {
+                    id: d.id,
+                    userId: d.userId,
+                    title: d.title,
+                    file: imageUrls[mainIndex],
+                    images: imageUrls,
+                    video,
+                };
+            } catch (err) {
+                console.error(err);
+                return undefined;
+            }
         }));
-        onChange(toyList);
+        onChange(resolved.filter((toy): toy is Toy => toy !== undefined));
     }, (err) => console.error(err));
 };
 
@@ -356,6 +369,19 @@ const getUserProfilesCallable = httpsCallable<
 export const getUserProfiles = async (uids: string[]) => {
     const result = await getUserProfilesCallable({ uids });
     return result.data.profiles;
+};
+
+const getTradePartnerNamesCallable = httpsCallable<
+    { uids: string[] },
+    { names: Record<string, string> }
+>(functions, "getTradePartnerNames");
+
+// Self-service equivalent of getUserProfiles above - any signed-in user can
+// call this, but a uid is only resolved if the caller actually shares an
+// offer with it (enforced server-side, see functions/src/tradePartners.ts).
+export const getTradePartnerNames = async (uids: string[]) => {
+    const result = await getTradePartnerNamesCallable({ uids });
+    return result.data.names;
 };
 
 const banUserCallable = httpsCallable<

@@ -4,6 +4,7 @@ export {syncOmnivaShipmentStatuses} from "./omnivaStatusSync";
 export {startDonationCheckout} from "./donation";
 export {toyShareCard} from "./toyShareCard";
 export {banUser, unbanUser, getUserProfiles, removeToy} from "./admin";
+export {getTradePartnerNames} from "./tradePartners";
 export {deleteMyData} from "./deleteMyData";
 export {deleteMyAccount} from "./deleteMyAccount";
 export {listParcelMachines} from "./parcelMachines";
