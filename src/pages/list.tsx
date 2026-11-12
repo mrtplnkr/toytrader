@@ -57,7 +57,15 @@ function ListPage() {
   // the fetch completes.
   const [selectedToyId, setSelectedToyId] = useState<string | undefined>(searchParams.get('toyId') ?? undefined);
 
-  const visibleToys = toys.filter((x: Toy) => x.userId !== auth.currentUser?.uid);
+  // Hide toys I've already proposed a trade for - declineOffer/cancelThisOffer
+  // hard-delete the offer doc (myOffers.tsx), so any offer doc that still
+  // exists here represents a still-live ask on my part; nothing left to do
+  // by browsing to it again.
+  const alreadyOfferedToyIds = new Set(
+    offers.filter((o: Offer) => o.userInitiated === auth.currentUser?.uid).map((o: Offer) => o.toyTargeted)
+  );
+  const visibleToys = toys.filter((x: Toy) =>
+    x.userId !== auth.currentUser?.uid && !alreadyOfferedToyIds.has(x.id));
   const toyBeingDisplayed = visibleToys.find((x: Toy) => x.id === selectedToyId);
 
   const nextToy = (direction: number | undefined) => {
