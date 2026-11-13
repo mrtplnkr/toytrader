@@ -1,5 +1,5 @@
 import { createUserWithEmailAndPassword, FacebookAuthProvider, sendPasswordResetEmail, signInWithEmailAndPassword, signInWithPopup, signOut, updateProfile } from "firebase/auth";
-import { addDoc, collection, deleteDoc, doc, DocumentData, getDoc, getDocs, onSnapshot, or, query, setDoc, Timestamp, Unsubscribe, updateDoc, where } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, deleteField, doc, DocumentData, getDoc, getDocs, onSnapshot, or, query, setDoc, Timestamp, Unsubscribe, updateDoc, where } from "firebase/firestore";
 import { deleteObject, getDownloadURL, ref } from "firebase/storage";
 import { httpsCallable } from "firebase/functions";
 import { getToken, onMessage } from "firebase/messaging";
@@ -83,8 +83,35 @@ export const addNewToy = async (title: string, images: string[], mainImage: stri
         images,
         ...(video ? { video } : {}),
         userId: auth.currentUser?.uid,
+        updatedAt: Date.now(),
     });
 }
+
+// Edits an existing toy's title/photos/video - updateToy's counterpart to
+// addNewToy above, same field shape. removedFileNames are raw Storage
+// object names the caller determined are no longer referenced (an image
+// taken out, or the video removed/replaced) - best-effort deleted the same
+// way deleteToy below cleans up a fully-deleted toy's files, so editing
+// doesn't leave the old files orphaned in Storage forever.
+export const updateToy = async (
+    toyId: string,
+    title: string,
+    images: string[],
+    mainImage: string,
+    video: string | undefined,
+    removedFileNames: string[]
+) => {
+    await updateDoc(doc(db, "toys", toyId), {
+        title,
+        file: mainImage,
+        images,
+        video: video ?? deleteField(),
+        updatedAt: Date.now(),
+    });
+    await Promise.allSettled(
+        removedFileNames.map((name) => deleteObject(ref(storage, `projectFiles/${name}`)))
+    );
+};
 
 export const addNewOffer = async (toyOffered: string, toyTargeted: string, userReceived: string) => {
     await addDoc(toyOffersCollectionRef, {
@@ -137,6 +164,7 @@ export const subscribeToys = (onChange: (toys: Toy[]) => void): Unsubscribe => {
                     file: imageUrls[mainIndex],
                     images: imageUrls,
                     video,
+                    updatedAt: d.updatedAt ? new Date(d.updatedAt) : undefined,
                 };
             } catch (err) {
                 console.error(err);

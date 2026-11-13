@@ -1,5 +1,7 @@
 {
   "share": "Поделиться",
+  "edit": "Редактировать",
+  "lastUpdated": "Обновлено: {{date}}",
   "shareText": "Посмотри \"{{title}}\" в ToyTrader!",
   "wished": "в желаемом",
   "wish": "хочу",

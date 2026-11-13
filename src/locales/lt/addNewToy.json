@@ -1,7 +1,10 @@
 {
   "heading": "Įkelkite savo žaislą",
+  "editHeading": "Redaguokite savo žaislą",
+  "loadingToy": "Kraunamas jūsų žaislas...",
   "uploadingPicture": "Keliama nuotrauka...",
   "add": "Pridėti",
+  "saveChanges": "Išsaugoti pakeitimus",
   "imageUploadFailedTitle": "Nuotraukos įkelti nepavyko",
   "pictureRequiredTitle": "Reikalinga nuotrauka",
   "pictureRequiredBody": "Prieš pateikdami, pridėkite savo žaislo nuotrauką (palaukite, kol ji baigs kelti).",

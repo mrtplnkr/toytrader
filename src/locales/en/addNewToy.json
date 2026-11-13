@@ -1,7 +1,10 @@
 {
   "heading": "List your toy",
+  "editHeading": "Edit your toy",
+  "loadingToy": "Loading your toy...",
   "uploadingPicture": "Uploading picture...",
   "add": "Add",
+  "saveChanges": "Save changes",
   "imageUploadFailedTitle": "Image upload failed",
   "pictureRequiredTitle": "Picture required",
   "pictureRequiredBody": "Please add a picture of your toy before submitting (wait for it to finish uploading).",

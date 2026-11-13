@@ -256,6 +256,14 @@ function App() {
                   }
                 />
                 <Route
+                  path="/editToy/:toyId"
+                  element={
+                    <RequireAuth>
+                      <AddNew />
+                    </RequireAuth>
+                  }
+                />
+                <Route
                   path="/profile"
                   element={
                     <RequireAuth>

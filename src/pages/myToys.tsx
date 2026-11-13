@@ -101,7 +101,7 @@ function MyToysPage() {
           {myToys.length > 0 ? myToys.map((x: Toy) => {
             return (
               <div key={x.id}>
-                <Item {...x} deleteItem={deleteItem} {...toyRatingStats(x.id)} />
+                <Item {...x} deleteItem={deleteItem} editItem={(id: string) => navigate(`/editToy/${id}`)} {...toyRatingStats(x.id)} />
                 <div className="text-[0.9em] text-text-dim">
                   {countOffers(offers, x.id) ?
                     <div>

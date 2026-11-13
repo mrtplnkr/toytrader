@@ -1,5 +1,7 @@
 {
   "share": "Share",
+  "edit": "Edit",
+  "lastUpdated": "Last updated: {{date}}",
   "shareText": "Check out \"{{title}}\" on ToyTrader!",
   "wished": "wished",
   "wish": "wish",

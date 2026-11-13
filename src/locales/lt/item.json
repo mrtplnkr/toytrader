@@ -1,5 +1,7 @@
 {
   "share": "Pasidalinti",
+  "edit": "Redaguoti",
+  "lastUpdated": "Paskutinį kartą atnaujinta: {{date}}",
   "shareText": "Pažiūrėk \"{{title}}\" ToyTrader programoje!",
   "wished": "pageidauta",
   "wish": "pageidauti",

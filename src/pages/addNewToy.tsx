@@ -1,13 +1,14 @@
 
-import { useState } from "react";
-import { storage } from "../firebase-config";
+import { useEffect, useRef, useState } from "react";
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db, storage } from "../firebase-config";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { v4 } from 'uuid';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBackspace, faStar, faTrash, faXmark } from "@fortawesome/free-solid-svg-icons";
-import { addNewToy } from "../hooks/helper";
+import { addNewToy, updateToy } from "../hooks/helper";
 import { Store } from "react-notifications-component";
 
 const notifyError = (title: string, message: string) => {
@@ -41,14 +42,66 @@ async function uploadToStorage(file: File): Promise<UploadedFile> {
 }
 
 function AddNew() {
+    // Present (editing an existing toy) or absent (listing a brand new one) -
+    // see the /editToy/:toyId route in App.tsx. Reusing this one form for
+    // both instead of a parallel page since they're ~the same form (title,
+    // up to 3 photos with a main-photo picker, one optional video, the same
+    // validation) - only the data source and the submit call differ.
+    const { toyId } = useParams<{ toyId?: string }>();
+    const isEditMode = !!toyId;
+
     const [title, setTitle] = useState<string>('');
     const [images, setImages] = useState<UploadedFile[]>([]);
     const [mainIndex, setMainIndex] = useState(0);
     const [video, setVideo] = useState<UploadedFile | undefined>(undefined);
     const [uploadingImage, setUploadingImage] = useState(false);
     const [uploadingVideo, setUploadingVideo] = useState(false);
+    const [loadingExisting, setLoadingExisting] = useState(isEditMode);
+    const [notOwner, setNotOwner] = useState(false);
     const navigate = useNavigate();
     const { t } = useTranslation();
+
+    // Raw filenames this toy had when the edit form loaded - lets
+    // removeImage/removeVideo below tell "removed a file that's actually
+    // saved on this toy" (needs cleaning up in Storage once saved) apart
+    // from "removed something uploaded earlier this same session" (never
+    // got referenced by any Firestore doc in the first place).
+    const originalFileNamesRef = useRef<Set<string>>(new Set());
+    const [removedFileNames, setRemovedFileNames] = useState<string[]>([]);
+
+    useEffect(() => {
+        if (!toyId) return;
+        (async () => {
+            try {
+                const snap = await getDoc(doc(db, "toys", toyId));
+                const data = snap.data();
+                if (!data || data.userId !== auth.currentUser?.uid) {
+                    setNotOwner(true);
+                    return;
+                }
+
+                const rawImages: string[] = data.images && data.images.length > 0 ? data.images : [data.file];
+                originalFileNamesRef.current = new Set(data.video ? [...rawImages, data.video] : rawImages);
+
+                const resolvedImages = await Promise.all(rawImages.map(async (name: string) => ({
+                    fileName: name,
+                    url: await getDownloadURL(ref(storage, `projectFiles/${name}`)),
+                })));
+                setTitle(data.title);
+                setImages(resolvedImages);
+                setMainIndex(Math.max(0, rawImages.indexOf(data.file)));
+                if (data.video) {
+                    setVideo({ fileName: data.video, url: await getDownloadURL(ref(storage, `projectFiles/${data.video}`)) });
+                }
+            } catch (err) {
+                notifyError(t('common:toast.actionFailedTitle'), t('common:toast.tryAgainLater'));
+            } finally {
+                setLoadingExisting(false);
+            }
+        })();
+    // Only ever runs once, for whichever toyId this page mounted with.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [toyId]);
 
     const uploadImage = async (file: File | undefined) => {
         if (!file) return;
@@ -77,6 +130,10 @@ function AddNew() {
     };
 
     const removeImage = (index: number) => {
+        const removed = images[index];
+        if (originalFileNamesRef.current.has(removed.fileName)) {
+            setRemovedFileNames((prev) => [...prev, removed.fileName]);
+        }
         setImages((prev) => prev.filter((_, i) => i !== index));
         setMainIndex((prev) => {
             if (index < prev) return prev - 1;
@@ -107,23 +164,49 @@ function AddNew() {
         }
     };
 
+    const removeVideo = () => {
+        if (video && originalFileNamesRef.current.has(video.fileName)) {
+            setRemovedFileNames((prev) => [...prev, video.fileName]);
+        }
+        setVideo(undefined);
+    };
+
     const onSubmitToy = async () => {
         if (images.length === 0) {
             notifyError(t('addNewToy:pictureRequiredTitle'), t('addNewToy:pictureRequiredBody'));
             return;
         }
         try {
-          await addNewToy(
-            title,
-            images.map((i) => i.fileName),
-            images[mainIndex].fileName,
-            video?.fileName
-          );
+          if (isEditMode && toyId) {
+              await updateToy(
+                  toyId,
+                  title,
+                  images.map((i) => i.fileName),
+                  images[mainIndex].fileName,
+                  video?.fileName,
+                  removedFileNames
+              );
+          } else {
+              await addNewToy(
+                  title,
+                  images.map((i) => i.fileName),
+                  images[mainIndex].fileName,
+                  video?.fileName
+              );
+          }
           navigate('/myToys');
         } catch (err) {
             notifyError(t('common:toast.actionFailedTitle'), t('common:toast.tryAgainLater'));
         }
     };
+
+    if (notOwner) {
+        return <Navigate to="/myToys" replace />;
+    }
+
+    if (loadingExisting) {
+        return <p>{t('addNewToy:loadingToy')}</p>;
+    }
 
     return (
       <>
@@ -133,14 +216,14 @@ function AddNew() {
           </button>
         </div>
 
-        <h3>{t('addNewToy:heading')}</h3>
+        <h3>{t(isEditMode ? 'addNewToy:editHeading' : 'addNewToy:heading')}</h3>
 
         <form id="newToy" className="flex flex-col" onSubmit={(e) => {
             onSubmitToy();
             e.preventDefault();
         }}>
           <div className="text-left">
-            <input id="title" type="text" className="my-2" onChange={(e) => setTitle(e.target.value)} />
+            <input id="title" type="text" className="my-2" value={title} onChange={(e) => setTitle(e.target.value)} />
           </div>
 
           <div className="flex flex-wrap gap-3 items-start my-2">
@@ -181,7 +264,7 @@ function AddNew() {
                 <div className="relative">
                     <video src={video.url} controls className="w-[12em] rounded-sm" />
                     <button type="button" className="absolute top-1 right-1 bg-surface-raised rounded-full w-[1.4em] h-[1.4em] flex items-center justify-center"
-                        onClick={() => setVideo(undefined)} title={t('addNewToy:removeVideo')}>
+                        onClick={removeVideo} title={t('addNewToy:removeVideo')}>
                         <FontAwesomeIcon icon={faTrash} />
                     </button>
                 </div>
@@ -198,7 +281,9 @@ function AddNew() {
           </div>
 
           <div className="flex flex-col">
-            <button type="submit" disabled={uploadingImage || uploadingVideo || images.length === 0} className="self-end">{t('addNewToy:add')}</button>
+            <button type="submit" disabled={uploadingImage || uploadingVideo || images.length === 0} className="self-end">
+                {t(isEditMode ? 'addNewToy:saveChanges' : 'addNewToy:add')}
+            </button>
           </div>
         </form>
       </>

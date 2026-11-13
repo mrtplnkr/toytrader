@@ -1,4 +1,4 @@
-import { faChevronLeft, faChevronRight, faShareNodes, faStar as faStarSolid, faTrash, faXmark } from "@fortawesome/free-solid-svg-icons";
+import { faChevronLeft, faChevronRight, faPen, faShareNodes, faStar as faStarSolid, faTrash, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { memo, MouseEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -9,6 +9,7 @@ const SITE_URL = "https://toystrader-a494f.web.app";
 interface Props extends Toy {
     wished?: boolean;
     deleteItem?: any;
+    editItem?: any;
     addRemoveWish?: any;
     averageRating?: number;
     ratingCount?: number;
@@ -64,12 +65,18 @@ function Item(props: Props) {
                 <button className="ml-4" onClick={shareToy} title={t('item:share')}>
                     <FontAwesomeIcon icon={faShareNodes} />
                 </button>
+                {props.editItem && <button className="ml-4" onClick={() => props.editItem(props.id)} title={t('item:edit')}>
+                    <FontAwesomeIcon icon={faPen} />
+                </button>}
                 {props.deleteItem && <button className="ml-4" onClick={() => props.deleteItem(props.id)}>
                     <FontAwesomeIcon icon={faTrash} />
                 </button>}
             </div>
             {!!props.ratingCount && <p className="text-sm text-text-dim m-0">
                 <FontAwesomeIcon icon={faStarSolid} /> {props.averageRating!.toFixed(1)} ({props.ratingCount})
+            </p>}
+            {props.updatedAt && <p className="text-sm text-text-dim m-0">
+                {t('item:lastUpdated', { date: props.updatedAt.toDateString() })}
             </p>}
             <div className="relative inline-block w-full">
                 <img alt={props.title} src={props.file} onClick={openLightbox}

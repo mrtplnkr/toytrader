@@ -14,4 +14,7 @@ export interface Toy {
     // for toys whose owner didn't add one.
     video?: string;
     userId: string;
+    // Set on creation and every edit (see addNewToy/updateToy in helper.ts) -
+    // absent for toys listed before this field existed.
+    updatedAt?: Date;
 }
