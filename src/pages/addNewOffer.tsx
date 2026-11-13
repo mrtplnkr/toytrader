@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { memo, TouchEvent, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Toy } from "../types/toy";
+import TradeConsentModal from "../components/tradeConsentModal";
 
 interface Props {
     yourToys: Toy[];
@@ -18,6 +19,7 @@ function ToyDisplay(props: Props) {//TODO: change to NewOffer
     const [triedWithoutSelection, setTriedWithoutSelection] = useState<boolean>(false);
 
     const [selectedToy, setSelectedToy] = useState<string | undefined>();
+    const [showConsent, setShowConsent] = useState(false);
 
     const { nextToy } = props;
 
@@ -84,7 +86,7 @@ function ToyDisplay(props: Props) {//TODO: change to NewOffer
                 </div>
             </div>
             <button onClick={() => {
-                if (selectedToy) props.proposeOffer(selectedToy)
+                if (selectedToy) setShowConsent(true);
                 else {
                     setTriedWithoutSelection(true);
                     setShowYourToys(true);
@@ -93,6 +95,15 @@ function ToyDisplay(props: Props) {//TODO: change to NewOffer
                 title={selectedToy ? t('addNewOffer:proposeTrade') : t('addNewOffer:selectYourToyFirst')}>
                     <FontAwesomeIcon icon={faHandshake} />
             </button>
+            {showConsent &&
+                <TradeConsentModal
+                    confirmLabel={t('addNewOffer:proposeTrade')}
+                    onCancel={() => setShowConsent(false)}
+                    onAgree={() => {
+                        setShowConsent(false);
+                        if (selectedToy) props.proposeOffer(selectedToy);
+                    }}
+                />}
             {/* The only on-screen indication this view can move between
                 toys at all used to be invisible full-height click zones
                 (no size, no icon) - arrow keys/touch swipe still work, but

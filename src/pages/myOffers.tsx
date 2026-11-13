@@ -12,6 +12,7 @@ import { Rating } from "../types/rating";
 import { ParcelMachine, ShipmentSide, ShippingPrice, declineOffer, getShippingPrice, getShippingProfile, getTradePartnerNames, markToyPosted, markToyReceived, saveShippingProfile, shareShippingInfo, startShipmentCheckout, submitOmnivaBarcode, submitRating, updateOffer } from "../hooks/helper";
 import { ShippingProfile } from "../types/shippingProfile";
 import ParcelMachinePicker from "../components/parcelMachinePicker";
+import TradeConsentModal from "../components/tradeConsentModal";
 import { DEFAULT_TOY_SIZE, OMNIVA_COUNTRIES, OMNIVA_PRICE_LIST_URL, OMNIVA_SEND_PARCEL_URL, TOY_SIZES, ToySize } from "../constants/omnivaPricing";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faStar as faStarSolid } from "@fortawesome/free-solid-svg-icons";
@@ -124,6 +125,7 @@ function MyOffersPage() {
     const ratings = useContextSelector(GoodAppContext, (state: any) => state.ratings);
 
     const [history, setHistory] = useState<HistoryItem[]>([]);
+    const [pendingAcceptOfferId, setPendingAcceptOfferId] = useState<string | undefined>();
     const [payingId, setPayingId] = useState<string | undefined>();
     const [respondingId, setRespondingId] = useState<string | undefined>();
     const [markingId, setMarkingId] = useState<string | undefined>();
@@ -493,7 +495,7 @@ function MyOffersPage() {
                 </div>
                 {x.isMyTurnToRespond ?
                     <div className="flex gap-2">
-                        <button className="btn-primary" disabled={respondingId === x.id} onClick={() => acceptOffer(x.id)}>
+                        <button className="btn-primary" disabled={respondingId === x.id} onClick={() => setPendingAcceptOfferId(x.id)}>
                             {t('myOffers:accept')}
                         </button>
                         <button className="btn-danger" disabled={respondingId === x.id} onClick={() => declineThisOffer(x.id)}>
@@ -698,6 +700,16 @@ function MyOffersPage() {
             </div>
         )}
 
+        {pendingAcceptOfferId &&
+            <TradeConsentModal
+                confirmLabel={t('myOffers:accept')}
+                onCancel={() => setPendingAcceptOfferId(undefined)}
+                onAgree={() => {
+                    const offerId = pendingAcceptOfferId;
+                    setPendingAcceptOfferId(undefined);
+                    acceptOffer(offerId);
+                }}
+            />}
     </>
   );
 }
