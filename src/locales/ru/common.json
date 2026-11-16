@@ -11,6 +11,8 @@
     "tryAgainLater": "Пожалуйста, попробуйте позже.",
     "tryAgainLaterWithError": "Пожалуйста, попробуйте позже... {{error}}",
     "pictureUploadFailedBody": "Попробуйте выбрать фото ещё раз.",
-    "photoUploadFailedTitle": "Не удалось загрузить фото"
+    "photoUploadFailedTitle": "Не удалось загрузить фото",
+    "sessionExpiredTitle": "Вы вышли из системы",
+    "sessionExpiredBody": "Ваша сессия истекла - пожалуйста, войдите снова, чтобы продолжить."
   }
 }

@@ -1,7 +1,7 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
-import { connectAuthEmulator, getAuth, FacebookAuthProvider, GoogleAuthProvider } from "firebase/auth";
+import { browserLocalPersistence, connectAuthEmulator, getAuth, setPersistence, FacebookAuthProvider, GoogleAuthProvider } from "firebase/auth";
 import { connectFirestoreEmulator, getFirestore } from "firebase/firestore";
 import { connectStorageEmulator, getStorage } from "firebase/storage";
 import { connectFunctionsEmulator, getFunctions } from "firebase/functions";
@@ -35,6 +35,15 @@ const analytics = getAnalytics(app);
 export const facebookProvider = new FacebookAuthProvider();
 export const googleProvider = new GoogleAuthProvider();
 export const auth = getAuth(app);
+// Explicit rather than relying on the SDK default (which is already this,
+// but a future SDK version changing its default shouldn't silently shorten
+// how long a signed-in session survives) - persists across browser
+// restarts, not just tab closes, until actual sign-out or token
+// revocation.
+setPersistence(auth, browserLocalPersistence).catch(() => {
+  // Unsupported storage (e.g. some private-browsing modes) - falls back
+  // to the SDK's own default rather than blocking app startup on it.
+});
 
 export const db = getFirestore(app);
 export const storage = getStorage(app);

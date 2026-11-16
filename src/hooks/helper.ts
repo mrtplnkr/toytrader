@@ -3,12 +3,72 @@ import { addDoc, collection, deleteDoc, deleteField, doc, DocumentData, getDoc, 
 import { deleteObject, getDownloadURL, ref } from "firebase/storage";
 import { httpsCallable } from "firebase/functions";
 import { getToken, onMessage } from "firebase/messaging";
+import { Store } from "react-notifications-component";
 import { auth, db, facebookProvider, googleProvider, functions, storage, getMessagingIfSupported, VAPID_KEY } from "../firebase-config";
+import i18n from "../i18n";
 import { Offer } from "../types/offer";
 import { Toy } from "../types/toy";
 import { Rating } from "../types/rating";
 import { Complaint } from "../types/complaint";
 import { ShippingProfile } from "../types/shippingProfile";
+
+// Wraps every write below: a backgrounded tab can sit long enough that the
+// SDK's own token refresh lags (browsers throttle timers in hidden tabs),
+// so the ID token a write goes out with can be stale even though the
+// session itself is still perfectly valid - that surfaces as
+// permission-denied (Firestore/Storage) or an unauthenticated functions/*
+// error (Cloud Functions callables), indistinguishable from an actually-
+// revoked session by error code alone. Try a forced token refresh and
+// retry ONCE - covers the common "just stale" case so the user never even
+// sees an error. Only if the retry fails too (refresh itself failed, or
+// still denied with a fresh token) is this treated as a genuinely dead
+// session: sign out, toast, and send them to /login instead of leaving
+// them looking at a cryptic Firestore error with no path forward.
+function isAuthRelatedError(err: unknown): boolean {
+    const code = (err as { code?: string })?.code ?? '';
+    return code === 'permission-denied' || code.includes('unauthenticated');
+}
+
+async function refreshSession(): Promise<boolean> {
+    const user = auth.currentUser;
+    if (!user) return false;
+    try {
+        await user.getIdToken(true);
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+async function withSessionRecovery<T>(operation: () => Promise<T>): Promise<T> {
+    try {
+        return await operation();
+    } catch (err) {
+        if (!isAuthRelatedError(err)) throw err;
+
+        if (await refreshSession()) {
+            return await operation();
+        }
+
+        await signOut(auth).catch(() => {});
+        Store.addNotification({
+            title: i18n.t('common:toast.sessionExpiredTitle'),
+            message: i18n.t('common:toast.sessionExpiredBody'),
+            type: "danger",
+            insert: "top",
+            container: "top-right",
+            animationIn: ["animated", "fadeIn"],
+            animationOut: ["animated", "fadeOut"],
+            dismiss: { duration: 8000, onScreen: true },
+        });
+        // Give the toast a moment to actually render before navigating away -
+        // window.location.assign (a hard redirect, not a SPA transition, so
+        // the whole app reinitializes cleanly after a dead session) would
+        // otherwise tear down the DOM right as the toast appears.
+        setTimeout(() => window.location.assign('/login'), 1500);
+        throw err;
+    }
+}
 
 export const logOff = async () => {
     await signOut(auth);
@@ -77,14 +137,14 @@ export const toysCollectionRef = collection(db, "toys");
 // bubbles.tsx) keeps working unchanged. video: optional single Storage
 // object name.
 export const addNewToy = async (title: string, images: string[], mainImage: string, video?: string) => {
-    await addDoc(toysCollectionRef, {
+    await withSessionRecovery(() => addDoc(toysCollectionRef, {
         title,
         file: mainImage,
         images,
         ...(video ? { video } : {}),
         userId: auth.currentUser?.uid,
         updatedAt: Date.now(),
-    });
+    }));
 }
 
 // Edits an existing toy's title/photos/video - updateToy's counterpart to
@@ -101,26 +161,26 @@ export const updateToy = async (
     video: string | undefined,
     removedFileNames: string[]
 ) => {
-    await updateDoc(doc(db, "toys", toyId), {
+    await withSessionRecovery(() => updateDoc(doc(db, "toys", toyId), {
         title,
         file: mainImage,
         images,
         video: video ?? deleteField(),
         updatedAt: Date.now(),
-    });
+    }));
     await Promise.allSettled(
         removedFileNames.map((name) => deleteObject(ref(storage, `projectFiles/${name}`)))
     );
 };
 
 export const addNewOffer = async (toyOffered: string, toyTargeted: string, userReceived: string) => {
-    await addDoc(toyOffersCollectionRef, {
+    await withSessionRecovery(() => addDoc(toyOffersCollectionRef, {
         toyTargeted,
         toyOffered,
         userInitiated: auth.currentUser?.uid,
         userReceived,
         offerCreated: Date.now(),
-    });
+    }));
 }
 
 // Real-time instead of one-shot: on Firestore's pay-as-you-go pricing, a
@@ -183,10 +243,12 @@ export const subscribeToys = (onChange: (toys: Toy[]) => void): Unsubscribe => {
 // URLs (see getToyList above), not the raw filenames a Storage ref needs.
 export const deleteToy = async (toyId: string) => {
     const toyDocRef = doc(db, "toys", toyId);
-    const snap = await getDoc(toyDocRef);
-    const data = snap.data();
-
-    await deleteDoc(toyDocRef);
+    const data = await withSessionRecovery(async () => {
+        const snap = await getDoc(toyDocRef);
+        const docData = snap.data();
+        await deleteDoc(toyDocRef);
+        return docData;
+    });
 
     if (!data) return;
     const rawImages: string[] = data.images && data.images.length > 0 ? data.images : [data.file];
@@ -240,11 +302,11 @@ export const subscribeOffers = (userId: string, onChange: (offers: Offer[]) => v
 
 export const updateOffer = async (id: string) => {
     const docToUpdate = doc(db, "offers", id)
-    await updateDoc(docToUpdate, {"offerAccepted": Date.now()});
+    await withSessionRecovery(() => updateDoc(docToUpdate, {"offerAccepted": Date.now()}));
 };
 
 export const declineOffer = async (id: string) => {
-    await deleteDoc(doc(db, "offers", id));
+    await withSessionRecovery(() => deleteDoc(doc(db, "offers", id)));
 };
 
 export type ShipmentSide = "offer" | "target";
@@ -255,12 +317,12 @@ export type ShipmentSide = "offer" | "target";
 // "offer"), same as offerShipmentBarcode etc. already work.
 export const markToyPosted = async (id: string, side: ShipmentSide) => {
     const docToUpdate = doc(db, "offers", id);
-    await updateDoc(docToUpdate, {[`${side}Posted`]: Date.now()});
+    await withSessionRecovery(() => updateDoc(docToUpdate, {[`${side}Posted`]: Date.now()}));
 };
 
 export const markToyReceived = async (id: string, side: ShipmentSide) => {
     const docToUpdate = doc(db, "offers", id);
-    await updateDoc(docToUpdate, {[`${side}Received`]: Date.now()});
+    await withSessionRecovery(() => updateDoc(docToUpdate, {[`${side}Received`]: Date.now()}));
 };
 
 const ratingsCollectionRef = collection(db, "ratings");
@@ -287,13 +349,13 @@ export const subscribeRatings = (onChange: (ratings: Rating[]) => void): Unsubsc
 };
 
 export const submitRating = async (offerId: string, side: ShipmentSide, toyId: string, stars: number) => {
-    await setDoc(doc(db, "ratings", `${offerId}_${side}`), {
+    await withSessionRecovery(() => setDoc(doc(db, "ratings", `${offerId}_${side}`), {
         offerId,
         toyId,
         stars,
         raterUid: auth.currentUser?.uid,
         createdAt: Date.now(),
-    });
+    }));
 };
 
 const startShipmentCheckoutCallable = httpsCallable<
@@ -305,7 +367,7 @@ const startShipmentCheckoutCallable = httpsCallable<
 // not per side, only callable once the backend confirms the whole trade has
 // completed (both toys confirmed received).
 export const startShipmentCheckout = async (offerId: string) => {
-    const result = await startShipmentCheckoutCallable({ offerId });
+    const result = await withSessionRecovery(() => startShipmentCheckoutCallable({ offerId }));
     return result.data;
 };
 
@@ -331,12 +393,12 @@ export const submitOmnivaBarcode = async (
     toySize?: string
 ) => {
     const docToUpdate = doc(db, "offers", id);
-    await updateDoc(docToUpdate, {
+    await withSessionRecovery(() => updateDoc(docToUpdate, {
         [`${side}ShipmentBarcode`]: barcode,
         [`${side}ShipmentToySize`]: toySize ?? null,
         [`${side}ShipmentStatus`]: "REGISTERED",
         [`${side}ShipmentStatusUpdatedAt`]: Date.now(),
-    });
+    }));
 };
 
 const recheckShipmentPaymentCallable = httpsCallable<
@@ -348,7 +410,7 @@ const recheckShipmentPaymentCallable = httpsCallable<
 // looks up the real Stripe session status and reconciles Firestore. Never
 // creates a new charge.
 export const recheckShipmentPayment = async (offerId: string) => {
-    const result = await recheckShipmentPaymentCallable({ offerId });
+    const result = await withSessionRecovery(() => recheckShipmentPaymentCallable({ offerId }));
     return result.data;
 };
 
@@ -422,14 +484,14 @@ const banUserCallable = httpsCallable<
 // already-issued token during its remaining lifetime - see
 // functions/src/admin.ts.
 export const banUser = async (uid: string, reason?: string) => {
-    const result = await banUserCallable({ uid, reason });
+    const result = await withSessionRecovery(() => banUserCallable({ uid, reason }));
     return result.data;
 };
 
 const unbanUserCallable = httpsCallable<{ uid: string }, { ok: boolean }>(functions, "unbanUser");
 
 export const unbanUser = async (uid: string) => {
-    await unbanUserCallable({ uid });
+    await withSessionRecovery(() => unbanUserCallable({ uid }));
 };
 
 export interface BannedUser {
@@ -457,7 +519,7 @@ const removeToyCallable = httpsCallable<{ toyId: string }, { ok: boolean }>(func
 
 // Removes a single listing without banning its owner - see functions/src/admin.ts.
 export const removeToy = async (toyId: string) => {
-    await removeToyCallable({ toyId });
+    await withSessionRecovery(() => removeToyCallable({ toyId }));
 };
 
 const deleteMyDataCallable = httpsCallable<void, { toysDeleted: number, toysKept: number }>(functions, "deleteMyData");
@@ -468,7 +530,7 @@ const deleteMyDataCallable = httpsCallable<void, { toysDeleted: number, toysKept
 // offer instead of deleting the trade record itself, and leaves the
 // Firebase Auth account untouched - see functions/src/deleteMyData.ts.
 export const deleteMyData = async () => {
-    const result = await deleteMyDataCallable();
+    const result = await withSessionRecovery(() => deleteMyDataCallable());
     return result.data;
 };
 
@@ -480,7 +542,7 @@ const deleteMyAccountCallable = httpsCallable<void, { toysDeleted: number, toysK
 // that on user deletion), so the UI must sign out right after this
 // resolves rather than relying on the account being gone server-side.
 export const deleteMyAccount = async () => {
-    const result = await deleteMyAccountCallable();
+    const result = await withSessionRecovery(() => deleteMyAccountCallable());
     return result.data;
 };
 
@@ -503,14 +565,14 @@ const complaintsCollectionRef = collection(db, "complaints");
 // convention as addNewToy.tsx/profile.tsx), not a resolved URL - resolved
 // lazily on read, same as Toy.file.
 export const submitComplaint = async (offerId: string, reportedUid: string, message: string, photoFile?: string) => {
-    await addDoc(complaintsCollectionRef, {
+    await withSessionRecovery(() => addDoc(complaintsCollectionRef, {
         offerId,
         reportedUid,
         reporterUid: auth.currentUser?.uid,
         message,
         photoFile: photoFile ?? null,
         createdAt: Date.now(),
-    });
+    }));
 };
 
 // Admin-only in practice: firestore.rules only lets a non-admin read back
@@ -574,7 +636,7 @@ export const getShippingProfile = async (): Promise<ShippingProfile | undefined>
 export const saveShippingProfile = async (profile: ShippingProfile) => {
     const uid = auth.currentUser?.uid;
     if (!uid) return;
-    await setDoc(shippingProfileDocRef(uid), profile);
+    await withSessionRecovery(() => setDoc(shippingProfileDocRef(uid), profile));
 };
 
 // Copies a user's saved ShippingProfile onto this specific offer's
@@ -582,12 +644,12 @@ export const saveShippingProfile = async (profile: ShippingProfile) => {
 // is what actually becomes visible to the other trader (the private
 // shippingProfiles doc itself never is).
 export const shareShippingInfo = async (offerId: string, side: ShipmentSide, profile: ShippingProfile) => {
-    await updateDoc(doc(db, "offers", offerId), {
+    await withSessionRecovery(() => updateDoc(doc(db, "offers", offerId), {
         [`${side}ShippingName`]: profile.name,
         [`${side}ShippingPhone`]: profile.phone,
         [`${side}ShippingParcelMachineId`]: profile.parcelMachineId,
         [`${side}ShippingParcelMachineLabel`]: profile.parcelMachineLabel,
-    });
+    }));
 };
 
 // Push notifications (Firebase Cloud Messaging). Sending happens entirely
@@ -608,7 +670,7 @@ export const requestNotificationPermission = async (): Promise<"granted" | "deni
 
     const registration = await navigator.serviceWorker.ready;
     const token = await getToken(messaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: registration });
-    await setDoc(doc(db, "fcmTokens", token), { uid, createdAt: Date.now() });
+    await withSessionRecovery(() => setDoc(doc(db, "fcmTokens", token), { uid, createdAt: Date.now() }));
 
     return "granted";
 };

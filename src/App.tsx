@@ -108,6 +108,23 @@ function StateProvider({children}: any) {
     };
   }, []);
 
+  // Browsers throttle timers in a backgrounded tab, which can delay the
+  // Firebase SDK's own background token refresh - by the time a long-idle
+  // tab comes back and the user clicks something, the token it's holding
+  // may already be past its ~1h lifetime. Force a refresh right when the
+  // tab becomes visible again, so staleness is caught before the user
+  // acts instead of surfacing as a failed write (see withSessionRecovery
+  // in helper.ts for the reactive fallback if this doesn't catch it).
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        auth.currentUser?.getIdToken(true).catch(() => {});
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange);
+  }, []);
+
   // A push notification that arrives while this tab is open and focused
   // doesn't auto-show as an OS notification (that only happens via the
   // service worker when the tab isn't focused) - show it as the same

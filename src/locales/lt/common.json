@@ -11,6 +11,8 @@
     "tryAgainLater": "Bandykite vėliau.",
     "tryAgainLaterWithError": "Bandykite vėliau... {{error}}",
     "pictureUploadFailedBody": "Bandykite pasirinkti nuotrauką iš naujo.",
-    "photoUploadFailedTitle": "Nuotraukos įkelti nepavyko"
+    "photoUploadFailedTitle": "Nuotraukos įkelti nepavyko",
+    "sessionExpiredTitle": "Jūs buvote atjungti",
+    "sessionExpiredBody": "Jūsų sesija baigėsi - prašome prisijungti iš naujo, kad galėtumėte tęsti."
   }
 }

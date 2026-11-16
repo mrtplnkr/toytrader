@@ -11,6 +11,8 @@
     "tryAgainLater": "Please try again later.",
     "tryAgainLaterWithError": "Please try again later... {{error}}",
     "pictureUploadFailedBody": "Please try selecting the picture again.",
-    "photoUploadFailedTitle": "Photo upload failed"
+    "photoUploadFailedTitle": "Photo upload failed",
+    "sessionExpiredTitle": "You've been signed out",
+    "sessionExpiredBody": "Your session expired - please sign in again to continue."
   }
 }
