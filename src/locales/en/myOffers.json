@@ -6,6 +6,7 @@
   "viewMyQrCode": "View my QR code",
   "shipmentReturned": "Your shipment was returned by Omniva - register it again and enter the new barcode below.",
   "sharedShippingInfo": "You've shared your shipping info.",
+  "sharedShippingInfoWith": "Shared with",
   "sharing": "sharing...",
   "shareMyShippingInfo": "Share my shipping info",
   "noShippingInfoYet": "No shipping info saved yet - set it up here (also saves it for next time), or do it anytime on <ProfileLink>your profile</ProfileLink>.",

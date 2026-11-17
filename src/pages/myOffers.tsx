@@ -50,6 +50,10 @@ interface HistoryItem {
     myShipmentBarcode?: string;
     myShipmentStatus?: string;
     hasSharedMyShipping: boolean;
+    partnerName: string;
+    myShippingName?: string;
+    myShippingPhone?: string;
+    myShippingParcelMachineLabel?: string;
     otherShippingName?: string;
     otherShippingPhone?: string;
     otherShippingParcelMachineLabel?: string;
@@ -213,6 +217,9 @@ function MyOffersPage() {
             const toyIReceived = otherSide === 'offer' ? toyIOffered : toyTargeted;
             const alreadyRated = ratings.some((r: Rating) => r.id === `${o.id}_${otherSide}`);
             const myShippingName = mySide === 'offer' ? o.offerShippingName : o.targetShippingName;
+            const myShippingPhone = mySide === 'offer' ? o.offerShippingPhone : o.targetShippingPhone;
+            const myShippingParcelMachineLabel = mySide === 'offer' ?
+                o.offerShippingParcelMachineLabel : o.targetShippingParcelMachineLabel;
             const otherShippingName = otherSide === 'offer' ? o.offerShippingName : o.targetShippingName;
             const otherShippingPhone = otherSide === 'offer' ? o.offerShippingPhone : o.targetShippingPhone;
             const otherShippingParcelMachineLabel = otherSide === 'offer' ?
@@ -225,6 +232,10 @@ function MyOffersPage() {
                 myShipmentBarcode,
                 myShipmentStatus,
                 hasSharedMyShipping: !!myShippingName,
+                partnerName,
+                myShippingName,
+                myShippingPhone,
+                myShippingParcelMachineLabel,
                 otherShippingName,
                 otherShippingPhone,
                 otherShippingParcelMachineLabel,
@@ -248,7 +259,13 @@ function MyOffersPage() {
                 // Cancellable any time before either toy has physically shipped -
                 // once posted, the parcel's in Omniva's hands and can't be recalled.
                 canCancel: !o.offerPosted && !o.targetPosted,
-                canRate: !!otherSideReceived && !alreadyRated,
+                // Rating only makes sense once the trade's been accepted,
+                // the other side's toy has actually shipped, and I've
+                // confirmed receiving it - otherSideReceived alone should
+                // already imply the first two, but checking all three
+                // explicitly means a stale/partial write on any one field
+                // can't surface the "how was it?" prompt early.
+                canRate: !!o.offerAccepted && !!otherSidePosted && !!otherSideReceived && !alreadyRated,
                 toyToRate: toyIReceived,
                 toyIOffered,
                 status: buildStatusHtml(t, o, isInitiator, isReceiver, partnerName, {
@@ -515,7 +532,13 @@ function MyOffersPage() {
                         {x.isAccepted &&
                             <div className="flex flex-col gap-2 items-center text-[0.85em] border border-border rounded-sm p-3">
                                 {x.hasSharedMyShipping ?
-                                    <p className="m-0 text-text-dim">{t('myOffers:sharedShippingInfo')}</p>
+                                    <>
+                                        <p className="m-0 text-text-dim">{t('myOffers:sharedShippingInfo')}</p>
+                                        <p className="m-0 text-text-dim">
+                                            {t('myOffers:sharedShippingInfoWith')} <strong>{x.partnerName}</strong>:{' '}
+                                            {x.myShippingName}, {x.myShippingPhone}, {x.myShippingParcelMachineLabel}
+                                        </p>
+                                    </>
                                 : myShippingProfile ?
                                     <button className="btn-primary" disabled={sharingShippingId === x.id}
                                         onClick={() => onShareShipping(x.id, x.mySide)}>
