@@ -8,6 +8,16 @@ service cloud.firestore {
       (data[field] is string && data[field].size() >= 5 && data[field].size() <= 30);
   }
 
+  // Only re-validate a barcode field on updates that actually touch it -
+  // checking it unconditionally on every update (the original version of
+  // this function) meant a single legacy/invalid value sitting in either
+  // barcode field (e.g. from before this check existed) would silently
+  // block every future update to that offer, including completely
+  // unrelated ones like sharing shipping info.
+  function validBarcodeIfChanged(before, after, field) {
+    return !(field in after.diff(before).affectedKeys()) || validBarcodeOrAbsent(after, field);
+  }
+
   function isBanned(database, uid) {
     return exists(/databases/$(database)/documents/bannedUsers/$(uid));
   }
@@ -34,8 +44,8 @@ service cloud.firestore {
         !request.resource.data.diff(resource.data).affectedKeys().hasAny([
           'tipPaid', 'tipStripeSessionId', 'tipPaidByUid'
         ]) &&
-        validBarcodeOrAbsent(request.resource.data, 'offerShipmentBarcode') &&
-        validBarcodeOrAbsent(request.resource.data, 'targetShipmentBarcode');
+        validBarcodeIfChanged(resource.data, request.resource.data, 'offerShipmentBarcode') &&
+        validBarcodeIfChanged(resource.data, request.resource.data, 'targetShipmentBarcode');
       allow delete: if request.auth.uid != null;
     }
     match /mail/{docId} {
