@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Store } from "react-notifications-component";
 import { Trans, useTranslation } from "react-i18next";
@@ -15,7 +15,15 @@ import ParcelMachinePicker from "../components/parcelMachinePicker";
 import TradeConsentModal from "../components/tradeConsentModal";
 import { DEFAULT_TOY_SIZE, OMNIVA_COUNTRIES, OMNIVA_PRICE_LIST_URL, OMNIVA_SEND_PARCEL_URL, TOY_SIZES, ToySize } from "../constants/omnivaPricing";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faStar as faStarSolid } from "@fortawesome/free-solid-svg-icons";
+import { IconDefinition } from "@fortawesome/fontawesome-svg-core";
+import {
+    faStar as faStarSolid,
+    faPaperPlane,
+    faHandshake,
+    faTruck,
+    faBoxOpen,
+    faChevronRight,
+} from "@fortawesome/free-solid-svg-icons";
 import { faStar as faStarRegular } from "@fortawesome/free-regular-svg-icons";
 
 // Omniva's documented barcode length bounds (a real one is typically 13
@@ -46,6 +54,9 @@ interface HistoryItem {
     canCancel: boolean;
     awaitingOtherRegistration: boolean;
     canRate: boolean;
+    bothPosted: boolean;
+    bothReceived: boolean;
+    hasRated: boolean;
     toyToRate?: Toy;
     myShipmentBarcode?: string;
     myShipmentStatus?: string;
@@ -118,6 +129,84 @@ function buildStatusHtml(t: TFunction, o: Offer, isInitiator: boolean, isReceive
             ${myShipmentLine ? `<li>${myShipmentLine}</li>` : ''}
             ${otherShipmentLine ? `<li>${otherShipmentLine}</li>` : ''}
             `;
+}
+
+// Overall trade lifecycle, independent of which side (initiator/receiver)
+// the viewer is on - unlike the per-side text in buildStatusHtml above,
+// this is the same five milestones for both participants, since "both
+// sides shipped"/"both sides received" are true or false regardless of
+// who's looking.
+type TradeStepKey = 'proposed' | 'accepted' | 'shipped' | 'received' | 'rated';
+
+const TRADE_STEP_ICONS: Record<TradeStepKey, IconDefinition> = {
+    proposed: faPaperPlane,
+    accepted: faHandshake,
+    shipped: faTruck,
+    received: faBoxOpen,
+    rated: faStarSolid,
+};
+
+function buildTradeSteps(x: HistoryItem): { key: TradeStepKey; done: boolean }[] {
+    return [
+        { key: 'proposed', done: true },
+        { key: 'accepted', done: x.isAccepted },
+        { key: 'shipped', done: x.bothPosted },
+        { key: 'received', done: x.bothReceived },
+        { key: 'rated', done: x.hasRated },
+    ];
+}
+
+// Fixed pixel widths (not just gap/padding) so the circles+arrows row and
+// the labels row underneath line up column-for-column regardless of how
+// wide each translated label is.
+const TRADE_STEP_CIRCLE_WIDTH = "w-10";
+const TRADE_STEP_ARROW_WIDTH = "w-5";
+
+function tradeStepCircleClasses(done: boolean, isNext: boolean): string {
+    if (done) return "bg-primary border-primary text-white";
+    if (isNext) return "bg-transparent border-success text-success";
+    return "bg-transparent border-border text-text-dim";
+}
+
+function tradeStepLabelClasses(done: boolean, isNext: boolean): string {
+    if (done) return "text-text";
+    if (isNext) return "text-success";
+    return "text-text-dim";
+}
+
+function TradeStepsBar({ steps }: { steps: { key: TradeStepKey; done: boolean }[] }) {
+    const { t } = useTranslation();
+    const nextIndex = steps.findIndex((s) => !s.done);
+
+    return (
+        <div className="flex flex-col items-center gap-1 w-full">
+            <div className="flex items-center justify-center">
+                {steps.map((s, i) => (
+                    <Fragment key={s.key}>
+                        <div
+                            className={`flex items-center justify-center h-10 ${TRADE_STEP_CIRCLE_WIDTH} rounded-full border-2 shrink-0 ${tradeStepCircleClasses(s.done, i === nextIndex)}`}
+                        >
+                            <FontAwesomeIcon icon={TRADE_STEP_ICONS[s.key]} />
+                        </div>
+                        {i < steps.length - 1 &&
+                            <div className={`flex items-center justify-center ${TRADE_STEP_ARROW_WIDTH} shrink-0`}>
+                                <FontAwesomeIcon icon={faChevronRight} className={s.done ? "text-primary" : "text-border"} />
+                            </div>}
+                    </Fragment>
+                ))}
+            </div>
+            <div className="flex items-center justify-center">
+                {steps.map((s, i) => (
+                    <Fragment key={s.key}>
+                        <span className={`${TRADE_STEP_CIRCLE_WIDTH} text-center text-[0.65em] leading-tight shrink-0 ${tradeStepLabelClasses(s.done, i === nextIndex)}`}>
+                            {t(`myOffers:steps.${s.key}`)}
+                        </span>
+                        {i < steps.length - 1 && <span className={`${TRADE_STEP_ARROW_WIDTH} shrink-0`} />}
+                    </Fragment>
+                ))}
+            </div>
+        </div>
+    );
 }
 
 function MyOffersPage() {
@@ -266,6 +355,13 @@ function MyOffersPage() {
                 // explicitly means a stale/partial write on any one field
                 // can't surface the "how was it?" prompt early.
                 canRate: !!o.offerAccepted && !!otherSidePosted && !!otherSideReceived && !alreadyRated,
+                // For the step indicator - unlike the per-side booleans
+                // above, these are symmetric (true/false the same way for
+                // both participants) since they require BOTH toys to have
+                // shipped/been received, not just "my" side of the trade.
+                bothPosted: !!myPosted && !!otherSidePosted,
+                bothReceived: !!myReceived && !!otherSideReceived,
+                hasRated: alreadyRated,
                 toyToRate: toyIReceived,
                 toyIOffered,
                 status: buildStatusHtml(t, o, isInitiator, isReceiver, partnerName, {
@@ -505,6 +601,7 @@ function MyOffersPage() {
 
         {history.map((x:HistoryItem) =>
             <div className="card flex flex-col items-center gap-4 mb-4 p-5" key={x.id}>
+                <TradeStepsBar steps={buildTradeSteps(x)} />
                 <div className="flex items-center justify-center gap-6">
                     <img className="w-[50px] rounded-sm" alt="offered" src={x.toyIOffered.file} />
                     <ul className="statusLines" dangerouslySetInnerHTML={{__html: x.status}}></ul>

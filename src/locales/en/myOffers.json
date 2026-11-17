@@ -50,6 +50,13 @@
   "enterBarcodeFirst": "Enter the barcode Omniva gave you first.",
   "invalidBarcode": "That doesn't look like a real Omniva barcode - it should be 5-30 characters.",
   "tradePartnerFallback": "your trade partner",
+  "steps": {
+    "proposed": "Proposed",
+    "accepted": "Accepted",
+    "shipped": "Shipped",
+    "received": "Received",
+    "rated": "Rated"
+  },
   "status": {
     "offeredYourToy": "you offered your <a href=\"{{toyUrl}}\" target=\"_target\">toy</a> on {{date}}",
     "receivedOfferForYourToy": "{{name}} offered a trade for your <a href=\"{{toyUrl}}\" target=\"_target\">toy</a> on {{date}}",

@@ -50,6 +50,13 @@
   "enterBarcodeFirst": "Pirmiausia įveskite Omniva duotą brūkšninį kodą.",
   "invalidBarcode": "Tai nepanašu į tikrą Omniva brūkšninį kodą - jis turėtų būti 5-30 simbolių.",
   "tradePartnerFallback": "jūsų mainų partneris",
+  "steps": {
+    "proposed": "Pasiūlyta",
+    "accepted": "Priimta",
+    "shipped": "Išsiųsta",
+    "received": "Gauta",
+    "rated": "Įvertinta"
+  },
   "status": {
     "offeredYourToy": "jūs pasiūlėte savo <a href=\"{{toyUrl}}\" target=\"_target\">žaislą</a> {{date}}",
     "receivedOfferForYourToy": "{{name}} pasiūlė mainus už jūsų <a href=\"{{toyUrl}}\" target=\"_target\">žaislą</a> {{date}}",

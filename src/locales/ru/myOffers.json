@@ -50,6 +50,13 @@
   "enterBarcodeFirst": "Сначала введите штрих-код, который дал вам Omniva.",
   "invalidBarcode": "Это не похоже на настоящий штрих-код Omniva - он должен быть длиной 5-30 символов.",
   "tradePartnerFallback": "ваш партнёр по обмену",
+  "steps": {
+    "proposed": "Предложено",
+    "accepted": "Принято",
+    "shipped": "Отправлено",
+    "received": "Получено",
+    "rated": "Оценено"
+  },
   "status": {
     "offeredYourToy": "вы предложили свою <a href=\"{{toyUrl}}\" target=\"_target\">игрушку</a> {{date}}",
     "receivedOfferForYourToy": "{{name}}: предложен обмен на вашу <a href=\"{{toyUrl}}\" target=\"_target\">игрушку</a>, {{date}}",
