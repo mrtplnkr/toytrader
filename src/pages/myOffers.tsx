@@ -40,6 +40,7 @@ const COUNTRY_LABEL_KEYS: Record<typeof OMNIVA_COUNTRIES[number], string> = {
 
 interface HistoryItem {
     id: string,
+    offerCreated: Date;
     toyIOffered: Toy;
     status: string;
     toyTargeted: Toy;
@@ -133,6 +134,13 @@ function buildStatusHtml(t: TFunction, o: Offer, isInitiator: boolean, isReceive
             `;
 }
 
+const MS_PER_DAY = 1000 * 60 * 60 * 24;
+
+function daysAgoText(t: TFunction, date: Date): string {
+    const diffDays = Math.floor((Date.now() - date.getTime()) / MS_PER_DAY);
+    return diffDays < 1 ? t('myOffers:today') : t('myOffers:daysAgo', { count: diffDays });
+}
+
 // Overall trade lifecycle, independent of which side (initiator/receiver)
 // the viewer is on - unlike the per-side text in buildStatusHtml above,
 // this is the same five milestones for both participants, since "both
@@ -165,9 +173,13 @@ const TRADE_STEP_CIRCLE_WIDTH = "w-10";
 const TRADE_STEP_ARROW_WIDTH = "w-5";
 
 function tradeStepCircleClasses(done: boolean, isNext: boolean): string {
-    if (done) return "bg-primary border-primary text-white";
-    if (isNext) return "bg-transparent border-success text-success";
-    return "bg-transparent border-border text-text-dim";
+    // border-solid/border-dashed is required (not just border-{color}) -
+    // Preflight is disabled app-wide (tailwind.config.js), so without an
+    // explicit style class border-style stays at the browser default of
+    // "none" and the border renders with zero effective width.
+    if (done) return "bg-primary border-solid border-primary text-white";
+    if (isNext) return "bg-transparent border-dashed border-success text-success";
+    return "bg-transparent border-solid border-border text-text-dim";
 }
 
 function tradeStepLabelClasses(done: boolean, isNext: boolean): string {
@@ -186,12 +198,7 @@ function TradeStepsBar({ steps }: { steps: { key: TradeStepKey; done: boolean }[
                 {steps.map((s, i) => (
                     <Fragment key={s.key}>
                         <div
-                            // border-solid is required here - Preflight is
-                            // disabled app-wide (tailwind.config.js), so
-                            // without it border-style stays at the browser
-                            // default of "none" and border-2/border-success
-                            // etc render with zero effective width.
-                            className={`flex items-center justify-center h-10 ${TRADE_STEP_CIRCLE_WIDTH} rounded-full border-2 border-solid shrink-0 ${tradeStepCircleClasses(s.done, i === nextIndex)}`}
+                            className={`flex items-center justify-center h-10 ${TRADE_STEP_CIRCLE_WIDTH} rounded-full border-2 shrink-0 ${tradeStepCircleClasses(s.done, i === nextIndex)}`}
                         >
                             <FontAwesomeIcon icon={TRADE_STEP_ICONS[s.key]} />
                         </div>
@@ -323,6 +330,7 @@ function MyOffersPage() {
 
             history.push({
                 id: o.id,
+                offerCreated: o.offerCreated as Date,
                 mySide,
                 otherSide,
                 myShipmentBarcode,
@@ -610,6 +618,7 @@ function MyOffersPage() {
         {history.map((x:HistoryItem) =>
             <div className="card flex flex-col items-center gap-4 mb-4 p-5" key={x.id}>
                 <TradeStepsBar steps={buildTradeSteps(x)} />
+                <span className="text-[0.7em] text-text-dim">{daysAgoText(t, x.offerCreated)}</span>
                 <div className="flex items-center justify-center gap-6">
                     <img className="w-[50px] rounded-sm" alt="offered" src={x.toyIOffered.file} />
                     <ul className="statusLines" dangerouslySetInnerHTML={{__html: x.status}}></ul>

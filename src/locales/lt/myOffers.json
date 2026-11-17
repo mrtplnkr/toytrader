@@ -1,6 +1,11 @@
 {
   "heading": "Visi jūsų pasiūlyti mainai",
   "addYourToy": "pridėti savo žaislą",
+  "today": "šiandien",
+  "daysAgo_one": "prieš {{count}} dieną",
+  "daysAgo_few": "prieš {{count}} dienas",
+  "daysAgo_many": "prieš {{count}} dienos",
+  "daysAgo_other": "prieš {{count}} dienų",
   "accept": "Priimti",
   "decline": "Atmesti",
   "shipmentReturned": "Jūsų siunta buvo grąžinta Omniva - užregistruokite ją iš naujo ir įveskite naują brūkšninį kodą žemiau.",

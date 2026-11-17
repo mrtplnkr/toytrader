@@ -1,6 +1,9 @@
 {
   "heading": "All offers made by you",
   "addYourToy": "add your toy",
+  "today": "today",
+  "daysAgo_one": "{{count}} day ago",
+  "daysAgo_other": "{{count}} days ago",
   "accept": "Accept",
   "decline": "Decline",
   "shipmentReturned": "Your shipment was returned by Omniva - register it again and enter the new barcode below.",
