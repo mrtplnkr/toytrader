@@ -58,8 +58,8 @@
     "rated": "Įvertinta"
   },
   "status": {
-    "offeredYourToy": "jūs pasiūlėte savo <a href=\"{{toyUrl}}\" target=\"_target\">žaislą</a> {{date}}",
-    "receivedOfferForYourToy": "{{name}} pasiūlė mainus už jūsų <a href=\"{{toyUrl}}\" target=\"_target\">žaislą</a> {{date}}",
+    "offeredYourToy": "jūs pasiūlėte savo <a href=\"{{toyUrl}}\" target=\"_target\">{{title}}</a> {{date}}",
+    "receivedOfferForYourToy": "{{name}} pasiūlė mainus už jūsų <a href=\"{{toyUrl}}\" target=\"_target\">{{title}}</a> {{date}}",
     "youAcceptedOffer": "jūs priėmėte pasiūlymą {{date}}",
     "partnerAcceptedOffer": "{{name}} priėmė pasiūlymą {{date}}",
     "yourTurnToRespond": "jūsų eilė priimti arba atmesti šį pasiūlymą",

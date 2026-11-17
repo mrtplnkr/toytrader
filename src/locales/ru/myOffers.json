@@ -58,8 +58,8 @@
     "rated": "Оценено"
   },
   "status": {
-    "offeredYourToy": "вы предложили свою <a href=\"{{toyUrl}}\" target=\"_target\">игрушку</a> {{date}}",
-    "receivedOfferForYourToy": "{{name}}: предложен обмен на вашу <a href=\"{{toyUrl}}\" target=\"_target\">игрушку</a>, {{date}}",
+    "offeredYourToy": "вы предложили свою <a href=\"{{toyUrl}}\" target=\"_target\">{{title}}</a> {{date}}",
+    "receivedOfferForYourToy": "{{name}}: предложен обмен на вашу <a href=\"{{toyUrl}}\" target=\"_target\">{{title}}</a>, {{date}}",
     "youAcceptedOffer": "вы приняли предложение {{date}}",
     "partnerAcceptedOffer": "{{name}}: предложение принято, {{date}}",
     "yourTurnToRespond": "ваша очередь принять или отклонить это предложение",

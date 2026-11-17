@@ -73,6 +73,8 @@ interface HistoryItem {
 function buildStatusHtml(t: TFunction, o: Offer, isInitiator: boolean, isReceiver: boolean, partnerName: string, params: {
     offeredToyUrl: string;
     targetedToyUrl: string;
+    offeredToyTitle: string;
+    targetedToyTitle: string;
     myShipmentStatus?: string;
     myReceived?: Date;
     otherSideShipmentStatus?: string;
@@ -83,8 +85,8 @@ function buildStatusHtml(t: TFunction, o: Offer, isInitiator: boolean, isReceive
     // initiator it's the one they offered (toyOffered); for the receiver
     // it's the one that got targeted (toyTargeted, which is theirs).
     const createdLine = isInitiator ?
-        t('myOffers:status.offeredYourToy', { toyUrl: params.offeredToyUrl, date: (o.offerCreated as Date).toDateString() }) :
-        t('myOffers:status.receivedOfferForYourToy', { name: partnerName, toyUrl: params.targetedToyUrl, date: (o.offerCreated as Date).toDateString() });
+        t('myOffers:status.offeredYourToy', { toyUrl: params.offeredToyUrl, title: params.offeredToyTitle, date: (o.offerCreated as Date).toDateString() }) :
+        t('myOffers:status.receivedOfferForYourToy', { name: partnerName, toyUrl: params.targetedToyUrl, title: params.targetedToyTitle, date: (o.offerCreated as Date).toDateString() });
 
     const acceptedLine = o.offerAccepted ?
         (isInitiator ?
@@ -184,7 +186,12 @@ function TradeStepsBar({ steps }: { steps: { key: TradeStepKey; done: boolean }[
                 {steps.map((s, i) => (
                     <Fragment key={s.key}>
                         <div
-                            className={`flex items-center justify-center h-10 ${TRADE_STEP_CIRCLE_WIDTH} rounded-full border-2 shrink-0 ${tradeStepCircleClasses(s.done, i === nextIndex)}`}
+                            // border-solid is required here - Preflight is
+                            // disabled app-wide (tailwind.config.js), so
+                            // without it border-style stays at the browser
+                            // default of "none" and border-2/border-success
+                            // etc render with zero effective width.
+                            className={`flex items-center justify-center h-10 ${TRADE_STEP_CIRCLE_WIDTH} rounded-full border-2 border-solid shrink-0 ${tradeStepCircleClasses(s.done, i === nextIndex)}`}
                         >
                             <FontAwesomeIcon icon={TRADE_STEP_ICONS[s.key]} />
                         </div>
@@ -366,6 +373,7 @@ function MyOffersPage() {
                 toyIOffered,
                 status: buildStatusHtml(t, o, isInitiator, isReceiver, partnerName, {
                     offeredToyUrl: toyIOffered.file, targetedToyUrl: toyTargeted.file,
+                    offeredToyTitle: toyIOffered.title, targetedToyTitle: toyTargeted.title,
                     myShipmentStatus, myReceived, otherSideShipmentStatus, otherSideReceived, otherSideShipmentBarcode,
                 }),
                 toyTargeted,

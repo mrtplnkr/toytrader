@@ -58,8 +58,8 @@
     "rated": "Rated"
   },
   "status": {
-    "offeredYourToy": "you offered your <a href=\"{{toyUrl}}\" target=\"_target\">toy</a> on {{date}}",
-    "receivedOfferForYourToy": "{{name}} offered a trade for your <a href=\"{{toyUrl}}\" target=\"_target\">toy</a> on {{date}}",
+    "offeredYourToy": "you offered your <a href=\"{{toyUrl}}\" target=\"_target\">{{title}}</a> on {{date}}",
+    "receivedOfferForYourToy": "{{name}} offered a trade for your <a href=\"{{toyUrl}}\" target=\"_target\">{{title}}</a> on {{date}}",
     "youAcceptedOffer": "you accepted the offer on {{date}}",
     "partnerAcceptedOffer": "{{name}} accepted the offer on {{date}}",
     "yourTurnToRespond": "it's your turn to accept or decline this offer",
