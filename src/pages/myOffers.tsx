@@ -626,10 +626,6 @@ function MyOffersPage() {
                     </div>
                 :
                     <div className="flex flex-col gap-2 items-center">
-                        {x.myShipmentBarcode &&
-                            <button onClick={() => navigate(`/shipment/result?offerId=${x.id}&side=${x.mySide}`)}>
-                                {t('myOffers:viewMyQrCode')}
-                            </button>}
                         {x.myShipmentStatus === 'RETURNED' &&
                             <p className="text-[0.8em] text-danger m-0">
                                 {t('myOffers:shipmentReturned')}
