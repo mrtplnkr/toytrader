@@ -30,6 +30,23 @@
   to { transform: translateY(-110vh) translateX(20px); opacity: 0; }
 }
 
+@keyframes point-right {
+  0%, 100% { transform: translateX(0); opacity: 1; }
+  50% { transform: translateX(5px); opacity: 0.5; }
+}
+
+/* The trade-step arrow that leads into the next-awaited step (myOffers.tsx) -
+   nudges right to draw the eye toward it. */
+.nextStepArrow {
+  animation: point-right 1s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nextStepArrow {
+    animation: none;
+  }
+}
+
 body {
   margin: 0;
   background-color: var(--color-bg);

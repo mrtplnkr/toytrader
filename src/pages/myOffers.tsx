@@ -204,7 +204,10 @@ function TradeStepsBar({ steps }: { steps: { key: TradeStepKey; done: boolean }[
                         </div>
                         {i < steps.length - 1 &&
                             <div className={`flex items-center justify-center ${TRADE_STEP_ARROW_WIDTH} shrink-0`}>
-                                <FontAwesomeIcon icon={faChevronRight} className={s.done ? "text-primary" : "text-border"} />
+                                <FontAwesomeIcon
+                                    icon={faChevronRight}
+                                    className={(s.done ? "text-primary" : "text-border") + (i + 1 === nextIndex ? " nextStepArrow" : "")}
+                                />
                             </div>}
                     </Fragment>
                 ))}
