@@ -5,6 +5,8 @@
   "uploadingPicture": "Загрузка фото...",
   "add": "Добавить",
   "saveChanges": "Сохранить изменения",
+  "celebrationThankYou": "Спасибо, что разместили игрушку!",
+  "celebrationRedirecting": "Перенаправляем вас к вашим игрушкам...",
   "imageUploadFailedTitle": "Не удалось загрузить изображение",
   "pictureRequiredTitle": "Требуется фото",
   "pictureRequiredBody": "Пожалуйста, добавьте фото своей игрушки перед отправкой (подождите, пока оно загрузится).",

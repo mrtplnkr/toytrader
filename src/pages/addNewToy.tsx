@@ -10,6 +10,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBackspace, faStar, faTrash, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { addNewToy, updateToy } from "../hooks/helper";
 import { Store } from "react-notifications-component";
+import ToyListedCelebration from "../components/toyListedCelebration";
 
 const notifyError = (title: string, message: string) => {
     Store.addNotification({
@@ -27,6 +28,7 @@ const notifyError = (title: string, message: string) => {
 const MAX_IMAGES = 3;
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 const MAX_VIDEO_BYTES = 30 * 1024 * 1024;
+const CELEBRATION_DURATION_MS = 2500;
 
 interface UploadedFile {
     fileName: string;
@@ -58,6 +60,7 @@ function AddNew() {
     const [uploadingVideo, setUploadingVideo] = useState(false);
     const [loadingExisting, setLoadingExisting] = useState(isEditMode);
     const [notOwner, setNotOwner] = useState(false);
+    const [showCelebration, setShowCelebration] = useState(false);
     const navigate = useNavigate();
     const { t } = useTranslation();
 
@@ -222,6 +225,7 @@ function AddNew() {
                   video?.fileName,
                   removedFileNames
               );
+              navigate('/myToys');
           } else {
               await addNewToy(
                   title,
@@ -229,8 +233,12 @@ function AddNew() {
                   images[mainIndex].fileName,
                   video?.fileName
               );
+              // Only for a genuinely new listing, not an edit - a brief
+              // confetti + thank-you moment before landing on /myToys,
+              // instead of an instant silent redirect.
+              setShowCelebration(true);
+              setTimeout(() => navigate('/myToys'), CELEBRATION_DURATION_MS);
           }
-          navigate('/myToys');
         } catch (err) {
             notifyError(t('common:toast.actionFailedTitle'), t('common:toast.tryAgainLater'));
         }
@@ -246,6 +254,8 @@ function AddNew() {
 
     return (
       <>
+        {showCelebration && <ToyListedCelebration />}
+
         <div className="flex flex-col my-4">
           <button id="backButton" onClick={() => navigate(-1)}>
             <FontAwesomeIcon color="darkviolet" icon={faBackspace} />

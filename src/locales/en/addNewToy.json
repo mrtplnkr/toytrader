@@ -5,6 +5,8 @@
   "uploadingPicture": "Uploading picture...",
   "add": "Add",
   "saveChanges": "Save changes",
+  "celebrationThankYou": "Thank you for listing a toy!",
+  "celebrationRedirecting": "Taking you to your toys...",
   "imageUploadFailedTitle": "Image upload failed",
   "pictureRequiredTitle": "Picture required",
   "pictureRequiredBody": "Please add a picture of your toy before submitting (wait for it to finish uploading).",
