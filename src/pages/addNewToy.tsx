@@ -171,6 +171,42 @@ function AddNew() {
         setVideo(undefined);
     };
 
+    // Picks up a file shared into the installed PWA via the OS "Share" sheet
+    // (manifest.json's share_target). The service worker can't hand the file
+    // to a client directly since none exists yet when the POST arrives - it
+    // stashes it in the Cache API instead and redirects here with ?shared=1,
+    // see src/service-worker.ts.
+    useEffect(() => {
+        if (toyId) return;
+        if (new URLSearchParams(window.location.search).get('shared') !== '1') return;
+        (async () => {
+            try {
+                const cache = await caches.open('share-target-v1');
+                const res = await cache.match('/__shared-file');
+                if (res) {
+                    const blob = await res.blob();
+                    const contentType = res.headers.get('Content-Type') || blob.type;
+                    const rawName = res.headers.get('X-File-Name');
+                    const name = rawName ? decodeURIComponent(rawName) : `shared.${contentType.split('/')[1] || 'bin'}`;
+                    const file = new File([blob], name, { type: contentType });
+                    if (contentType.startsWith('video/')) {
+                        await uploadVideo(file);
+                    } else if (contentType.startsWith('image/')) {
+                        await uploadImage(file);
+                    }
+                    await cache.delete('/__shared-file');
+                }
+            } catch {
+                // Best effort - worst case this behaves like a normal manual
+                // visit to /addNew with nothing pre-attached.
+            } finally {
+                navigate('/addNew', { replace: true });
+            }
+        })();
+    // Only ever runs once on mount to pick up a pending handoff, if any.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     const onSubmitToy = async () => {
         if (images.length === 0) {
             notifyError(t('addNewToy:pictureRequiredTitle'), t('addNewToy:pictureRequiredBody'));

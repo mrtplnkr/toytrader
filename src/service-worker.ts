@@ -69,6 +69,39 @@ registerRoute(
   })
 );
 
+// Web Share Target (manifest.json's share_target) - on Android/ChromeOS,
+// once installed, this app shows up in the OS "Share" sheet for images and
+// videos. The browser POSTs the shared file here as multipart form data -
+// a service worker is the only place that can read that POST body (there's
+// no server behind this SPA to receive it), so the file is stashed in the
+// Cache API, keyed by a fixed URL, for addNewToy.tsx to pick up once the
+// ensuing redirect lands the user on /addNew. Cache (not postMessage) is
+// used because no client page exists yet to receive a message at this point.
+const SHARE_TARGET_CACHE = 'share-target-v1';
+const SHARE_TARGET_CACHE_KEY = '/__shared-file';
+
+registerRoute(
+  ({ url, request }: { url: URL; request: Request }) =>
+    request.method === 'POST' && url.pathname === '/share-target',
+  async ({ request }: { request: Request }) => {
+    try {
+      const formData = await request.formData();
+      const file = formData.get('media');
+      if (file instanceof File) {
+        const cache = await caches.open(SHARE_TARGET_CACHE);
+        await cache.put(SHARE_TARGET_CACHE_KEY, new Response(file, {
+          headers: { 'Content-Type': file.type, 'X-File-Name': encodeURIComponent(file.name) },
+        }));
+      }
+    } catch {
+      // Falls through to the redirect either way - addNewToy.tsx simply
+      // won't find anything cached, same as a normal manual visit.
+    }
+    return Response.redirect('/addNew?shared=1', 303);
+  },
+  'POST'
+);
+
 // Lets the app trigger an immediate update via
 // registration.waiting.postMessage({ type: 'SKIP_WAITING' }).
 self.addEventListener('message', (event) => {
