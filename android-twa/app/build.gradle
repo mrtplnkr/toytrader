@@ -57,8 +57,8 @@ android {
         applicationId "app.web.toystrader_a494f.twa"
         minSdkVersion 24
         targetSdkVersion 36
-        versionCode 1
-        versionName "1"
+        versionCode 2
+        versionName "1.1"
 
         // The name for the application
         resValue "string", "appName", twaManifest.name
@@ -84,6 +84,9 @@ android {
             resValue "string", "fullScopeUrl", 'https://toystrader-a494f.web.app/'
         
 
+        
+            // The data for the app to support web share target.
+            resValue "string", "shareTarget", '{\\"action\\":\\"https://toystrader-a494f.web.app/share-target\\",\\"method\\":\\"POST\\",\\"enctype\\":\\"multipart/form-data\\",\\"params\\":{\\"files\\":[{\\"name\\":\\"media\\",\\"accept\\":[\\"image/*\\",\\"video/*\\"]}]}}'
         
 
         // The hostname is used when building the intent-filter, so the TWA is able to

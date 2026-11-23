@@ -26,6 +26,14 @@ function randomPassword() {
 
   let twaManifest = await TwaManifest.fromWebManifest(MANIFEST_URL);
   twaManifest.signingKey.path = path.join(TARGET_DIR, twaManifest.signingKey.path);
+  // Bumped from the last build (Oct 19, versionCode 1) so Android treats
+  // this as an update over the already-installed app rather than a
+  // same-version no-op - this rebuild's actual point is to pick up
+  // share_target (added to the live web manifest since then), which
+  // bubblewrap only bakes into the generated AndroidManifest.xml's
+  // intent-filter if it's present in the manifest fetched here.
+  twaManifest.appVersionCode = 2;
+  twaManifest.appVersionName = "1.1";
   // The default (21) is older than androidbrowserhelper 2.7.4 (the actual
   // TWA runtime library) requires - its own manifest declares minSdk 24,
   // and Gradle's manifest merger fails outright rather than silently
