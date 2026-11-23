@@ -53,6 +53,11 @@ function AddNew() {
     const isEditMode = !!toyId;
 
     const [title, setTitle] = useState<string>('');
+    const [description, setDescription] = useState<string>('');
+    // Only required for a brand-new listing, not an edit - the toy's
+    // physical completeness isn't something an edit (title/photo tweaks)
+    // would change.
+    const [confirmedComplete, setConfirmedComplete] = useState(false);
     const [images, setImages] = useState<UploadedFile[]>([]);
     const [mainIndex, setMainIndex] = useState(0);
     const [video, setVideo] = useState<UploadedFile | undefined>(undefined);
@@ -91,6 +96,7 @@ function AddNew() {
                     url: await getDownloadURL(ref(storage, `projectFiles/${name}`)),
                 })));
                 setTitle(data.title);
+                setDescription(data.description ?? '');
                 setImages(resolvedImages);
                 setMainIndex(Math.max(0, rawImages.indexOf(data.file)));
                 if (data.video) {
@@ -215,6 +221,10 @@ function AddNew() {
             notifyError(t('addNewToy:pictureRequiredTitle'), t('addNewToy:pictureRequiredBody'));
             return;
         }
+        if (!isEditMode && !confirmedComplete) {
+            notifyError(t('addNewToy:confirmCompleteRequiredTitle'), t('addNewToy:confirmCompleteRequiredBody'));
+            return;
+        }
         try {
           if (isEditMode && toyId) {
               await updateToy(
@@ -223,7 +233,8 @@ function AddNew() {
                   images.map((i) => i.fileName),
                   images[mainIndex].fileName,
                   video?.fileName,
-                  removedFileNames
+                  removedFileNames,
+                  description.trim() || undefined
               );
               navigate('/myToys');
           } else {
@@ -231,7 +242,8 @@ function AddNew() {
                   title,
                   images.map((i) => i.fileName),
                   images[mainIndex].fileName,
-                  video?.fileName
+                  video?.fileName,
+                  description.trim() || undefined
               );
               // Only for a genuinely new listing, not an edit - a brief
               // confetti + thank-you moment before landing on /myToys,
@@ -271,6 +283,13 @@ function AddNew() {
           <div className="text-left">
             <input id="title" type="text" className="my-2" value={title} onChange={(e) => setTitle(e.target.value)} />
           </div>
+
+          <label className="flex flex-col gap-1 text-left my-2">
+            <span className="text-[0.85em] text-text-dim">{t('addNewToy:descriptionLabel')}</span>
+            <textarea id="description" rows={3}
+              placeholder={t('addNewToy:descriptionPlaceholder')}
+              value={description} onChange={(e) => setDescription(e.target.value)} />
+          </label>
 
           <div className="flex flex-wrap gap-3 items-start my-2">
             {images.map((img, index) => (
@@ -326,8 +345,17 @@ function AddNew() {
                 </div>}
           </div>
 
+          {!isEditMode &&
+              <label className="flex items-start gap-2 text-[0.85em] text-left my-2 cursor-pointer">
+                  <input type="checkbox" className="mt-1" checked={confirmedComplete}
+                      onChange={(e) => setConfirmedComplete(e.target.checked)} />
+                  {t('addNewToy:confirmCompleteLabel')}
+              </label>}
+
           <div className="flex flex-col">
-            <button type="submit" disabled={uploadingImage || uploadingVideo || images.length === 0} className="self-end">
+            <button type="submit"
+                disabled={uploadingImage || uploadingVideo || images.length === 0 || (!isEditMode && !confirmedComplete)}
+                className="self-end">
                 {t(isEditMode ? 'addNewToy:saveChanges' : 'addNewToy:add')}
             </button>
           </div>

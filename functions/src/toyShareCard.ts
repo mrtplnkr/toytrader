@@ -71,6 +71,9 @@ export const toyShareCard = onRequest(
       }
       const toy = toySnap.data() ?? {};
       const title = String(toy.title ?? "A toy on ToyTrader");
+      // The owner's own description (addNewToy.tsx, optional) wins when
+      // present - it's more accurate than the generic title-derived one.
+      const ownDescription = typeof toy.description === "string" ? toy.description.trim() : "";
 
       let imageUrl = `${APP_URL}/og-image.png`;
       const fileName = toy.file as string | undefined;
@@ -90,7 +93,7 @@ export const toyShareCard = onRequest(
       }
 
       const safeTitle = escapeHtml(title);
-      const safeDescription = escapeHtml(buildToyDescription(title));
+      const safeDescription = escapeHtml(ownDescription || buildToyDescription(title));
       const safeKeywords = escapeHtml(buildToyKeywords(title));
       const pageUrl = `${APP_URL}/toy/${encodeURIComponent(toyId)}`;
 

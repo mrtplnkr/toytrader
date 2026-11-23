@@ -135,6 +135,8 @@ function ToyDisplay(props: Props) {//TODO: change to NewOffer
                     column and the caption below it gets squeezed off-screen. */}
                 <img alt={props.toy.title} src={props.toy.file} className="max-h-[80%] max-w-full" />
                 <p className="text-white text-[1.1em] m-0">{props.toy.title}</p>
+                {props.toy.description &&
+                    <p className="text-text-dim text-[0.85em] m-0 max-w-[80%] text-center">{props.toy.description}</p>}
             </div>
             <button
                 className="fixed top-1/2 right-4 -translate-y-1/2 z-[1] w-12 h-12 rounded-full bg-surface-raised/80 border border-border flex items-center justify-center text-text hover:bg-surface-raised"

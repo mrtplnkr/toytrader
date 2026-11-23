@@ -136,12 +136,19 @@ export const toysCollectionRef = collection(db, "toys");
 // every existing reader (item.tsx, myOffers.tsx, admin.tsx, toyShareCard.ts,
 // bubbles.tsx) keeps working unchanged. video: optional single Storage
 // object name.
-export const addNewToy = async (title: string, images: string[], mainImage: string, video?: string) => {
+export const addNewToy = async (
+    title: string,
+    images: string[],
+    mainImage: string,
+    video?: string,
+    description?: string
+) => {
     await withSessionRecovery(() => addDoc(toysCollectionRef, {
         title,
         file: mainImage,
         images,
         ...(video ? { video } : {}),
+        ...(description ? { description } : {}),
         userId: auth.currentUser?.uid,
         updatedAt: Date.now(),
     }));
@@ -159,13 +166,15 @@ export const updateToy = async (
     images: string[],
     mainImage: string,
     video: string | undefined,
-    removedFileNames: string[]
+    removedFileNames: string[],
+    description?: string
 ) => {
     await withSessionRecovery(() => updateDoc(doc(db, "toys", toyId), {
         title,
         file: mainImage,
         images,
         video: video ?? deleteField(),
+        description: description ?? deleteField(),
         updatedAt: Date.now(),
     }));
     await Promise.allSettled(
@@ -221,6 +230,8 @@ export const subscribeToys = (onChange: (toys: Toy[]) => void): Unsubscribe => {
                     id: d.id,
                     userId: d.userId,
                     title: d.title,
+                    description: d.description,
+                    lockedByOfferId: d.lockedByOfferId,
                     file: imageUrls[mainIndex],
                     images: imageUrls,
                     video,
@@ -300,14 +311,57 @@ export const subscribeOffers = (userId: string, onChange: (offers: Offer[]) => v
     }, (err) => console.error(err));
 };
 
+// Toys are public-read (firestore.rules), but offers are read-restricted to
+// the two participants/admins (they can carry a shipping phone number) - so
+// an uninvolved visitor's client never sees an accepted offer between two
+// other people via the offers collection at all. Marking the toy itself
+// with the accepted offer's id, here, is what lets list.tsx hide an
+// already-spoken-for toy from *everyone*, not just whichever two people are
+// actually party to that offer.
 export const updateOffer = async (id: string) => {
-    const docToUpdate = doc(db, "offers", id)
-    await withSessionRecovery(() => updateDoc(docToUpdate, {"offerAccepted": Date.now()}));
+    const docToUpdate = doc(db, "offers", id);
+    await withSessionRecovery(async () => {
+        const snap = await getDoc(docToUpdate);
+        const data = snap.data();
+        await updateDoc(docToUpdate, {"offerAccepted": Date.now()});
+        if (data) {
+            await Promise.allSettled([
+                updateDoc(doc(db, "toys", data.toyOffered), {lockedByOfferId: id}),
+                updateDoc(doc(db, "toys", data.toyTargeted), {lockedByOfferId: id}),
+            ]);
+        }
+    });
 };
 
 export const declineOffer = async (id: string) => {
-    await withSessionRecovery(() => deleteDoc(doc(db, "offers", id)));
+    const docToDelete = doc(db, "offers", id);
+    await withSessionRecovery(async () => {
+        const snap = await getDoc(docToDelete);
+        const data = snap.data();
+        await deleteDoc(docToDelete);
+        // Only an offer that actually got accepted could have locked its
+        // toys in the first place (see updateOffer above) - release them so
+        // the toy becomes offerable again. Checked against the lock's own
+        // offer id (not just "clear unconditionally") so this can't
+        // clobber a different, newer lock in the unlikely case this same
+        // toy was already re-accepted into another trade by the time this
+        // decline/cancel goes through.
+        if (data?.offerAccepted) {
+            await Promise.allSettled([
+                clearToyLockIfOwnedByOffer(data.toyOffered, id),
+                clearToyLockIfOwnedByOffer(data.toyTargeted, id),
+            ]);
+        }
+    });
 };
+
+async function clearToyLockIfOwnedByOffer(toyId: string, offerId: string) {
+    const toyRef = doc(db, "toys", toyId);
+    const toySnap = await getDoc(toyRef);
+    if (toySnap.data()?.lockedByOfferId === offerId) {
+        await updateDoc(toyRef, {lockedByOfferId: deleteField()});
+    }
+}
 
 export type ShipmentSide = "offer" | "target";
 
