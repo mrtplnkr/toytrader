@@ -73,8 +73,27 @@ function ListPage() {
   // the two participants/admins, so an uninvolved visitor's `offers` array
   // would never contain this accepted offer at all, even though the toy
   // itself is public-read and needs to disappear for *everyone*.
+  // Approximate age-range filter - a toy matches when its [ageMin, ageMax]
+  // overlaps the filter's [from, to] (either bound left blank means
+  // unbounded on that side). A toy listed before this field existed has
+  // neither bound set and can't be confirmed to match, so it's excluded
+  // once the filter is actually in use rather than guessed into the
+  // results - but still shown normally when no filter is applied.
+  const [filterAgeFrom, setFilterAgeFrom] = useState<string>('');
+  const [filterAgeTo, setFilterAgeTo] = useState<string>('');
+  const ageFilterActive = filterAgeFrom.trim() !== '' || filterAgeTo.trim() !== '';
+  const filterFromNum = filterAgeFrom.trim() !== '' ? Number(filterAgeFrom) : undefined;
+  const filterToNum = filterAgeTo.trim() !== '' ? Number(filterAgeTo) : undefined;
+  const matchesAgeFilter = (toy: Toy) => {
+    if (!ageFilterActive) return true;
+    if (toy.ageMin === undefined || toy.ageMax === undefined) return false;
+    if (filterFromNum !== undefined && toy.ageMax < filterFromNum) return false;
+    if (filterToNum !== undefined && toy.ageMin > filterToNum) return false;
+    return true;
+  };
+
   const visibleToys = toys.filter((x: Toy) =>
-    x.userId !== auth.currentUser?.uid && !alreadyOfferedToyIds.has(x.id) && !x.lockedByOfferId);
+    x.userId !== auth.currentUser?.uid && !alreadyOfferedToyIds.has(x.id) && !x.lockedByOfferId && matchesAgeFilter(x));
   const toyBeingDisplayed = visibleToys.find((x: Toy) => x.id === selectedToyId);
 
   const nextToy = (direction: number | undefined) => {
@@ -163,6 +182,19 @@ function ListPage() {
           <button id="addButton" onClick={() => navigate('/addNew')}>
             <FontAwesomeIcon color="darkviolet" icon={faCirclePlus} />
           </button>
+        </div>
+
+        <div className="flex items-center justify-center gap-2 mb-4 text-[0.85em]">
+          <span className="text-text-dim">{t('list:ageFilterLabel')}</span>
+          <input type="number" min={0} className="w-[4.5em]" placeholder={t('list:ageFilterFrom')}
+            value={filterAgeFrom} onChange={(e) => setFilterAgeFrom(e.target.value)} />
+          <span className="text-text-dim">{t('list:ageFilterTo')}</span>
+          <input type="number" min={0} className="w-[4.5em]" placeholder={t('list:ageFilterToPlaceholder')}
+            value={filterAgeTo} onChange={(e) => setFilterAgeTo(e.target.value)} />
+          {ageFilterActive &&
+            <button type="button" onClick={() => { setFilterAgeFrom(''); setFilterAgeTo(''); }}>
+              {t('list:ageFilterClear')}
+            </button>}
         </div>
 
         <ul id="toyList">

@@ -18,6 +18,13 @@ export interface Toy {
     // title-derived fallback) in /toy/{id}'s share-link meta tags, see
     // functions/src/toyShareCard.ts.
     description?: string;
+    // Approximate suitable age range in years, required + validated
+    // (ageMin <= ageMax, both 0-MAX_TOY_AGE) on every new listing - see
+    // addNewToy.tsx. Optional in the type only because toys listed before
+    // this field existed predate it; list.tsx's age filter treats those as
+    // non-matching rather than crashing on missing data.
+    ageMin?: number;
+    ageMax?: number;
     // Set to the accepted offer's id once a trade for this toy is accepted
     // (helper.ts's updateOffer), cleared if that same offer is later
     // declined/cancelled before shipping (declineOffer) - lets list.tsx hide

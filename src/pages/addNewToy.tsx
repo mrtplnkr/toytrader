@@ -29,6 +29,7 @@ const MAX_IMAGES = 3;
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 const MAX_VIDEO_BYTES = 30 * 1024 * 1024;
 const CELEBRATION_DURATION_MS = 2500;
+const MAX_TOY_AGE = 18;
 
 interface UploadedFile {
     fileName: string;
@@ -54,6 +55,11 @@ function AddNew() {
 
     const [title, setTitle] = useState<string>('');
     const [description, setDescription] = useState<string>('');
+    // Approximate suitable age range in years - required, validated before
+    // submit (see onSubmitToy). Kept as strings while editing so an empty
+    // field reads as "not filled in yet" rather than coercing to 0.
+    const [ageMin, setAgeMin] = useState<string>('');
+    const [ageMax, setAgeMax] = useState<string>('');
     // Only required for a brand-new listing, not an edit - the toy's
     // physical completeness isn't something an edit (title/photo tweaks)
     // would change.
@@ -97,6 +103,8 @@ function AddNew() {
                 })));
                 setTitle(data.title);
                 setDescription(data.description ?? '');
+                setAgeMin(data.ageMin !== undefined ? String(data.ageMin) : '');
+                setAgeMax(data.ageMax !== undefined ? String(data.ageMax) : '');
                 setImages(resolvedImages);
                 setMainIndex(Math.max(0, rawImages.indexOf(data.file)));
                 if (data.video) {
@@ -225,6 +233,20 @@ function AddNew() {
             notifyError(t('addNewToy:confirmCompleteRequiredTitle'), t('addNewToy:confirmCompleteRequiredBody'));
             return;
         }
+        const ageMinNum = Number(ageMin);
+        const ageMaxNum = Number(ageMax);
+        if (ageMin.trim() === '' || ageMax.trim() === '' || Number.isNaN(ageMinNum) || Number.isNaN(ageMaxNum)) {
+            notifyError(t('addNewToy:ageRequiredTitle'), t('addNewToy:ageRequiredBody'));
+            return;
+        }
+        if (ageMinNum < 0 || ageMaxNum < 0 || ageMinNum > MAX_TOY_AGE || ageMaxNum > MAX_TOY_AGE) {
+            notifyError(t('addNewToy:ageInvalidTitle'), t('addNewToy:ageInvalidBody', { max: MAX_TOY_AGE }));
+            return;
+        }
+        if (ageMinNum > ageMaxNum) {
+            notifyError(t('addNewToy:ageRangeInvalidTitle'), t('addNewToy:ageRangeInvalidBody'));
+            return;
+        }
         try {
           if (isEditMode && toyId) {
               await updateToy(
@@ -234,6 +256,8 @@ function AddNew() {
                   images[mainIndex].fileName,
                   video?.fileName,
                   removedFileNames,
+                  ageMinNum,
+                  ageMaxNum,
                   description.trim() || undefined
               );
               navigate('/myToys');
@@ -242,6 +266,8 @@ function AddNew() {
                   title,
                   images.map((i) => i.fileName),
                   images[mainIndex].fileName,
+                  ageMinNum,
+                  ageMaxNum,
                   video?.fileName,
                   description.trim() || undefined
               );
@@ -290,6 +316,20 @@ function AddNew() {
               placeholder={t('addNewToy:descriptionPlaceholder')}
               value={description} onChange={(e) => setDescription(e.target.value)} />
           </label>
+
+          <div className="flex flex-col gap-1 text-left my-2">
+            <span className="text-[0.85em] text-text-dim">{t('addNewToy:ageRangeLabel')}</span>
+            <div className="flex items-center gap-2">
+              <input id="ageMin" type="number" min={0} max={MAX_TOY_AGE} className="w-[5em]"
+                placeholder={t('addNewToy:ageFromPlaceholder')}
+                value={ageMin} onChange={(e) => setAgeMin(e.target.value)} />
+              <span className="text-text-dim">{t('addNewToy:ageRangeTo')}</span>
+              <input id="ageMax" type="number" min={0} max={MAX_TOY_AGE} className="w-[5em]"
+                placeholder={t('addNewToy:ageToPlaceholder')}
+                value={ageMax} onChange={(e) => setAgeMax(e.target.value)} />
+              <span className="text-text-dim text-[0.85em]">{t('addNewToy:ageRangeYears')}</span>
+            </div>
+          </div>
 
           <div className="flex flex-wrap gap-3 items-start my-2">
             {images.map((img, index) => (
@@ -354,7 +394,8 @@ function AddNew() {
 
           <div className="flex flex-col">
             <button type="submit"
-                disabled={uploadingImage || uploadingVideo || images.length === 0 || (!isEditMode && !confirmedComplete)}
+                disabled={uploadingImage || uploadingVideo || images.length === 0 || (!isEditMode && !confirmedComplete) ||
+                    ageMin.trim() === '' || ageMax.trim() === ''}
                 className="self-end">
                 {t(isEditMode ? 'addNewToy:saveChanges' : 'addNewToy:add')}
             </button>

@@ -140,6 +140,8 @@ export const addNewToy = async (
     title: string,
     images: string[],
     mainImage: string,
+    ageMin: number,
+    ageMax: number,
     video?: string,
     description?: string
 ) => {
@@ -147,6 +149,8 @@ export const addNewToy = async (
         title,
         file: mainImage,
         images,
+        ageMin,
+        ageMax,
         ...(video ? { video } : {}),
         ...(description ? { description } : {}),
         userId: auth.currentUser?.uid,
@@ -167,6 +171,8 @@ export const updateToy = async (
     mainImage: string,
     video: string | undefined,
     removedFileNames: string[],
+    ageMin: number,
+    ageMax: number,
     description?: string
 ) => {
     await withSessionRecovery(() => updateDoc(doc(db, "toys", toyId), {
@@ -174,6 +180,8 @@ export const updateToy = async (
         file: mainImage,
         images,
         video: video ?? deleteField(),
+        ageMin,
+        ageMax,
         description: description ?? deleteField(),
         updatedAt: Date.now(),
     }));
@@ -232,6 +240,8 @@ export const subscribeToys = (onChange: (toys: Toy[]) => void): Unsubscribe => {
                     title: d.title,
                     description: d.description,
                     lockedByOfferId: d.lockedByOfferId,
+                    ageMin: d.ageMin,
+                    ageMax: d.ageMax,
                     file: imageUrls[mainIndex],
                     images: imageUrls,
                     video,

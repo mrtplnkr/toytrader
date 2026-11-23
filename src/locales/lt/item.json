@@ -2,6 +2,7 @@
   "share": "Pasidalinti",
   "edit": "Redaguoti",
   "lastUpdated": "Paskutinį kartą atnaujinta: {{date}}",
+  "ageRange": "Amžius {{from}}-{{to}}",
   "shareText": "Pažiūrėk \"{{title}}\" ToyTrader programoje!",
   "wished": "pageidauta",
   "wish": "pageidauti",

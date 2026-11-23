@@ -2,6 +2,7 @@
   "share": "Поделиться",
   "edit": "Редактировать",
   "lastUpdated": "Обновлено: {{date}}",
+  "ageRange": "Возраст {{from}}-{{to}}",
   "shareText": "Посмотри \"{{title}}\" в ToyTrader!",
   "wished": "в желаемом",
   "wish": "хочу",

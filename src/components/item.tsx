@@ -72,6 +72,9 @@ function Item(props: Props) {
                     <FontAwesomeIcon icon={faTrash} />
                 </button>}
             </div>
+            {props.ageMin !== undefined && props.ageMax !== undefined && <p className="text-sm text-text-dim m-0">
+                {t('item:ageRange', { from: props.ageMin, to: props.ageMax })}
+            </p>}
             {!!props.ratingCount && <p className="text-sm text-text-dim m-0">
                 <FontAwesomeIcon icon={faStarSolid} /> {props.averageRating!.toFixed(1)} ({props.ratingCount})
             </p>}
