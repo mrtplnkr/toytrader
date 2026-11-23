@@ -64,8 +64,17 @@ function ListPage() {
   const alreadyOfferedToyIds = new Set(
     offers.filter((o: Offer) => o.userInitiated === auth.currentUser?.uid).map((o: Offer) => o.toyTargeted)
   );
+  // A toy with lockedByOfferId set has an accepted offer and a winner - no
+  // longer up for grabs, unlike a merely pending offer (several of those are
+  // deliberately allowed to coexist on the same toy at once; myOffers.tsx's
+  // acceptOffer auto-declines the losers the moment one is accepted).
+  // Read off the toy doc itself (set by helper.ts's updateOffer/declineOffer)
+  // rather than derived from `offers` here - offers are read-restricted to
+  // the two participants/admins, so an uninvolved visitor's `offers` array
+  // would never contain this accepted offer at all, even though the toy
+  // itself is public-read and needs to disappear for *everyone*.
   const visibleToys = toys.filter((x: Toy) =>
-    x.userId !== auth.currentUser?.uid && !alreadyOfferedToyIds.has(x.id));
+    x.userId !== auth.currentUser?.uid && !alreadyOfferedToyIds.has(x.id) && !x.lockedByOfferId);
   const toyBeingDisplayed = visibleToys.find((x: Toy) => x.id === selectedToyId);
 
   const nextToy = (direction: number | undefined) => {
@@ -87,7 +96,11 @@ function ListPage() {
       !(o.offerReceived && o.targetReceived));
 
   const proposeOffer = async (toyOffered: string) => {
-    if (isToyCommittedElsewhere(toyOffered)) {
+    // toyBeingDisplayed can only ever be a toy from visibleToys (which
+    // already excludes locked toys), so this only actually fires in the
+    // narrow race where someone else's offer got accepted after this toy's
+    // full-screen view was already open.
+    if (isToyCommittedElsewhere(toyOffered) || toyBeingDisplayed?.lockedByOfferId) {
       Store.addNotification({
         title: t('list:cantOfferTitle'),
         message: t('list:cantOfferBody'),
