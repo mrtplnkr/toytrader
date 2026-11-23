@@ -26,8 +26,12 @@ function PublicPage() {
         }
     };
 
+    // pronoun pairs with word - some languages (Lithuanian) need a
+    // different object pronoun case depending on the verb (e.g.
+    // "pasikeiskite jais" vs "mainykite juos"), so the two travel together
+    // rather than the pronoun being a single fixed word in wellTradeThem.
     const randomSelect = () => {
-      const actionWords = t('public:actionWords', { returnObjects: true }) as string[];
+      const actionWords = t('public:actionWords', { returnObjects: true }) as { word: string; pronoun: string }[];
       return actionWords[Math.floor(Math.random() * actionWords.length)];
     }
 
@@ -42,7 +46,7 @@ function PublicPage() {
             <Trans i18nKey="public:boredQuestion" components={{ Old: <span className="text-primary" /> }} />
           </h3>
           <h2>
-            <Trans i18nKey="public:wellTradeThem" values={{ word: randomSelect() }} components={{ Action: <span className="text-success" /> }} />
+            <Trans i18nKey="public:wellTradeThem" values={randomSelect()} components={{ Action: <span className="text-success" /> }} />
           </h2>
           <div className="text-[1.5em]">
             <Trans i18nKey="public:discoverFun" components={{
@@ -51,7 +55,7 @@ function PublicPage() {
               Trading: <span className="text-success font-bold" />,
               GrownUps: <span className="font-bold" />,
             }} />
-             <div className="text-[0.8em] text-text-dim">{t('public:exceptToy4Toy', { word: randomSelect() })}</div>
+             <div className="text-[0.8em] text-text-dim">{t('public:exceptToy4Toy', { word: randomSelect().word })}</div>
           </div>
           <p className="text-[1.2em]">
             {t('public:justLogin')}
