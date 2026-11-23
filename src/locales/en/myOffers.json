@@ -46,7 +46,7 @@
   "leaveTip": "☕ Buy me a coffee (€1)",
   "noThanks": "No thanks",
   "cancelling": "cancelling...",
-  "cancelTrade": "Cancel this trade",
+  "cancelTrade": "Decline",
   "cannotCancelAnymore": "This trade can no longer be cancelled - a toy is already on its way.",
   "confirmCancel": "Cancel this trade? This cannot be undone.",
   "enterBarcodeFirst": "Enter the barcode Omniva gave you first.",
