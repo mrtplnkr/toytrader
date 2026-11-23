@@ -60,15 +60,15 @@ function Item(props: Props) {
 
     return (
         <li>
-            <div className="flex justify-between w-[90%]">
-                <h3 className="italic m-0 flex-1">{props.title}</h3>
-                <button className="ml-4" onClick={shareToy} title={t('item:share')}>
+            <div className="flex items-center justify-between w-full gap-1">
+                <h3 className="italic m-0 flex-1 min-w-0 truncate">{props.title}</h3>
+                <button className="shrink-0 p-1" onClick={shareToy} title={t('item:share')}>
                     <FontAwesomeIcon icon={faShareNodes} />
                 </button>
-                {props.editItem && <button className="ml-4" onClick={() => props.editItem(props.id)} title={t('item:edit')}>
+                {props.editItem && <button className="shrink-0 p-1" onClick={() => props.editItem(props.id)} title={t('item:edit')}>
                     <FontAwesomeIcon icon={faPen} />
                 </button>}
-                {props.deleteItem && <button className="ml-4" onClick={() => props.deleteItem(props.id)}>
+                {props.deleteItem && <button className="shrink-0 p-1" onClick={() => props.deleteItem(props.id)}>
                     <FontAwesomeIcon icon={faTrash} />
                 </button>}
             </div>
@@ -90,7 +90,7 @@ function Item(props: Props) {
                         {t('item:moreMedia', { count: media.length - 1 })}
                     </span>}
             </div>
-            {props.wished != null && <div className="flex w-[90%] justify-between">
+            {props.wished != null && <div className="flex w-full justify-center">
                 <button className="self-center" onClick={() => props.addRemoveWish(props)}>
                     {props.wished ? t('item:wished') : t('item:wish')}</button>
             </div>}
