@@ -151,6 +151,55 @@ function StateProvider({children}: any) {
   )
 }
 
+// Top-level, not nested inside App() - a function component defined inside
+// another component's body gets a brand new identity on every render of
+// its parent, so React treats <RequireAuth> as a different component type
+// each time and remounts its whole subtree, wiping any in-progress local
+// state in the page underneath (e.g. an addNewToy.tsx upload in progress).
+// App() re-renders itself ~1.8s and ~2.1s after mount for the splash-screen
+// fade, which made this reliably reproducible: any state set on an
+// auth-gated page within the first ~2.1s of a fresh load got silently
+// discarded. Hoisting these out fixes it.
+function RequireAuth(children: any) {
+  let location = useLocation();
+
+  const [user, setUser] = useState<User | null | undefined>(undefined);
+
+  useEffect(() => {
+    checkStatus();
+  }, []);
+
+  const checkStatus = async () => {
+    await auth.onAuthStateChanged((e: User | null) => {
+      setUser(e);
+    });
+  }
+
+  return <>
+    { user !== undefined ?
+      <>{ user ? children.children : <Navigate to="/login" state={{ from: location }} replace /> }</>
+      :
+      <>loading...</>
+    }
+  </>;
+}
+
+function RequireAdmin(children: any) {
+  const [isAdmin, setIsAdmin] = useState<boolean | undefined>(undefined);
+
+  useEffect(() => {
+    checkIsAdmin().then(setIsAdmin);
+  }, []);
+
+  return <>
+    { isAdmin !== undefined ?
+      <>{ isAdmin ? children.children : <Navigate to="/list" replace /> }</>
+      :
+      <>loading...</>
+    }
+  </>;
+}
+
 function App() {
 
   // Shown for a couple of seconds on initial load, then fades out - purely
@@ -166,46 +215,6 @@ function App() {
       clearTimeout(hideTimer);
     };
   }, []);
-
-  function RequireAuth(children: any) {
-    let location = useLocation();
-
-    const [user, setUser] = useState<User | null | undefined>(undefined);
-
-    useEffect(() => {
-      checkStatus();
-    }, []);
-
-    const checkStatus = async () => {
-      await auth.onAuthStateChanged((e: User | null) => {
-        setUser(e);
-      });
-    }
-
-    return <>
-      { user !== undefined ?
-        <>{ user ? children.children : <Navigate to="/login" state={{ from: location }} replace /> }</>
-        :
-        <>loading...</>
-      }
-    </>;
-  }
-
-  function RequireAdmin(children: any) {
-    const [isAdmin, setIsAdmin] = useState<boolean | undefined>(undefined);
-
-    useEffect(() => {
-      checkIsAdmin().then(setIsAdmin);
-    }, []);
-
-    return <>
-      { isAdmin !== undefined ?
-        <>{ isAdmin ? children.children : <Navigate to="/list" replace /> }</>
-        :
-        <>loading...</>
-      }
-    </>;
-  }
 
   return (
     <div className="App">
