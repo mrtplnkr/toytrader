@@ -57,17 +57,22 @@ function StateProvider({children}: any) {
     await logOff();
   };
 
-  // toys/ratings/offers are now real-time Firestore listeners rather than a
+  // toys/ratings/offers are real-time Firestore listeners rather than a
   // poll - see subscribeToys/subscribeRatings/subscribeOffers in helper.ts
   // for why (billed reads only on actual document changes instead of a
-  // full re-read of every document on a timer). This effect's job is just
-  // the subscribe/unsubscribe lifecycle: (re)attach all three whenever the
-  // signed-in user changes, and tear everything down on sign-out so a
-  // stale listener doesn't keep running (and erroring on permission-denied)
-  // after the session that authorized it ends.
+  // full re-read of every document on a timer).
+  //
+  // toys/ratings are public data (firestore.rules allows anonymous reads on
+  // both) - subscribed once, unconditionally, so a signed-out visitor can
+  // browse/search /list without ever signing in. offers stays gated behind
+  // a signed-in uid, since it's inherently a per-user query (and rules
+  // restrict reads to the two participants/admins anyway) - (re)attached on
+  // every sign-in/out, torn down on sign-out so a stale listener doesn't
+  // keep running (and erroring on permission-denied) after the session that
+  // authorized it ends.
   useEffect(() => {
-    let unsubToys: (() => void) | undefined;
-    let unsubRatings: (() => void) | undefined;
+    const unsubToys = subscribeToys(setToys);
+    const unsubRatings = subscribeRatings(setRatings);
     let unsubOffers: (() => void) | undefined;
     // onSnapshot fires immediately with the current state on attach, the
     // same way the very first poll used to - skip diffing/notifying on
@@ -76,20 +81,14 @@ function StateProvider({children}: any) {
     let isFirstOffersSnapshot = true;
 
     const unsubAuth = onAuthStateChanged(auth, (user) => {
-      unsubToys?.();
-      unsubRatings?.();
       unsubOffers?.();
 
       if (!user) {
-        setToys([]);
-        setRatings([]);
         setOffers([]);
         prevOffersRef.current = [];
         return;
       }
 
-      unsubToys = subscribeToys(setToys);
-      unsubRatings = subscribeRatings(setRatings);
       isFirstOffersSnapshot = true;
       unsubOffers = subscribeOffers(user.uid, (newOffers) => {
         if (!isFirstOffersSnapshot) {
@@ -103,8 +102,8 @@ function StateProvider({children}: any) {
 
     return () => {
       unsubAuth();
-      unsubToys?.();
-      unsubRatings?.();
+      unsubToys();
+      unsubRatings();
       unsubOffers?.();
     };
   }, []);
@@ -236,11 +235,7 @@ function App() {
                 <Route path="/privacy" element={<PrivacyPage />} />
                 <Route
                   path="/list"
-                  element={
-                    <RequireAuth>
-                      <ListPage />
-                    </RequireAuth>
-                  }
+                  element={<ListPage />}
                 />
                 <Route
                   path="/myToys"

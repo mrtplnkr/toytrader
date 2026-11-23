@@ -2,8 +2,10 @@ import { faChevronDown, faChevronLeft, faChevronRight, faFlagCheckered, faHandsh
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { memo, TouchEvent, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Toy } from "../types/toy";
 import TradeConsentModal from "../components/tradeConsentModal";
+import { auth } from "../firebase-config";
 
 interface Props {
     yourToys: Toy[];
@@ -15,6 +17,8 @@ interface Props {
 function ToyDisplay(props: Props) {//TODO: change to NewOffer
 
     const { t } = useTranslation();
+    const navigate = useNavigate();
+    const location = useLocation();
     const [showYourToys, setShowYourToys] = useState<boolean>(true);
     const [triedWithoutSelection, setTriedWithoutSelection] = useState<boolean>(false);
 
@@ -86,6 +90,14 @@ function ToyDisplay(props: Props) {//TODO: change to NewOffer
                 </div>
             </div>
             <button onClick={() => {
+                // /list is public now (anonymous visitors can browse/search) -
+                // this is the actual "initiate a trade" moment, so it's the
+                // right place to prompt sign-in rather than gating the whole
+                // page. state.from sends them right back here afterward.
+                if (!auth.currentUser) {
+                    navigate('/login', { state: { from: location } });
+                    return;
+                }
                 if (selectedToy) setShowConsent(true);
                 else {
                     setTriedWithoutSelection(true);

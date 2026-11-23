@@ -58,11 +58,16 @@ service cloud.firestore {
       // checked by isBanned() above on toys/offers writes.
     }
     match /toys/{toyId} {
-      allow read: if request.auth.uid != null;
+      // Public read - anonymous visitors can browse/search /list without
+      // signing in (writes still require auth; signing in only gets asked
+      // for when they actually try to initiate a trade).
+      allow read: if true;
       allow create, update, delete: if request.auth.uid != null && !isBanned(database, request.auth.uid);
     }
     match /ratings/{ratingId} {
-      allow read: if request.auth.uid != null;
+      // Public read, same reasoning as toys - star ratings shown on toy
+      // cards/details need to render for a signed-out visitor too.
+      allow read: if true;
       allow create: if request.auth.uid != null &&
         request.resource.data.raterUid == request.auth.uid;
       allow update, delete: if false;

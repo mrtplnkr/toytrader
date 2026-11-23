@@ -18,7 +18,19 @@ service firebase.storage {
     // CLAUDE.md), so a broader rule can't coexist with a narrower
     // restriction on a path it also matches.
     match /projectFiles/{fileName} {
-      allow read: if request.auth.uid != null;
+      // Public read - toy photos need to load for a signed-out visitor
+      // browsing /list (firestore.rules' toys/ratings collections are public
+      // read for the same reason). This path is also shared by profile
+      // avatars and complaint/support photos, which don't get narrower
+      // protection here than they already had: a getDownloadURL() result is
+      // a plain https://.../o/{path}?alt=media&token=... URL that Firebase
+      // Storage serves to anyone holding the right token regardless of these
+      // rules - rules only ever gated the *client SDK call* that mints that
+      // URL, not the URL itself once obtained. So this only removes the
+      // "must be signed in" step to mint it; it was never the actual access
+      // boundary for a leaked link, same unguessable-UUID-filename model as
+      // before.
+      allow read: if true;
       allow create, update: if request.auth.uid != null &&
         (
           (request.resource.contentType.matches('image/.*') && request.resource.size < 8 * 1024 * 1024) ||
