@@ -19,6 +19,27 @@ function escapeHtml(s: string): string {
     .replace(/"/g, "&quot;");
 }
 
+// A keyword-rich, per-toy description/keywords pair - generated from the
+// title rather than a field on the toy doc, so every toy (including ones
+// listed before this existed) gets one automatically, with no new form
+// field or backfill needed. Feeds <meta name="description">,
+// <meta name="keywords"> (Google itself hasn't used the keywords tag for
+// ranking since ~2009, kept for other/legacy crawlers, same as
+// public/index.html's site-wide one) and og:description, so it's also
+// what shows as the caption when a toy URL is shared on Facebook/etc.
+function buildToyDescription(title: string): string {
+  return `${title} - trade it for free on ToyTrader. Swap, exchange or give away ` +
+    "kids' toys near you, no money involved, just toy for toy.";
+}
+
+function buildToyKeywords(title: string): string {
+  return [
+    title,
+    "toy swap", "toy exchange", "kids toys", "trade toys for free",
+    "second hand toys", "toy trader", "swap toys near me", "give away toys",
+  ].join(", ");
+}
+
 /**
  * Serves a crawler-friendly HTML page for a single toy, with Open Graph
  * tags pointing at that toy's own title/image. The React SPA has no
@@ -69,6 +90,8 @@ export const toyShareCard = onRequest(
       }
 
       const safeTitle = escapeHtml(title);
+      const safeDescription = escapeHtml(buildToyDescription(title));
+      const safeKeywords = escapeHtml(buildToyKeywords(title));
       const pageUrl = `${APP_URL}/toy/${encodeURIComponent(toyId)}`;
 
       res.set("Content-Type", "text/html; charset=utf-8");
@@ -77,13 +100,18 @@ export const toyShareCard = onRequest(
 <head>
 <meta charset="utf-8">
 <title>${safeTitle} - ToyTrader</title>
+<meta name="description" content="${safeDescription}">
+<meta name="keywords" content="${safeKeywords}">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="ToyTrader">
 <meta property="og:title" content="${safeTitle} on ToyTrader">
-<meta property="og:description" content="Trade for this toy on ToyTrader - no money, just toy for toy.">
+<meta property="og:description" content="${safeDescription}">
 <meta property="og:url" content="${pageUrl}">
 <meta property="og:image" content="${imageUrl}">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${safeTitle} on ToyTrader">
+<meta name="twitter:description" content="${safeDescription}">
+<meta name="twitter:image" content="${imageUrl}">
 <meta http-equiv="refresh" content="0; url=${redirectUrl}">
 <script>location.replace(${JSON.stringify(redirectUrl)});</script>
 </head>
