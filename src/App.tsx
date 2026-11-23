@@ -33,6 +33,7 @@ import ShipmentResultPage from "./pages/shipmentResult";
 import HelpPage from "./pages/help";
 import SplashScreen from "./components/splashScreen";
 import Bubbles from "./components/bubbles";
+import Snowfall from "./components/snowfall";
 import AboutPage from "./pages/about";
 import DisclaimerPage from "./pages/disclaimer";
 import PrivacyPage from "./pages/privacy";
@@ -340,6 +341,7 @@ function Layout() {
   return (
     <div>
       <Bubbles />
+      <Snowfall />
       <div className="relative z-10">
         <div className="navBar">
           <Link className="brand" to="/">
