@@ -1,4 +1,4 @@
-import { faChevronDown, faChevronLeft, faChevronRight, faFlagCheckered, faHandshake, faRemove } from "@fortawesome/free-solid-svg-icons";
+import { faChevronDown, faChevronLeft, faChevronRight, faFlagCheckered, faHandshake, faPen, faRemove } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { memo, TouchEvent, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -85,6 +85,12 @@ function ToyDisplay(props: Props) {//TODO: change to NewOffer
                             {selectedToy === x.id &&
                         <FontAwesomeIcon className="absolute top-[17px] right-[2px]"
                             color='#81fc51' icon={faFlagCheckered} />}
+                        <button
+                            className="absolute top-[17px] left-[2px] bg-surface-raised/85 rounded-full w-[1.6em] h-[1.6em] flex items-center justify-center text-[0.8em]"
+                            onClick={(e) => { e.stopPropagation(); navigate(`/editToy/${x.id}`); }}
+                            title={t('addNewOffer:editThisToy')}>
+                            <FontAwesomeIcon icon={faPen} />
+                        </button>
                     </div>)
                 }
                 </div>
