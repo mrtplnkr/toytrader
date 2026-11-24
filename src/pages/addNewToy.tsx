@@ -7,7 +7,7 @@ import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { v4 } from 'uuid';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBackspace, faCameraRetro, faStar, faTrash, faXmark } from "@fortawesome/free-solid-svg-icons";
+import { faBackspace, faCameraRetro, faStar, faTrash, faVideo, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { addNewToy, updateToy } from "../hooks/helper";
 import { Store } from "react-notifications-component";
 import ToyListedCelebration from "../components/toyListedCelebration";
@@ -354,17 +354,21 @@ function AddNew() {
             ))}
 
             {images.length < MAX_IMAGES &&
-                <div className="flex flex-col gap-1">
-                    <label htmlFor="picture" className="text-[0.85em] text-text-dim flex items-center gap-1">
-                        <FontAwesomeIcon icon={faCameraRetro} />
-                        {t('addNewToy:takeClearPhoto')}
+                <div className="flex flex-col items-center gap-1">
+                    <label htmlFor="picture"
+                        className={`flex flex-col items-center justify-center gap-1 w-[6em] h-[6em] rounded-sm
+                            border-2 border-dashed border-border text-text-dim text-[0.7em] text-center leading-tight
+                            px-1 transition-colors
+                            ${uploadingImage ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:border-primary hover:text-primary'}`}>
+                        <FontAwesomeIcon icon={faCameraRetro} className="text-[1.4em]" />
+                        {uploadingImage ? t('addNewToy:uploadingPicture') : t('addNewToy:addPhoto')}
+                        <input id="picture" type="file" accept="image/*" alt="toy" disabled={uploadingImage} className="sr-only"
+                            onChange={(e) => {
+                                uploadImage(e.target.files?.[0]);
+                                e.target.value = '';
+                            }} />
                     </label>
-                    <input id="picture" type="file" accept="image/*" alt="toy" disabled={uploadingImage}
-                        onChange={(e) => {
-                            uploadImage(e.target.files?.[0]);
-                            e.target.value = '';
-                        }} />
-                    {uploadingImage && <p className="text-[0.85em] m-0">{t('addNewToy:uploadingPicture')}</p>}
+                    <p className="text-[0.7em] text-text-dim m-0 max-w-[7em] text-center">{t('addNewToy:takeClearPhoto')}</p>
                 </div>}
           </div>
 
@@ -378,15 +382,18 @@ function AddNew() {
                     </button>
                 </div>
             :
-                <div className="flex flex-col gap-1">
-                    <label className="text-[0.85em] text-text-dim">{t('addNewToy:addVideo')}</label>
-                    <input id="video" type="file" accept="video/*" disabled={uploadingVideo}
+                <label htmlFor="video"
+                    className={`flex flex-col items-center justify-center gap-1 w-[12em] h-[6em] rounded-sm
+                        border-2 border-dashed border-border text-text-dim text-[0.85em] text-center transition-colors
+                        ${uploadingVideo ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:border-primary hover:text-primary'}`}>
+                    <FontAwesomeIcon icon={faVideo} className="text-[1.4em]" />
+                    {uploadingVideo ? t('addNewToy:uploadingVideo') : t('addNewToy:addVideo')}
+                    <input id="video" type="file" accept="video/*" disabled={uploadingVideo} className="sr-only"
                         onChange={(e) => {
                             uploadVideo(e.target.files?.[0]);
                             e.target.value = '';
                         }} />
-                    {uploadingVideo && <p className="text-[0.85em] m-0">{t('addNewToy:uploadingVideo')}</p>}
-                </div>}
+                </label>}
           </div>
 
           {!isEditMode &&
