@@ -92,6 +92,15 @@ service cloud.firestore {
       allow read: if request.auth.uid != null;
       allow write: if false;
     }
+    match /appConfig/{docId} {
+      // A handful of app-wide singleton settings docs (currently just
+      // "ads" - see src/types/adsConfig.ts) - public read, since even an
+      // anonymous /list visitor's client needs to know whether/how to show
+      // an ad, admin-only write via the Firebase custom claim (same check
+      // already used for offers/complaints reads above).
+      allow read: if true;
+      allow write: if request.auth.uid != null && request.auth.token.admin == true;
+    }
     match /complaints/{complaintId} {
       // May name someone else and describe a dispute - only the person who
       // filed it or an admin should be able to read it back, unlike the
@@ -115,7 +124,7 @@ service cloud.firestore {
         !(collectionName in ['mail', 'complaints', 'offers', 'shippingProfiles', 'fcmTokens']);
       allow write : if request.auth.uid != null &&
         !(collectionName in ['offers', 'mail', 'ratings', 'bannedUsers', 'toys', 'complaints',
-          'shippingProfiles', 'omnivaCache', 'fcmTokens']);
+          'shippingProfiles', 'omnivaCache', 'fcmTokens', 'appConfig']);
     }
   }
   //match /databases/{database}/documents {

@@ -11,6 +11,7 @@ import { Toy } from "../types/toy";
 import { Rating } from "../types/rating";
 import { Complaint } from "../types/complaint";
 import { ShippingProfile } from "../types/shippingProfile";
+import { AdsConfig } from "../types/adsConfig";
 
 // Wraps every write below: a backgrounded tab can sit long enough that the
 // SDK's own token refresh lags (browsers throttle timers in hidden tabs),
@@ -701,6 +702,23 @@ export const saveShippingProfile = async (profile: ShippingProfile) => {
     const uid = auth.currentUser?.uid;
     if (!uid) return;
     await withSessionRecovery(() => setDoc(shippingProfileDocRef(uid), profile));
+};
+
+// A single global doc (not per-uid, unlike shippingProfiles above) - public
+// read so even an anonymous visitor's client knows whether to render an ad,
+// admin-only write (see firestore.rules). getAdsConfig is read unwrapped
+// (same reasoning as every other pure-read function in this file - a
+// surprise session-recovery redirect on a background read failure would be
+// worse UX than just not showing an ad).
+const adsConfigDocRef = doc(db, "appConfig", "ads");
+
+export const getAdsConfig = async (): Promise<AdsConfig | undefined> => {
+    const snap = await getDoc(adsConfigDocRef);
+    return snap.exists() ? (snap.data() as AdsConfig) : undefined;
+};
+
+export const saveAdsConfig = async (config: AdsConfig) => {
+    await withSessionRecovery(() => setDoc(adsConfigDocRef, config));
 };
 
 // Copies a user's saved ShippingProfile onto this specific offer's

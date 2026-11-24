@@ -7,7 +7,8 @@ import { GoodAppContext } from "../hooks/context";
 import { Toy } from "../types/toy";
 import { Offer } from "../types/offer";
 import { Complaint } from "../types/complaint";
-import { banUser, BannedUser, getBannedUsers, getComplaintList, getOfferById, getUserProfiles, removeToy, unbanUser } from "../hooks/helper";
+import { banUser, BannedUser, getAdsConfig, getBannedUsers, getComplaintList, getOfferById, getUserProfiles, removeToy, saveAdsConfig, unbanUser } from "../hooks/helper";
+import { AdsConfig } from "../types/adsConfig";
 import adminEn from "../locales/en/admin.json";
 import adminLt from "../locales/lt/admin.json";
 import adminRu from "../locales/ru/admin.json";
@@ -60,6 +61,27 @@ function AdminPage() {
     const [offersByComplaint, setOffersByComplaint] = useState<Record<string, Offer | undefined>>({});
     const [recentCommits, setRecentCommits] = useState<RecentCommit[]>([]);
     const [commitsError, setCommitsError] = useState(false);
+
+    const [adsEnabled, setAdsEnabled] = useState(false);
+    const [adsPublisherId, setAdsPublisherId] = useState('');
+    const [adsSlotId, setAdsSlotId] = useState('');
+    const [adsFrequencyEveryN, setAdsFrequencyEveryN] = useState('3');
+    // Defaults on (this app's audience) even before the config doc has ever
+    // been saved - a brand-new site shouldn't default to OFF on a COPPA/
+    // GDPR-K signal.
+    const [adsChildDirected, setAdsChildDirected] = useState(true);
+    const [savingAdsConfig, setSavingAdsConfig] = useState(false);
+
+    useEffect(() => {
+        getAdsConfig().then((config) => {
+            if (!config) return;
+            setAdsEnabled(config.enabled);
+            setAdsPublisherId(config.publisherId);
+            setAdsSlotId(config.slotId);
+            setAdsFrequencyEveryN(String(config.frequencyEveryN));
+            setAdsChildDirected(config.childDirectedTreatment);
+        }).catch(() => {});
+    }, []);
 
     useEffect(() => {
         // Public repo, unauthenticated read - GitHub's API allows this
@@ -166,6 +188,30 @@ function AdminPage() {
         }
     };
 
+    const onSaveAdsConfig = async () => {
+        const frequency = Number(adsFrequencyEveryN);
+        if (!Number.isFinite(frequency) || frequency < 1) {
+            notify(t('common:toast.actionFailedTitle'), t('admin:adsFrequencyInvalid'), "danger");
+            return;
+        }
+        const config: AdsConfig = {
+            enabled: adsEnabled,
+            publisherId: adsPublisherId.trim(),
+            slotId: adsSlotId.trim(),
+            frequencyEveryN: frequency,
+            childDirectedTreatment: adsChildDirected,
+        };
+        try {
+            setSavingAdsConfig(true);
+            await saveAdsConfig(config);
+            notify(t('admin:adsSavedTitle'), t('admin:adsSavedBody'), "success");
+        } catch (err) {
+            notify(t('common:toast.actionFailedTitle'), (err as Error).message, "danger");
+        } finally {
+            setSavingAdsConfig(false);
+        }
+    };
+
     const onRemoveToy = async (toy: Toy) => {
         if (!window.confirm(t('admin:confirmRemoveToy', { title: toy.title }))) {
             return;
@@ -183,6 +229,41 @@ function AdminPage() {
 
     return (
         <>
+            <h3>{t('admin:adsHeading')}</h3>
+            <div className="card flex flex-col gap-3 p-4 mb-6 max-w-[420px] text-left">
+                <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={adsEnabled} onChange={(e) => setAdsEnabled(e.target.checked)} />
+                    {t('admin:adsEnabled')}
+                </label>
+                <label className="flex flex-col gap-1">
+                    <span className="text-[0.85em] text-text-dim">{t('admin:adsPublisherId')}</span>
+                    <input type="text" value={adsPublisherId} onChange={(e) => setAdsPublisherId(e.target.value)}
+                        placeholder="ca-pub-xxxxxxxxxxxxxxxx" />
+                </label>
+                <label className="flex flex-col gap-1">
+                    <span className="text-[0.85em] text-text-dim">{t('admin:adsSlotId')}</span>
+                    <input type="text" value={adsSlotId} onChange={(e) => setAdsSlotId(e.target.value)}
+                        placeholder="1234567890" />
+                </label>
+                <label className="flex flex-col gap-1">
+                    <span className="text-[0.85em] text-text-dim">{t('admin:adsFrequency')}</span>
+                    <input type="number" min={1} value={adsFrequencyEveryN}
+                        onChange={(e) => setAdsFrequencyEveryN(e.target.value)} className="w-[6em]" />
+                </label>
+                <label className="flex items-start gap-2 cursor-pointer">
+                    <input type="checkbox" className="mt-1" checked={adsChildDirected}
+                        onChange={(e) => setAdsChildDirected(e.target.checked)} />
+                    <span>
+                        {t('admin:adsChildDirected')}
+                        <br />
+                        <span className="text-[0.8em] text-text-dim">{t('admin:adsChildDirectedHint')}</span>
+                    </span>
+                </label>
+                <button className="btn-primary self-start" disabled={savingAdsConfig} onClick={onSaveAdsConfig}>
+                    {savingAdsConfig ? t('admin:adsSaving') : t('admin:adsSave')}
+                </button>
+            </div>
+
             <details className="mb-6">
                 <summary className="cursor-pointer text-[0.9em] text-text-dim">
                     {t('admin:recentCommits', { count: recentCommits.length })}

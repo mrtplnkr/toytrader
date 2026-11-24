@@ -25,6 +25,7 @@ import {
     faChevronRight,
 } from "@fortawesome/free-solid-svg-icons";
 import { faStar as faStarRegular } from "@fortawesome/free-regular-svg-icons";
+import AdSlot from "../components/adSlot";
 
 // Omniva's documented barcode length bounds (a real one is typically 13
 // chars, e.g. CC730129455EE) - mirrored in firestore.rules'
@@ -822,6 +823,11 @@ function MyOffersPage() {
                                 </div>
                             </div>
                         }
+                        {/* A natural pause point - the trade just fully
+                            completed - same "sometimes, not every time"
+                            frequency gating as the /list placement, just a
+                            separate counter (trigger="tradeComplete"). */}
+                        {x.canOfferTip && <AdSlot trigger="tradeComplete" />}
                         {x.canCancel ?
                             <button className="btn-danger" disabled={respondingId === x.id} onClick={() => cancelThisOffer(x.id)}>
                                 {respondingId === x.id ? t('myOffers:cancelling') : t('myOffers:cancelTrade')}

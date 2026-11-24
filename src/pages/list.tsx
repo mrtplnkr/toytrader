@@ -14,6 +14,7 @@ import { Rating } from "../types/rating";
 import ToyDisplay from "./addNewOffer";
 import { addNewOffer } from "../hooks/helper";
 import { Store } from "react-notifications-component";
+import AdSlot from "../components/adSlot";
 
 function ListPage() {
   let navigate = useNavigate();
@@ -196,6 +197,8 @@ function ListPage() {
               {t('list:ageFilterClear')}
             </button>}
         </div>
+
+        <AdSlot trigger="list" />
 
         <ul id="toyList">
           {visibleToys.length > 0 ? visibleToys.map((x: any) => {
