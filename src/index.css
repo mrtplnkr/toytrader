@@ -135,6 +135,7 @@ input[type="text"],
 input[type="email"],
 input[type="password"],
 input[type="tel"],
+input[type="number"],
 input[type="file"] {
   font: inherit;
   color: var(--color-text);
@@ -147,10 +148,18 @@ input[type="file"] {
 input[type="text"]:focus,
 input[type="email"]:focus,
 input[type="password"]:focus,
-input[type="tel"]:focus {
+input[type="tel"]:focus,
+input[type="number"]:focus {
   outline: 2px solid var(--color-primary);
   outline-offset: 1px;
 }
+
+/* type="number" was missing from the rule above entirely - fell back to
+   the browser's own default control styling, which (unlike the other input
+   types here) some browsers render with their own background/text color
+   rather than inheriting the page's, dark-text-on-dark-page included.
+   Reported as the list.tsx/addNewToy.tsx age fields "not appearing" in
+   Firefox specifically - they were there, just unreadable. */
 
 .smallOffer {
   height: 5em;
@@ -170,9 +179,9 @@ input[type="tel"]:focus {
   /* A full-screen overlay (fixed, covers everything) needs to render above
      NotificationPrompt's bottom banner (z-[900]) when both are showing at
      once - position:fixed + z-index here creates its own stacking context,
-     so without this, no z-index on anything *inside* .largeOffer (e.g.
-     .buttonFixedLeft) could ever escape it to outrank a sibling element
-     elsewhere in the DOM. Still below true modals (TradeConsentModal,
+     so without this, no z-index on anything *inside* .largeOffer could ever
+     escape it to outrank a sibling element elsewhere in the DOM. Still
+     below true modals (TradeConsentModal,
      ToyListedCelebration, item.tsx's lightbox - all z-[1000]). */
   z-index: 960;
 }
