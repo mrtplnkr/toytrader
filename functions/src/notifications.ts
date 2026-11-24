@@ -50,10 +50,20 @@ async function toyTitle(db: FirebaseFirestore.Firestore, toyId: string): Promise
   return (snap.data()?.title as string | undefined) ?? "a toy";
 }
 
+// "IN_TRANSIT" -> "in transit". Omniva's own status values (see
+// functions/src/omniva.ts's OmnivaShipmentStatus) are already readable
+// enough once de-shouted/de-underscored - no need for a second label map to
+// keep in sync with that one.
+function formatShipmentStatus(status: string): string {
+  return status.toLowerCase().replace(/_/g, " ");
+}
+
 /**
  * Covers every trade-progress notification in one trigger by diffing
  * before/after on each write to an offer: a brand new offer, it being
- * accepted, and each side's toy being posted/received. One function per
+ * declined/cancelled, accepted, each side's shipping info being shared,
+ * barcode registered/shipment status changing, each side's toy being
+ * posted/received, and the optional tip being paid. One function per
  * collection (rather than one per event type) keeps the before/after diff
  * logic in a single place, matching how myOffers.tsx itself derives UI
  * state from the same offer fields.
@@ -63,9 +73,29 @@ export const onOfferWritten = onDocumentWritten(
   async (event) => {
     const before = event.data?.before.data();
     const after = event.data?.after.data();
-    if (!after) return; // deleted (e.g. declined/superseded) - nothing to notify
-
     const db = getFirestore();
+
+    if (!after) {
+      // Deleted - either side declining a pending offer, or either side
+      // cancelling an already-accepted one (declineOffer hard-deletes the
+      // doc either way, see src/hooks/helper.ts - there's no "declined by"
+      // field to say who, so both participants are notified; whoever
+      // actually clicked decline/cancel just gets told about their own
+      // action, same low-cost tradeoff as the tip-paid case below).
+      if (before) {
+        await Promise.all([
+          sendPushToUser(before.userInitiated, {
+            title: "Trade didn't go through",
+            body: "This trade was declined or cancelled.",
+          }, {offerId: event.params.offerId}),
+          sendPushToUser(before.userReceived, {
+            title: "Trade didn't go through",
+            body: "This trade was declined or cancelled.",
+          }, {offerId: event.params.offerId}),
+        ]);
+      }
+      return;
+    }
 
     if (!before) {
       // Brand new offer - the toy owner (userReceived) needs to know.
@@ -78,6 +108,7 @@ export const onOfferWritten = onDocumentWritten(
     }
 
     const newlySet = (field: string) => !before[field] && after[field];
+    const changed = (field: string) => before[field] !== after[field] && after[field] !== undefined;
 
     if (newlySet("offerAccepted")) {
       await sendPushToUser(after.userInitiated, {
@@ -85,6 +116,58 @@ export const onOfferWritten = onDocumentWritten(
         body: "Your trade offer was accepted.",
       }, {offerId: event.params.offerId});
     }
+
+    // Shipping name/phone/parcel machine shared on this trade (see
+    // src/hooks/helper.ts's shareShippingInfo) - lets the other side know
+    // they can go ahead and register/drop off their own shipment.
+    if (newlySet("offerShippingName")) {
+      await sendPushToUser(after.userReceived, {
+        title: "Shipping info shared",
+        body: "Your trade partner shared their shipping details.",
+      }, {offerId: event.params.offerId});
+    }
+    if (newlySet("targetShippingName")) {
+      await sendPushToUser(after.userInitiated, {
+        title: "Shipping info shared",
+        body: "Your trade partner shared their shipping details.",
+      }, {offerId: event.params.offerId});
+    }
+
+    // Covers both the initial self-reported barcode submission (which also
+    // sets status to "REGISTERED", see submitOmnivaBarcode in helper.ts)
+    // and every later change the scheduled Omniva poll writes
+    // (IN_TRANSIT/ARRIVED_AT_TERMINAL/DELIVERED/RETURNED, see
+    // omnivaStatusSync.ts) - both participants have a stake in either leg
+    // of the shipment (RETURNED in particular needs the sender's action),
+    // unlike the posted/received milestones below which are each
+    // meaningful to only one specific side.
+    if (changed("offerShipmentStatus")) {
+      const status = formatShipmentStatus(after.offerShipmentStatus);
+      await Promise.all([
+        sendPushToUser(after.userInitiated, {
+          title: "Shipment update",
+          body: `Your shipment is now ${status}.`,
+        }, {offerId: event.params.offerId}),
+        sendPushToUser(after.userReceived, {
+          title: "Shipment update",
+          body: `Your trade partner's shipment is now ${status}.`,
+        }, {offerId: event.params.offerId}),
+      ]);
+    }
+    if (changed("targetShipmentStatus")) {
+      const status = formatShipmentStatus(after.targetShipmentStatus);
+      await Promise.all([
+        sendPushToUser(after.userReceived, {
+          title: "Shipment update",
+          body: `Your shipment is now ${status}.`,
+        }, {offerId: event.params.offerId}),
+        sendPushToUser(after.userInitiated, {
+          title: "Shipment update",
+          body: `Your trade partner's shipment is now ${status}.`,
+        }, {offerId: event.params.offerId}),
+      ]);
+    }
+
     if (newlySet("offerPosted")) {
       await sendPushToUser(after.userReceived, {
         title: "Toy shipped",
@@ -107,6 +190,18 @@ export const onOfferWritten = onDocumentWritten(
       await sendPushToUser(after.userReceived, {
         title: "Toy received",
         body: "Your toy was confirmed received!",
+      }, {offerId: event.params.offerId});
+    }
+
+    // Tip is per-trade, payable by either side, first to pay closes it for
+    // both (see stripeWebhook in shipment.ts, the only writer of this
+    // field) - notify whichever side didn't pay; the payer already knows,
+    // they're the one who just paid.
+    if (newlySet("tipPaid") && after.tipPaidByUid) {
+      const otherUid = after.tipPaidByUid === after.userInitiated ? after.userReceived : after.userInitiated;
+      await sendPushToUser(otherUid, {
+        title: "☕ Tip received",
+        body: "Your trade partner bought you a coffee - thanks for using ToyTrader!",
       }, {offerId: event.params.offerId});
     }
   }
