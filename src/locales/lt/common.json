@@ -6,6 +6,12 @@
   "languageSwitcher": {
     "ariaLabel": "Kalba"
   },
+  "notificationPrompt": {
+    "body": "Gaukite pranešimus akimirksniu pasikeitus mainų statusui - priimta, išsiųsta, pristatyta ir daugiau.",
+    "enable": "Įjungti pranešimus",
+    "enabling": "Įjungiama...",
+    "notNow": "Ne dabar"
+  },
   "toast": {
     "actionFailedTitle": "Nepavyko atlikti veiksmo !",
     "tryAgainLater": "Bandykite vėliau.",

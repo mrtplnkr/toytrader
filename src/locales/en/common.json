@@ -6,6 +6,12 @@
   "languageSwitcher": {
     "ariaLabel": "Language"
   },
+  "notificationPrompt": {
+    "body": "Get notified the moment your trade's status changes - accepted, shipped, delivered, and more.",
+    "enable": "Enable notifications",
+    "enabling": "Enabling...",
+    "notNow": "Not now"
+  },
   "toast": {
     "actionFailedTitle": "Unfortunately this action failed !",
     "tryAgainLater": "Please try again later.",

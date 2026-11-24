@@ -24,7 +24,8 @@ import { Toy } from "./types/toy";
 import { Offer } from "./types/offer";
 import { Rating } from "./types/rating";
 import { GoodAppContext } from "./hooks/context";
-import { checkIsAdmin, logOff, onForegroundMessage, subscribeOffers, subscribeRatings, subscribeToys } from "./hooks/helper";
+import { checkIsAdmin, logOff, notificationsSupported, onForegroundMessage, requestNotificationPermission, subscribeOffers, subscribeRatings, subscribeToys } from "./hooks/helper";
+import NotificationPrompt from "./components/notificationPrompt";
 import { diffAndNotifyShipmentStatus } from "./hooks/shipmentNotifications";
 import { Store } from "react-notifications-component";
 import HistoryPage from "./pages/inPost";
@@ -330,8 +331,43 @@ function App() {
   );
 }
 
+const NOTIFICATION_PROMPT_DISMISSED_KEY = 'notificationPromptDismissed';
+
 function Layout() {
   const { t } = useTranslation();
+  const [showNotificationPrompt, setShowNotificationPrompt] = useState(false);
+  const [enablingNotifications, setEnablingNotifications] = useState(false);
+
+  // Shown once, right after sign-in, while the browser's own permission is
+  // still undecided - re-checked on every auth change (not just once on
+  // mount) so it also fires for a user who was already signed in when the
+  // tab loaded, not just a fresh sign-in within this session.
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!user || !notificationsSupported() || Notification.permission !== 'default' ||
+          localStorage.getItem(NOTIFICATION_PROMPT_DISMISSED_KEY) === '1') {
+        setShowNotificationPrompt(false);
+        return;
+      }
+      setShowNotificationPrompt(true);
+    });
+    return unsubscribe;
+  }, []);
+
+  const onEnableNotifications = async () => {
+    setEnablingNotifications(true);
+    try {
+      await requestNotificationPermission();
+    } finally {
+      setEnablingNotifications(false);
+      setShowNotificationPrompt(false);
+    }
+  };
+
+  const onDismissNotificationPrompt = () => {
+    localStorage.setItem(NOTIFICATION_PROMPT_DISMISSED_KEY, '1');
+    setShowNotificationPrompt(false);
+  };
 
   return (
     <div>
@@ -362,6 +398,13 @@ function Layout() {
           <Outlet />
         </main>
       </div>
+
+      {showNotificationPrompt &&
+        <NotificationPrompt
+          enabling={enablingNotifications}
+          onEnable={onEnableNotifications}
+          onDismiss={onDismissNotificationPrompt}
+        />}
     </div>
   );
 }
