@@ -12,6 +12,7 @@ import { Rating } from "../types/rating";
 import { Complaint } from "../types/complaint";
 import { ShippingProfile } from "../types/shippingProfile";
 import { AdsConfig } from "../types/adsConfig";
+import { AgeProfile } from "../types/ageProfile";
 
 // Wraps every write below: a backgrounded tab can sit long enough that the
 // SDK's own token refresh lags (browsers throttle timers in hidden tabs),
@@ -719,6 +720,25 @@ export const getAdsConfig = async (): Promise<AdsConfig | undefined> => {
 
 export const saveAdsConfig = async (config: AdsConfig) => {
     await withSessionRecovery(() => setDoc(adsConfigDocRef, config));
+};
+
+// Self-reported once right after first sign-in - see src/types/ageProfile.ts
+// and components/ageProfileModal.tsx. getAgeProfile is read unwrapped (a
+// background read failure here should just skip showing the one-time
+// modal, not force a surprise sign-out).
+const ageProfileDocRef = (uid: string) => doc(db, "ageProfiles", uid);
+
+export const getAgeProfile = async (): Promise<AgeProfile | undefined> => {
+    const uid = auth.currentUser?.uid;
+    if (!uid) return undefined;
+    const snap = await getDoc(ageProfileDocRef(uid));
+    return snap.exists() ? (snap.data() as AgeProfile) : undefined;
+};
+
+export const saveAgeProfile = async (profile: AgeProfile) => {
+    const uid = auth.currentUser?.uid;
+    if (!uid) return;
+    await withSessionRecovery(() => setDoc(ageProfileDocRef(uid), profile));
 };
 
 // Copies a user's saved ShippingProfile onto this specific offer's

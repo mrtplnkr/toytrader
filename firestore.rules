@@ -79,6 +79,12 @@ service cloud.firestore {
       // own ${side}Shipping* fields instead (see /offers above).
       allow read, write: if request.auth.uid != null && request.auth.uid == uid;
     }
+    match /ageProfiles/{uid} {
+      // Self-reported once right after first sign-in (18+ attestation, or a
+      // school grade/class if not) - fully private, same trust model as
+      // shippingProfiles above, never read by anyone else including admins.
+      allow read, write: if request.auth.uid != null && request.auth.uid == uid;
+    }
     match /fcmTokens/{token} {
       // One doc per push-notification registration token (a user can have
       // several, one per device/browser). Only the owning user can register
@@ -121,10 +127,10 @@ service cloud.firestore {
     // being bypassed - mail was openly readable, ratings openly writable).
  		match /{collectionName}/{doc}{
       allow read : if request.auth.uid != null &&
-        !(collectionName in ['mail', 'complaints', 'offers', 'shippingProfiles', 'fcmTokens']);
+        !(collectionName in ['mail', 'complaints', 'offers', 'shippingProfiles', 'ageProfiles', 'fcmTokens']);
       allow write : if request.auth.uid != null &&
         !(collectionName in ['offers', 'mail', 'ratings', 'bannedUsers', 'toys', 'complaints',
-          'shippingProfiles', 'omnivaCache', 'fcmTokens', 'appConfig']);
+          'shippingProfiles', 'ageProfiles', 'omnivaCache', 'fcmTokens', 'appConfig']);
     }
   }
   //match /databases/{database}/documents {

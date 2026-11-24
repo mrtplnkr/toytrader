@@ -60,6 +60,9 @@ import deleteDataRu from '../locales/ru/deleteData.json';
 import tradeConsentEn from '../locales/en/tradeConsent.json';
 import tradeConsentLt from '../locales/lt/tradeConsent.json';
 import tradeConsentRu from '../locales/ru/tradeConsent.json';
+import ageProfileEn from '../locales/en/ageProfile.json';
+import ageProfileLt from '../locales/lt/ageProfile.json';
+import ageProfileRu from '../locales/ru/ageProfile.json';
 
 export const SUPPORTED_LANGUAGES = ['en', 'lt', 'ru'] as const;
 export type SupportedLanguage = typeof SUPPORTED_LANGUAGES[number];
@@ -95,7 +98,7 @@ i18next
     ns: [
       'common', 'login', 'auth', 'about', 'disclaimer', 'item', 'parcelMachinePicker',
       'myToys', 'inPost', 'list', 'shipmentResult', 'help', 'addNewToy', 'addNewOffer', 'profile',
-      'myOffers', 'public', 'privacy', 'deleteData', 'tradeConsent',
+      'myOffers', 'public', 'privacy', 'deleteData', 'tradeConsent', 'ageProfile',
     ],
     defaultNS: 'common',
     resources: {
@@ -104,21 +107,21 @@ i18next
         item: itemEn, parcelMachinePicker: parcelMachinePickerEn, myToys: myToysEn, inPost: inPostEn,
         list: listEn, shipmentResult: shipmentResultEn, help: helpEn, addNewToy: addNewToyEn,
         addNewOffer: addNewOfferEn, profile: profileEn, myOffers: myOffersEn, public: publicEn,
-        privacy: privacyEn, deleteData: deleteDataEn, tradeConsent: tradeConsentEn,
+        privacy: privacyEn, deleteData: deleteDataEn, tradeConsent: tradeConsentEn, ageProfile: ageProfileEn,
       },
       lt: {
         common: commonLt, login: loginLt, auth: authLt, about: aboutLt, disclaimer: disclaimerLt,
         item: itemLt, parcelMachinePicker: parcelMachinePickerLt, myToys: myToysLt, inPost: inPostLt,
         list: listLt, shipmentResult: shipmentResultLt, help: helpLt, addNewToy: addNewToyLt,
         addNewOffer: addNewOfferLt, profile: profileLt, myOffers: myOffersLt, public: publicLt,
-        privacy: privacyLt, deleteData: deleteDataLt, tradeConsent: tradeConsentLt,
+        privacy: privacyLt, deleteData: deleteDataLt, tradeConsent: tradeConsentLt, ageProfile: ageProfileLt,
       },
       ru: {
         common: commonRu, login: loginRu, auth: authRu, about: aboutRu, disclaimer: disclaimerRu,
         item: itemRu, parcelMachinePicker: parcelMachinePickerRu, myToys: myToysRu, inPost: inPostRu,
         list: listRu, shipmentResult: shipmentResultRu, help: helpRu, addNewToy: addNewToyRu,
         addNewOffer: addNewOfferRu, profile: profileRu, myOffers: myOffersRu, public: publicRu,
-        privacy: privacyRu, deleteData: deleteDataRu, tradeConsent: tradeConsentRu,
+        privacy: privacyRu, deleteData: deleteDataRu, tradeConsent: tradeConsentRu, ageProfile: ageProfileRu,
       },
     },
     interpolation: { escapeValue: false },

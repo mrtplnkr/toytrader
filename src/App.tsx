@@ -25,8 +25,9 @@ import { Toy } from "./types/toy";
 import { Offer } from "./types/offer";
 import { Rating } from "./types/rating";
 import { GoodAppContext } from "./hooks/context";
-import { checkIsAdmin, logOff, notificationsSupported, onForegroundMessage, requestNotificationPermission, subscribeOffers, subscribeRatings, subscribeToys } from "./hooks/helper";
+import { checkIsAdmin, getAgeProfile, logOff, notificationsSupported, onForegroundMessage, requestNotificationPermission, subscribeOffers, subscribeRatings, subscribeToys } from "./hooks/helper";
 import NotificationPrompt from "./components/notificationPrompt";
+import AgeProfileModal from "./components/ageProfileModal";
 import { diffAndNotifyShipmentStatus } from "./hooks/shipmentNotifications";
 import { Store } from "react-notifications-component";
 import HistoryPage from "./pages/inPost";
@@ -338,6 +339,7 @@ function Layout() {
   const { t } = useTranslation();
   const [showNotificationPrompt, setShowNotificationPrompt] = useState(false);
   const [enablingNotifications, setEnablingNotifications] = useState(false);
+  const [showAgeProfile, setShowAgeProfile] = useState(false);
 
   // Shown once, right after sign-in, while the browser's own permission is
   // still undecided - re-checked on every auth change (not just once on
@@ -351,6 +353,21 @@ function Layout() {
         return;
       }
       setShowNotificationPrompt(true);
+    });
+    return unsubscribe;
+  }, []);
+
+  // One-time age/18+-or-school-class attestation (see AgeProfileModal) -
+  // checked on every sign-in, same reasoning as the notification prompt
+  // above, since neither Google nor Facebook sign-in reliably exposes real
+  // age/birthdate.
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        setShowAgeProfile(false);
+        return;
+      }
+      getAgeProfile().then((profile) => setShowAgeProfile(!profile)).catch(() => {});
     });
     return unsubscribe;
   }, []);
@@ -416,6 +433,7 @@ function Layout() {
             onEnable={onEnableNotifications}
             onDismiss={onDismissNotificationPrompt}
           />}
+        {showAgeProfile && <AgeProfileModal onSaved={() => setShowAgeProfile(false)} />}
       </div>
     </div>
   );
