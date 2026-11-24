@@ -167,7 +167,14 @@ input[type="tel"]:focus {
   padding: 0 !important;
   height: 100% !important;
   width: 100% !important;
-  z-index: 10;
+  /* A full-screen overlay (fixed, covers everything) needs to render above
+     NotificationPrompt's bottom banner (z-[900]) when both are showing at
+     once - position:fixed + z-index here creates its own stacking context,
+     so without this, no z-index on anything *inside* .largeOffer (e.g.
+     .buttonFixedLeft) could ever escape it to outrank a sibling element
+     elsewhere in the DOM. Still below true modals (TradeConsentModal,
+     ToyListedCelebration, item.tsx's lightbox - all z-[1000]). */
+  z-index: 960;
 }
 
 .largeOffer img {
@@ -186,7 +193,17 @@ input[type="tel"]:focus {
   margin: 3em;
   bottom: 0;
   left: 0;
-  z-index: 1;
+  /* Neither this nor .buttonFixedRight centered their icon - a plain
+     <button><FontAwesomeIcon/></button> with no flex layout just sits at the
+     default inline start of the button's content box, not the middle of
+     the circle. */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Above NotificationPrompt's bottom banner (z-[900]) - that banner is wide
+     enough on a phone-width screen to otherwise fully cover this corner,
+     making the button unreachable/invisible whenever it's also showing. */
+  z-index: 950;
   box-shadow: var(--shadow);
 }
 
@@ -237,6 +254,18 @@ input[type="tel"]:focus {
 .buttonFixedRight:hover:not(:disabled) {
   background: var(--color-danger);
   filter: brightness(1.1);
+}
+
+/* Combined with .buttonFixedRight (addNewOffer.tsx's close button only -
+   shipmentResult.tsx's own .buttonFixedRight usage stays bottom-right) to
+   move it to the top-right corner instead, both so it reads as a
+   conventional modal close button and so it stops sitting in the same
+   corner NotificationPrompt's bottom banner can cover. Two classes
+   combined (specificity 0,2,0) reliably wins over .buttonFixedRight alone
+   (0,1,0) regardless of stylesheet order. */
+.buttonFixedRight.topRight {
+  top: 0;
+  bottom: auto;
 }
 
 .card {

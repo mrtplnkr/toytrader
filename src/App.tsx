@@ -401,14 +401,22 @@ function Layout() {
         <main>
           <Outlet />
         </main>
-      </div>
 
-      {showNotificationPrompt &&
-        <NotificationPrompt
-          enabling={enablingNotifications}
-          onEnable={onEnableNotifications}
-          onDismiss={onDismissNotificationPrompt}
-        />}
+        {/* Inside this z-10 wrapper, not a sibling of it - position:relative
+            + z-index here creates its own stacking context, which traps
+            every descendant's z-index (however high, e.g. .largeOffer's
+            960) to compare only against siblings *within* it. A sibling of
+            the wrapper itself only ever compares against its outer z-10,
+            so nothing inside could ever out-rank this banner - it has to
+            live in here to actually stack correctly against .largeOffer/
+            modals. */}
+        {showNotificationPrompt &&
+          <NotificationPrompt
+            enabling={enablingNotifications}
+            onEnable={onEnableNotifications}
+            onDismiss={onDismissNotificationPrompt}
+          />}
+      </div>
     </div>
   );
 }

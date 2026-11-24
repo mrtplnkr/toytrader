@@ -1,4 +1,4 @@
-import { faChevronDown, faChevronLeft, faChevronRight, faFlagCheckered, faHandshake, faPen, faRemove } from "@fortawesome/free-solid-svg-icons";
+import { faChevronDown, faChevronLeft, faChevronRight, faFlagCheckered, faHandHolding, faPen, faRemove } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { memo, TouchEvent, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -71,7 +71,7 @@ function ToyDisplay(props: Props) {//TODO: change to NewOffer
             <button onClick={() => setShowYourToys(x => !x)} className={`border border-dashed border-[green] fixed left-4 top-4 z-[1] ${showYourToys ? "animateBorder" : ''}`}>
                     <FontAwesomeIcon icon={faChevronDown} />
             </button>
-            <div className={`fixed left-4 top-14 w-[120px] overflow-y-scroll transition-all duration-[2000ms] ${!showYourToys ? 'h-px' : 'h-[82%]'}`}>
+            <div className={`fixed left-4 top-20 w-[120px] overflow-y-scroll transition-all duration-[2000ms] ${!showYourToys ? 'h-px' : 'h-[82%]'}`}>
                 {showYourToys &&
                     <p className={`text-[0.75em] mt-0 mb-2 ${triedWithoutSelection ? 'text-[#ff6b6b]' : ''}`}>
                         {triedWithoutSelection ? t('addNewOffer:pickFirst') : t('addNewOffer:pickToyToOffer')}
@@ -111,7 +111,7 @@ function ToyDisplay(props: Props) {//TODO: change to NewOffer
                 } }}
                 className={`buttonFixedLeft ${selectedToy ? 'cursor-pointer opacity-100' : 'cursor-not-allowed opacity-60 animateBorder'}`}
                 title={selectedToy ? t('addNewOffer:proposeTrade') : t('addNewOffer:selectYourToyFirst')}>
-                    <FontAwesomeIcon icon={faHandshake} />
+                    <FontAwesomeIcon icon={faHandHolding} />
             </button>
             {showConsent &&
                 <TradeConsentModal
@@ -152,7 +152,7 @@ function ToyDisplay(props: Props) {//TODO: change to NewOffer
                 <FontAwesomeIcon icon={faChevronRight} />
             </button>
             <button onClick={() => props.nextToy(undefined)}
-                className={'buttonFixedRight'}>
+                className={'buttonFixedRight topRight'}>
                     <FontAwesomeIcon icon={faRemove} />
             </button>
       </div>
