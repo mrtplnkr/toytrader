@@ -382,18 +382,21 @@ function AddNew() {
                     </button>
                 </div>
             :
-                <label htmlFor="video"
-                    className={`flex flex-col items-center justify-center gap-1 w-[12em] h-[6em] rounded-sm
-                        border-2 border-dashed border-border text-text-dim text-[0.85em] text-center transition-colors
-                        ${uploadingVideo ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:border-primary hover:text-primary'}`}>
-                    <FontAwesomeIcon icon={faVideo} className="text-[1.4em]" />
-                    {uploadingVideo ? t('addNewToy:uploadingVideo') : t('addNewToy:addVideo')}
-                    <input id="video" type="file" accept="video/*" disabled={uploadingVideo} className="sr-only"
-                        onChange={(e) => {
-                            uploadVideo(e.target.files?.[0]);
-                            e.target.value = '';
-                        }} />
-                </label>}
+                <div className="flex flex-col items-center gap-1">
+                    <label htmlFor="video"
+                        className={`flex flex-col items-center justify-center gap-1 w-[12em] h-[6em] rounded-sm
+                            border-2 border-dashed border-border text-text-dim text-[0.85em] text-center transition-colors
+                            ${uploadingVideo ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:border-primary hover:text-primary'}`}>
+                        <FontAwesomeIcon icon={faVideo} className="text-[1.4em]" />
+                        {uploadingVideo ? t('addNewToy:uploadingVideo') : t('addNewToy:addVideo')}
+                        <input id="video" type="file" accept="video/*" disabled={uploadingVideo} className="sr-only"
+                            onChange={(e) => {
+                                uploadVideo(e.target.files?.[0]);
+                                e.target.value = '';
+                            }} />
+                    </label>
+                    <p className="text-[0.7em] text-text-dim m-0 max-w-[14em] text-center">{t('addNewToy:videoHint')}</p>
+                </div>}
           </div>
 
           {!isEditMode &&
