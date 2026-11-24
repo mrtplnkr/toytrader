@@ -7,7 +7,7 @@ import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { v4 } from 'uuid';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBackspace, faStar, faTrash, faXmark } from "@fortawesome/free-solid-svg-icons";
+import { faBackspace, faCameraRetro, faStar, faTrash, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { addNewToy, updateToy } from "../hooks/helper";
 import { Store } from "react-notifications-component";
 import ToyListedCelebration from "../components/toyListedCelebration";
@@ -355,6 +355,10 @@ function AddNew() {
 
             {images.length < MAX_IMAGES &&
                 <div className="flex flex-col gap-1">
+                    <label htmlFor="picture" className="text-[0.85em] text-text-dim flex items-center gap-1">
+                        <FontAwesomeIcon icon={faCameraRetro} />
+                        {t('addNewToy:takeClearPhoto')}
+                    </label>
                     <input id="picture" type="file" accept="image/*" alt="toy" disabled={uploadingImage}
                         onChange={(e) => {
                             uploadImage(e.target.files?.[0]);
