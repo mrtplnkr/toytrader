@@ -3,6 +3,7 @@
   "edit": "Редактировать",
   "lastUpdated": "Обновлено: {{date}}",
   "ageRange": "Возраст {{from}}-{{to}}",
+  "playVideo": "Воспроизвести видео",
   "shareText": "Посмотри \"{{title}}\" в ToyTrader!",
   "wished": "в желаемом",
   "wish": "хочу",

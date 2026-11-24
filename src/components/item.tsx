@@ -1,4 +1,4 @@
-import { faChevronLeft, faChevronRight, faPen, faShareNodes, faStar as faStarSolid, faTrash, faXmark } from "@fortawesome/free-solid-svg-icons";
+import { faChevronLeft, faChevronRight, faPen, faPlay, faShareNodes, faStar as faStarSolid, faTrash, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { memo, MouseEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -30,6 +30,13 @@ function Item(props: Props) {
         ...(props.video ? [{ type: 'video' as const, url: props.video }] : []),
     ];
     const hasGallery = media.length > 1;
+    // Video, if present, is always appended last in media above.
+    const videoIndex = props.video ? media.length - 1 : -1;
+
+    const playVideo = (e: MouseEvent) => {
+        e.stopPropagation();
+        setLightboxIndex(videoIndex);
+    };
 
     const shareToy = (e: MouseEvent) => {
         e.stopPropagation();
@@ -84,6 +91,13 @@ function Item(props: Props) {
             <div className="relative inline-block w-full">
                 <img alt={props.title} src={props.file} onClick={openLightbox}
                     className={hasGallery ? "cursor-pointer" : undefined} />
+                {props.video &&
+                    <button
+                        className="absolute inset-0 m-auto w-12 h-12 rounded-full bg-bg/70 text-white flex items-center justify-center text-[1.2em] hover:bg-bg/85"
+                        onClick={playVideo}
+                        title={t('item:playVideo')}>
+                        <FontAwesomeIcon icon={faPlay} />
+                    </button>}
                 {hasGallery &&
                     // Inset enough to clear the image's own rounded corner
                     // (bottom-1/right-1 sat right on top of the curve,

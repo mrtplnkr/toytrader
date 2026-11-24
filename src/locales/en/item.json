@@ -3,6 +3,7 @@
   "edit": "Edit",
   "lastUpdated": "Last updated: {{date}}",
   "ageRange": "Ages {{from}}-{{to}}",
+  "playVideo": "Play video",
   "shareText": "Check out \"{{title}}\" on ToyTrader!",
   "wished": "wished",
   "wish": "wish",
