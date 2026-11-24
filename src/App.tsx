@@ -1,3 +1,4 @@
+import packageJson from "../package.json";
 import PublicPage from "./pages/public";
 import LoginPage from "./pages/login";
 import ListPage from "./pages/list";
@@ -376,7 +377,10 @@ function Layout() {
       <div className="relative z-10">
         <div className="navBar">
           <Link className="brand" to="/">
-            <img src="/logo192.png" alt="" className="brandLogo" />
+            <span className="flex flex-col items-center leading-none">
+              <img src="/logo192.png" alt="ToyTrader logo" className="brandLogo" />
+              <span className="text-[0.55em] text-text-dim mt-0.5">v{packageJson.version}</span>
+            </span>
             <span className="brandWord">Toy<span className="brandAccent">Trader</span></span>
           </Link>
 
