@@ -191,37 +191,29 @@ input[type="number"]:focus {
   max-width: 100%;
 }
 
-.buttonFixedLeft {
+/* The propose/offer button in addNewOffer.tsx's full-screen toy view - sits
+   as a flex child in the fixed bottom nav row there alongside the prev/next
+   chevrons (that row owns the fixed positioning), not independently fixed
+   itself like its .buttonFixedLeft predecessor was. */
+.proposeButton {
   background: var(--color-success);
   border-color: var(--color-success);
   color: #08281f;
-  position: fixed;
   height: 4em;
   width: 4em;
   border-radius: 50%;
-  margin: 3em;
-  bottom: 0;
-  left: 0;
-  /* Neither this nor .buttonFixedRight centered their icon - a plain
-     <button><FontAwesomeIcon/></button> with no flex layout just sits at the
-     default inline start of the button's content box, not the middle of
-     the circle. */
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Above NotificationPrompt's bottom banner (z-[900]) - that banner is wide
-     enough on a phone-width screen to otherwise fully cover this corner,
-     making the button unreachable/invisible whenever it's also showing. */
-  z-index: 950;
   box-shadow: var(--shadow);
 }
 
-.buttonFixedLeft:hover:not(:disabled) {
+.proposeButton:hover:not(:disabled) {
   background: var(--color-success);
   filter: brightness(1.1);
 }
 
-.buttonFixedLeft:disabled {
+.proposeButton:disabled {
   cursor: not-allowed;
 }
 

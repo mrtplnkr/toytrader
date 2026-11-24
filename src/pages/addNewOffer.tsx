@@ -95,24 +95,6 @@ function ToyDisplay(props: Props) {//TODO: change to NewOffer
                 }
                 </div>
             </div>
-            <button onClick={() => {
-                // /list is public now (anonymous visitors can browse/search) -
-                // this is the actual "initiate a trade" moment, so it's the
-                // right place to prompt sign-in rather than gating the whole
-                // page. state.from sends them right back here afterward.
-                if (!auth.currentUser) {
-                    navigate('/login', { state: { from: location } });
-                    return;
-                }
-                if (selectedToy) setShowConsent(true);
-                else {
-                    setTriedWithoutSelection(true);
-                    setShowYourToys(true);
-                } }}
-                className={`buttonFixedLeft ${selectedToy ? 'cursor-pointer opacity-100' : 'cursor-not-allowed opacity-60 animateBorder'}`}
-                title={selectedToy ? t('addNewOffer:proposeTrade') : t('addNewOffer:selectYourToyFirst')}>
-                    <FontAwesomeIcon icon={faHandHolding} />
-            </button>
             {showConsent &&
                 <TradeConsentModal
                     confirmLabel={t('addNewOffer:proposeTrade')}
@@ -122,19 +104,6 @@ function ToyDisplay(props: Props) {//TODO: change to NewOffer
                         if (selectedToy) props.proposeOffer(selectedToy);
                     }}
                 />}
-            {/* The only on-screen indication this view can move between
-                toys at all used to be invisible full-height click zones
-                (no size, no icon) - arrow keys/touch swipe still work, but
-                nothing showed they existed. These give it a visible,
-                clickable affordance, same chevron pattern as item.tsx's
-                gallery lightbox. */}
-            <button
-                className="fixed top-1/2 left-4 -translate-y-1/2 z-[1] w-12 h-12 rounded-full bg-surface-raised/80 border border-border flex items-center justify-center text-text hover:bg-surface-raised"
-                onClick={() => props.nextToy(-1)}
-                title={t('addNewOffer:previousToy')}
-            >
-                <FontAwesomeIcon icon={faChevronLeft} />
-            </button>
             <div className="flex flex-col items-center justify-center h-full gap-2">
                 {/* Inline maxHeight overrides the shared ".largeOffer img { max-height: 100% }"
                     rule (by specificity) - otherwise the image alone fills this whole flex
@@ -144,13 +113,45 @@ function ToyDisplay(props: Props) {//TODO: change to NewOffer
                 {props.toy.description &&
                     <p className="text-text-dim text-[0.85em] m-0 max-w-[80%] text-center">{props.toy.description}</p>}
             </div>
-            <button
-                className="fixed top-1/2 right-4 -translate-y-1/2 z-[1] w-12 h-12 rounded-full bg-surface-raised/80 border border-border flex items-center justify-center text-text hover:bg-surface-raised"
-                onClick={() => props.nextToy(1)}
-                title={t('addNewOffer:nextToy')}
-            >
-                <FontAwesomeIcon icon={faChevronRight} />
-            </button>
+            {/* Prev/propose/next together in one fixed bottom row - the only
+                on-screen indication this view can move between toys at all
+                used to be invisible full-height click zones (no size, no
+                icon); arrow keys/touch swipe still work regardless, but
+                nothing used to show they existed. */}
+            <div className="fixed bottom-0 left-0 right-0 z-[1] flex items-center justify-center gap-8 pb-10">
+                <button
+                    className="w-12 h-12 rounded-full bg-surface-raised/80 border border-solid border-border flex items-center justify-center text-text hover:bg-surface-raised"
+                    onClick={() => props.nextToy(-1)}
+                    title={t('addNewOffer:previousToy')}
+                >
+                    <FontAwesomeIcon icon={faChevronLeft} />
+                </button>
+                <button onClick={() => {
+                    // /list is public now (anonymous visitors can browse/search) -
+                    // this is the actual "initiate a trade" moment, so it's the
+                    // right place to prompt sign-in rather than gating the whole
+                    // page. state.from sends them right back here afterward.
+                    if (!auth.currentUser) {
+                        navigate('/login', { state: { from: location } });
+                        return;
+                    }
+                    if (selectedToy) setShowConsent(true);
+                    else {
+                        setTriedWithoutSelection(true);
+                        setShowYourToys(true);
+                    } }}
+                    className={`proposeButton ${selectedToy ? 'cursor-pointer opacity-100' : 'cursor-not-allowed opacity-60 animateBorder'}`}
+                    title={selectedToy ? t('addNewOffer:proposeTrade') : t('addNewOffer:selectYourToyFirst')}>
+                        <FontAwesomeIcon icon={faHandHolding} />
+                </button>
+                <button
+                    className="w-12 h-12 rounded-full bg-surface-raised/80 border border-solid border-border flex items-center justify-center text-text hover:bg-surface-raised"
+                    onClick={() => props.nextToy(1)}
+                    title={t('addNewOffer:nextToy')}
+                >
+                    <FontAwesomeIcon icon={faChevronRight} />
+                </button>
+            </div>
             <button onClick={() => props.nextToy(undefined)}
                 className={'buttonFixedRight topRight'}>
                     <FontAwesomeIcon icon={faRemove} />
