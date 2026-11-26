@@ -13,6 +13,7 @@ import { ParcelMachine, ShipmentSide, ShippingPrice, declineOffer, getShippingPr
 import { ShippingProfile } from "../types/shippingProfile";
 import ParcelMachinePicker from "../components/parcelMachinePicker";
 import TradeConsentModal from "../components/tradeConsentModal";
+import FeedbackCelebration from "../components/feedbackCelebration";
 import { DEFAULT_TOY_SIZE, OMNIVA_COUNTRIES, OMNIVA_PRICE_LIST_URL, OMNIVA_SEND_PARCEL_URL, TOY_SIZES, ToySize } from "../constants/omnivaPricing";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { IconDefinition } from "@fortawesome/fontawesome-svg-core";
@@ -247,6 +248,7 @@ function MyOffersPage() {
     const [barcodeInputByOfferId, setBarcodeInputByOfferId] = useState<Record<string, string>>({});
     const [starsByOfferId, setStarsByOfferId] = useState<Record<string, number>>({});
     const [feedbackByOfferId, setFeedbackByOfferId] = useState<Record<string, string>>({});
+    const [showFeedbackCelebration, setShowFeedbackCelebration] = useState(false);
     const [submittingRatingId, setSubmittingRatingId] = useState<string | undefined>();
     const [dismissedRatingIds, setDismissedRatingIds] = useState<Set<string>>(new Set());
     const [dismissedTipIds, setDismissedTipIds] = useState<Set<string>>(new Set());
@@ -489,6 +491,7 @@ function MyOffersPage() {
         try {
             setSubmittingRatingId(offerId);
             await submitRating(offerId, side, toyId, stars, feedbackByOfferId[offerId]);
+            setShowFeedbackCelebration(true);
         } catch (err) {
             notifyError(err as Error);
         } finally {
@@ -860,6 +863,9 @@ function MyOffersPage() {
                     acceptOffer(offerId);
                 }}
             />}
+
+        {showFeedbackCelebration &&
+            <FeedbackCelebration onClose={() => setShowFeedbackCelebration(false)} />}
     </>
   );
 }

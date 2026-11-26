@@ -1,0 +1,6 @@
+{
+  "instructions": "Palieskite, spustelėkite arba paspauskite tarpo klavišą, kad šoktumėte!",
+  "score": "Taškai: {{score}}",
+  "best": "Geriausias: {{best}}",
+  "playAgain": "Žaisti dar kartą"
+}

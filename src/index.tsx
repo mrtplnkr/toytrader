@@ -4,6 +4,7 @@ import './index.css';
 import './tailwind.css';
 import './i18n';
 import App from './App';
+import ErrorBoundary from './components/errorBoundary';
 import reportWebVitals from './reportWebVitals';
 import * as serviceWorkerRegistration from './serviceWorkerRegistration';
 
@@ -12,7 +13,9 @@ const root = ReactDOM.createRoot(
 );
 
 root.render(
-  <App />
+  <ErrorBoundary>
+    <App />
+  </ErrorBoundary>
 );
 
 // If you want to start measuring performance in your app, pass a function

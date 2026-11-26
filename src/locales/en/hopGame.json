@@ -1,0 +1,6 @@
+{
+  "instructions": "Tap, click, or press space to jump!",
+  "score": "Score: {{score}}",
+  "best": "Best: {{best}}",
+  "playAgain": "Play again"
+}
