@@ -10,34 +10,154 @@ if (getApps().length === 0) {
 
 const REGION = "europe-west1";
 
+type Lang = "en" | "lt" | "ru";
+const SUPPORTED_LANGS: Lang[] = ["en", "lt", "ru"];
+function normalizeLang(lang: unknown): Lang {
+  return SUPPORTED_LANGS.includes(lang as Lang) ? (lang as Lang) : "en";
+}
+
+/**
+ * One entry per notification "kind" this app ever sends, in every
+ * supported language - kept here (not shared with src/locales) because
+ * functions/ is a separate TypeScript package with its own build, and this
+ * is a small, closed set of strings that rarely changes. The frontend
+ * itself doesn't translate Omniva's own raw shipment-status values either
+ * (see myOffers.tsx's status.yourShipmentStatus) - {{status}} here is kept
+ * consistent with that, untranslated on purpose.
+ */
+const STRINGS: Record<Lang, {
+  tradeDidntGoThrough: { title: string; body: string };
+  newTradeOffer: (toyTitle: string) => { title: string; body: string };
+  offerAccepted: { title: string; body: string };
+  shippingInfoShared: { title: string; body: string };
+  shipmentUpdateMine: (status: string) => { title: string; body: string };
+  shipmentUpdateTheirs: (status: string) => { title: string; body: string };
+  toyShipped: { title: string; body: string };
+  toyReceived: { title: string; body: string };
+  tipReceived: { title: string; body: string };
+  newRating: (toyTitle: string, stars: number) => { title: string; body: string };
+}> = {
+  en: {
+    tradeDidntGoThrough: {title: "Trade didn't go through", body: "This trade was declined or cancelled."},
+    newTradeOffer: (toyTitle) => ({
+      title: "New trade offer!", body: `Someone wants to trade for your ${toyTitle}.`,
+    }),
+    offerAccepted: {title: "Offer accepted!", body: "Your trade offer was accepted."},
+    shippingInfoShared: {
+      title: "Shipping info shared", body: "Your trade partner shared their shipping details.",
+    },
+    shipmentUpdateMine: (status) => ({title: "Shipment update", body: `Your shipment is now ${status}.`}),
+    shipmentUpdateTheirs: (status) => ({
+      title: "Shipment update", body: `Your trade partner's shipment is now ${status}.`,
+    }),
+    toyShipped: {title: "Toy shipped", body: "Your trade partner shipped their toy."},
+    toyReceived: {title: "Toy received", body: "Your toy was confirmed received!"},
+    tipReceived: {
+      title: "☕ Tip received", body: "Your trade partner bought you a coffee - thanks for using ToyTrader!",
+    },
+    newRating: (toyTitle, stars) => ({
+      title: "New rating!", body: `Someone rated ${toyTitle} ${stars} star${stars === 1 ? "" : "s"}.`,
+    }),
+  },
+  lt: {
+    tradeDidntGoThrough: {title: "Mainai neįvyko", body: "Šis pasiūlymas buvo atmestas arba atšauktas."},
+    newTradeOffer: (toyTitle) => ({
+      title: "Naujas mainų pasiūlymas!", body: `Kažkas nori išsimainyti jūsų ${toyTitle}.`,
+    }),
+    offerAccepted: {title: "Pasiūlymas priimtas!", body: "Jūsų mainų pasiūlymas buvo priimtas."},
+    shippingInfoShared: {
+      title: "Pristatymo informacija pasidalinta",
+      body: "Jūsų mainų partneris pasidalino savo pristatymo duomenimis.",
+    },
+    shipmentUpdateMine: (status) => ({title: "Siuntos atnaujinimas", body: `Jūsų siunta dabar yra ${status}.`}),
+    shipmentUpdateTheirs: (status) => ({
+      title: "Siuntos atnaujinimas", body: `Jūsų mainų partnerio siunta dabar yra ${status}.`,
+    }),
+    toyShipped: {title: "Žaislas išsiųstas", body: "Jūsų mainų partneris išsiuntė savo žaislą."},
+    toyReceived: {title: "Žaislas gautas", body: "Jūsų žaislo gavimas patvirtintas!"},
+    tipReceived: {
+      title: "☕ Gautas arbatpinigis",
+      body: "Jūsų mainų partneris nupirko jums kavos - ačiū, kad naudojatės ToyTrader!",
+    },
+    newRating: (toyTitle, stars) => ({
+      title: "Naujas įvertinimas!", body: `Kažkas įvertino ${toyTitle} ${stars}/5 žvaigždučių.`,
+    }),
+  },
+  ru: {
+    tradeDidntGoThrough: {title: "Обмен не состоялся", body: "Эта сделка была отклонена или отменена."},
+    newTradeOffer: (toyTitle) => ({
+      title: "Новое предложение обмена!", body: `Кто-то хочет обменять вашу игрушку ${toyTitle}.`,
+    }),
+    offerAccepted: {title: "Предложение принято!", body: "Ваше предложение обмена было принято."},
+    shippingInfoShared: {
+      title: "Данные доставки отправлены",
+      body: "Ваш партнёр по обмену поделился данными доставки.",
+    },
+    shipmentUpdateMine: (status) => ({
+      title: "Обновление доставки", body: `Статус вашей посылки теперь: ${status}.`,
+    }),
+    shipmentUpdateTheirs: (status) => ({
+      title: "Обновление доставки", body: `Статус посылки вашего партнёра теперь: ${status}.`,
+    }),
+    toyShipped: {title: "Игрушка отправлена", body: "Ваш партнёр по обмену отправил свою игрушку."},
+    toyReceived: {title: "Игрушка получена", body: "Получение вашей игрушки подтверждено!"},
+    tipReceived: {
+      title: "☕ Получены чаевые",
+      body: "Ваш партнёр по обмену угостил вас кофе - спасибо, что пользуетесь ToyTrader!",
+    },
+    newRating: (toyTitle, stars) => ({
+      title: "Новая оценка!", body: `Кто-то оценил ${toyTitle} на ${stars}/5.`,
+    }),
+  },
+};
+
 /**
  * Sends a push notification to every device/browser a user has registered
  * (fcmTokens/{token}, one doc per token - see src/hooks/helper.ts's
- * requestNotificationPermission). Self-cleaning: a token FCM reports as
- * unregistered/invalid gets deleted so this collection doesn't accumulate
- * stale entries from uninstalled browsers/revoked permissions.
+ * requestNotificationPermission/syncNotificationLanguage). Tokens are
+ * grouped by their own `lang` field (set at registration time, kept in
+ * sync when the user switches language in the UI) so each device gets the
+ * notification in whatever language it was last registered under - a user
+ * signed in on two devices in two different languages gets each worded
+ * correctly. Self-cleaning: a token FCM reports as unregistered/invalid
+ * gets deleted so this collection doesn't accumulate stale entries from
+ * uninstalled browsers/revoked permissions.
  */
 async function sendPushToUser(
   uid: string,
-  notification: {title: string, body: string},
+  build: (strings: typeof STRINGS["en"]) => { title: string; body: string },
   data?: Record<string, string>
 ): Promise<void> {
   const db = getFirestore();
   const tokenDocs = await db.collection("fcmTokens").where("uid", "==", uid).get();
   if (tokenDocs.empty) return;
 
-  const tokens = tokenDocs.docs.map((d) => d.id);
-  const response = await getMessaging().sendEachForMulticast({tokens, notification, data});
-  logger.info(
-    `sendPushToUser: uid=${uid} title="${notification.title}" tokens=${tokens.length} ` +
-    `successes=${response.successCount} failures=${response.failureCount}`
-  );
-
-  const staleTokenDocs = tokenDocs.docs.filter((_, i) => {
-    const error = response.responses[i].error;
-    return error?.code === "messaging/registration-token-not-registered" ||
-      error?.code === "messaging/invalid-registration-token";
+  const groups = new Map<Lang, FirebaseFirestore.QueryDocumentSnapshot[]>();
+  tokenDocs.docs.forEach((d) => {
+    const lang = normalizeLang(d.data().lang);
+    const group = groups.get(lang) ?? [];
+    group.push(d);
+    groups.set(lang, group);
   });
+
+  const staleTokenDocs: FirebaseFirestore.QueryDocumentSnapshot[] = [];
+  await Promise.all([...groups.entries()].map(async ([lang, docs]) => {
+    const notification = build(STRINGS[lang]);
+    const tokens = docs.map((d) => d.id);
+    const response = await getMessaging().sendEachForMulticast({tokens, notification, data});
+    logger.info(
+      `sendPushToUser: uid=${uid} lang=${lang} title="${notification.title}" tokens=${tokens.length} ` +
+      `successes=${response.successCount} failures=${response.failureCount}`
+    );
+    docs.forEach((d, i) => {
+      const error = response.responses[i].error;
+      if (error?.code === "messaging/registration-token-not-registered" ||
+        error?.code === "messaging/invalid-registration-token") {
+        staleTokenDocs.push(d);
+      }
+    });
+  }));
+
   if (staleTokenDocs.length > 0) {
     const batch = db.batch();
     staleTokenDocs.forEach((d) => batch.delete(d.ref));
@@ -84,14 +204,8 @@ export const onOfferWritten = onDocumentWritten(
       // action, same low-cost tradeoff as the tip-paid case below).
       if (before) {
         await Promise.all([
-          sendPushToUser(before.userInitiated, {
-            title: "Trade didn't go through",
-            body: "This trade was declined or cancelled.",
-          }, {offerId: event.params.offerId}),
-          sendPushToUser(before.userReceived, {
-            title: "Trade didn't go through",
-            body: "This trade was declined or cancelled.",
-          }, {offerId: event.params.offerId}),
+          sendPushToUser(before.userInitiated, (s) => s.tradeDidntGoThrough, {offerId: event.params.offerId}),
+          sendPushToUser(before.userReceived, (s) => s.tradeDidntGoThrough, {offerId: event.params.offerId}),
         ]);
       }
       return;
@@ -100,10 +214,7 @@ export const onOfferWritten = onDocumentWritten(
     if (!before) {
       // Brand new offer - the toy owner (userReceived) needs to know.
       const title = await toyTitle(db, after.toyTargeted);
-      await sendPushToUser(after.userReceived, {
-        title: "New trade offer!",
-        body: `Someone wants to trade for your ${title}.`,
-      }, {offerId: event.params.offerId});
+      await sendPushToUser(after.userReceived, (s) => s.newTradeOffer(title), {offerId: event.params.offerId});
       return;
     }
 
@@ -111,26 +222,17 @@ export const onOfferWritten = onDocumentWritten(
     const changed = (field: string) => before[field] !== after[field] && after[field] !== undefined;
 
     if (newlySet("offerAccepted")) {
-      await sendPushToUser(after.userInitiated, {
-        title: "Offer accepted!",
-        body: "Your trade offer was accepted.",
-      }, {offerId: event.params.offerId});
+      await sendPushToUser(after.userInitiated, (s) => s.offerAccepted, {offerId: event.params.offerId});
     }
 
     // Shipping name/phone/parcel machine shared on this trade (see
     // src/hooks/helper.ts's shareShippingInfo) - lets the other side know
     // they can go ahead and register/drop off their own shipment.
     if (newlySet("offerShippingName")) {
-      await sendPushToUser(after.userReceived, {
-        title: "Shipping info shared",
-        body: "Your trade partner shared their shipping details.",
-      }, {offerId: event.params.offerId});
+      await sendPushToUser(after.userReceived, (s) => s.shippingInfoShared, {offerId: event.params.offerId});
     }
     if (newlySet("targetShippingName")) {
-      await sendPushToUser(after.userInitiated, {
-        title: "Shipping info shared",
-        body: "Your trade partner shared their shipping details.",
-      }, {offerId: event.params.offerId});
+      await sendPushToUser(after.userInitiated, (s) => s.shippingInfoShared, {offerId: event.params.offerId});
     }
 
     // Covers both the initial self-reported barcode submission (which also
@@ -144,53 +246,29 @@ export const onOfferWritten = onDocumentWritten(
     if (changed("offerShipmentStatus")) {
       const status = formatShipmentStatus(after.offerShipmentStatus);
       await Promise.all([
-        sendPushToUser(after.userInitiated, {
-          title: "Shipment update",
-          body: `Your shipment is now ${status}.`,
-        }, {offerId: event.params.offerId}),
-        sendPushToUser(after.userReceived, {
-          title: "Shipment update",
-          body: `Your trade partner's shipment is now ${status}.`,
-        }, {offerId: event.params.offerId}),
+        sendPushToUser(after.userInitiated, (s) => s.shipmentUpdateMine(status), {offerId: event.params.offerId}),
+        sendPushToUser(after.userReceived, (s) => s.shipmentUpdateTheirs(status), {offerId: event.params.offerId}),
       ]);
     }
     if (changed("targetShipmentStatus")) {
       const status = formatShipmentStatus(after.targetShipmentStatus);
       await Promise.all([
-        sendPushToUser(after.userReceived, {
-          title: "Shipment update",
-          body: `Your shipment is now ${status}.`,
-        }, {offerId: event.params.offerId}),
-        sendPushToUser(after.userInitiated, {
-          title: "Shipment update",
-          body: `Your trade partner's shipment is now ${status}.`,
-        }, {offerId: event.params.offerId}),
+        sendPushToUser(after.userReceived, (s) => s.shipmentUpdateMine(status), {offerId: event.params.offerId}),
+        sendPushToUser(after.userInitiated, (s) => s.shipmentUpdateTheirs(status), {offerId: event.params.offerId}),
       ]);
     }
 
     if (newlySet("offerPosted")) {
-      await sendPushToUser(after.userReceived, {
-        title: "Toy shipped",
-        body: "Your trade partner shipped their toy.",
-      }, {offerId: event.params.offerId});
+      await sendPushToUser(after.userReceived, (s) => s.toyShipped, {offerId: event.params.offerId});
     }
     if (newlySet("targetPosted")) {
-      await sendPushToUser(after.userInitiated, {
-        title: "Toy shipped",
-        body: "Your trade partner shipped their toy.",
-      }, {offerId: event.params.offerId});
+      await sendPushToUser(after.userInitiated, (s) => s.toyShipped, {offerId: event.params.offerId});
     }
     if (newlySet("offerReceived")) {
-      await sendPushToUser(after.userInitiated, {
-        title: "Toy received",
-        body: "Your toy was confirmed received!",
-      }, {offerId: event.params.offerId});
+      await sendPushToUser(after.userInitiated, (s) => s.toyReceived, {offerId: event.params.offerId});
     }
     if (newlySet("targetReceived")) {
-      await sendPushToUser(after.userReceived, {
-        title: "Toy received",
-        body: "Your toy was confirmed received!",
-      }, {offerId: event.params.offerId});
+      await sendPushToUser(after.userReceived, (s) => s.toyReceived, {offerId: event.params.offerId});
     }
 
     // Tip is per-trade, payable by either side, first to pay closes it for
@@ -199,10 +277,7 @@ export const onOfferWritten = onDocumentWritten(
     // they're the one who just paid.
     if (newlySet("tipPaid") && after.tipPaidByUid) {
       const otherUid = after.tipPaidByUid === after.userInitiated ? after.userReceived : after.userInitiated;
-      await sendPushToUser(otherUid, {
-        title: "☕ Tip received",
-        body: "Your trade partner bought you a coffee - thanks for using ToyTrader!",
-      }, {offerId: event.params.offerId});
+      await sendPushToUser(otherUid, (s) => s.tipReceived, {offerId: event.params.offerId});
     }
   }
 );
@@ -226,9 +301,6 @@ export const onRatingCreated = onDocumentCreated(
     }
 
     const title = (toySnap.data()?.title as string | undefined) ?? "your toy";
-    await sendPushToUser(ownerUid, {
-      title: "New rating!",
-      body: `Someone rated ${title} ${rating.stars} star${rating.stars === 1 ? "" : "s"}.`,
-    }, {offerId: rating.offerId});
+    await sendPushToUser(ownerUid, (s) => s.newRating(title, rating.stars), {offerId: rating.offerId});
   }
 );

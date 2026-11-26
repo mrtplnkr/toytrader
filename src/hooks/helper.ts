@@ -776,9 +776,30 @@ export const requestNotificationPermission = async (): Promise<"granted" | "deni
 
     const registration = await navigator.serviceWorker.ready;
     const token = await getToken(messaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: registration });
-    await withSessionRecovery(() => setDoc(doc(db, "fcmTokens", token), { uid, createdAt: Date.now() }));
+    await withSessionRecovery(() => setDoc(doc(db, "fcmTokens", token), { uid, createdAt: Date.now(), lang: i18n.language }));
 
     return "granted";
+};
+
+// Keeps an already-registered device's push-notification language in sync
+// when the user switches language in the UI (see languageSwitcher.tsx) -
+// without this, a token registered under one language would keep getting
+// notifications in that language forever, since there's no other trigger
+// to re-send it. Best-effort and silent: no tokens yet (notifications
+// never enabled) is the common case, not an error.
+export const syncNotificationLanguage = async (lang: string) => {
+    const uid = auth.currentUser?.uid;
+    if (!uid) return;
+    try {
+        const tokenDocs = await getDocs(query(collection(db, "fcmTokens"), where("uid", "==", uid)));
+        await withSessionRecovery(() => Promise.all(
+            tokenDocs.docs
+                .filter((d) => d.data().lang !== lang)
+                .map((d) => updateDoc(d.ref, { lang }))
+        ));
+    } catch (err) {
+        // Non-critical - next registration will carry the right language anyway.
+    }
 };
 
 // FCM only auto-shows an OS notification via the service worker when the

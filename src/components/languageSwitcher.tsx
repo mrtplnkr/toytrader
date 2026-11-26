@@ -4,6 +4,7 @@ import gbFlag from "flag-icons/flags/4x3/gb.svg";
 import ltFlag from "flag-icons/flags/4x3/lt.svg";
 import ruFlag from "flag-icons/flags/4x3/ru.svg";
 import { setLanguage, SupportedLanguage } from "../i18n";
+import { syncNotificationLanguage } from "../hooks/helper";
 
 const LANGUAGES: { code: SupportedLanguage, label: string, flag: string }[] = [
   { code: "en", label: "English", flag: gbFlag },
@@ -42,6 +43,7 @@ function LanguageSwitcher() {
 
   const onSelect = (code: SupportedLanguage) => {
     setLanguage(code);
+    syncNotificationLanguage(code);
     setOpen(false);
   };
 
