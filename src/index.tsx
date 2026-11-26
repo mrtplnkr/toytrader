@@ -25,5 +25,23 @@ reportWebVitals();
 
 // Registers the service worker (src/service-worker.ts) for offline support
 // and installability - no-ops outside production builds, see
-// serviceWorkerRegistration.ts.
-serviceWorkerRegistration.register();
+// serviceWorkerRegistration.ts. Without onUpdate, a newly deployed version
+// would just sit "waiting" forever - the old one keeps serving every open
+// tab until the user manually closes all of them, which is why a version
+// bump on github could ship and still show the old number for days. Instead,
+// tell the waiting worker to activate immediately (service-worker.ts already
+// listens for this message) and reload once it takes over.
+if ('serviceWorker' in navigator) {
+  let reloadedForUpdate = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (reloadedForUpdate) return;
+    reloadedForUpdate = true;
+    window.location.reload();
+  });
+}
+
+serviceWorkerRegistration.register({
+  onUpdate: (registration) => {
+    registration.waiting?.postMessage({ type: 'SKIP_WAITING' });
+  },
+});
