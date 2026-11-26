@@ -104,12 +104,27 @@ function ToyDisplay(props: Props) {//TODO: change to NewOffer
                         if (selectedToy) props.proposeOffer(selectedToy);
                     }}
                 />}
+            {/* Positioned relative to .largeOffer itself (fixed, full-screen),
+                not the centered flex column below, so it sits at the very
+                top of the view regardless of how tall the image is. Inset
+                left/right (rather than centered with a max-width) so the
+                title can never reach into the close button's corner
+                (.buttonFixedRight.topRight: right:0, margin:3em, width:4em -
+                occupies the rightmost ~7em) or, while "pick your toy" is
+                open, the toy-picker column (left-4, w-[120px] - ~9em total)
+                regardless of how many lines it wraps to. line-clamp caps an
+                extreme title (rather than wrapping indefinitely) with an
+                ellipsis - the full text is still on the image's own alt
+                text and this element's title attribute. */}
+            <p className="absolute top-4 left-[9em] right-[7.5em] z-[1] text-white text-[1.1em] font-semibold m-0 text-center line-clamp-2"
+                title={props.toy.title}>
+                {props.toy.title}
+            </p>
             <div className="flex flex-col items-center justify-center h-full gap-2">
                 {/* Inline maxHeight overrides the shared ".largeOffer img { max-height: 100% }"
                     rule (by specificity) - otherwise the image alone fills this whole flex
                     column and the caption below it gets squeezed off-screen. */}
                 <img alt={props.toy.title} src={props.toy.file} className="max-h-[80%] max-w-full" />
-                <p className="text-white text-[1.1em] m-0">{props.toy.title}</p>
                 {props.toy.description &&
                     <p className="text-text-dim text-[0.85em] m-0 max-w-[80%] text-center">{props.toy.description}</p>}
             </div>
