@@ -41,9 +41,20 @@ const COUNTRY_LABEL_KEYS: Record<typeof OMNIVA_COUNTRIES[number], string> = {
     LT: 'myOffers:countryLithuania',
 };
 
+// The most recent thing that's happened on a trade - used to sort myOffers
+// with the most recently active trades first, rather than by creation date
+// alone (an old trade that just had a shipping update should bubble back up,
+// not stay buried under newer-but-stalled ones).
+function latestOfferActivity(o: Offer): Date {
+    const dates = [o.offerCreated, o.offerAccepted, o.offerPosted, o.offerReceived,
+        o.targetPosted, o.targetReceived, o.tipPaid].filter((d): d is Date => !!d);
+    return dates.reduce((latest, d) => d > latest ? d : latest, o.offerCreated);
+}
+
 interface HistoryItem {
     id: string,
     offerCreated: Date;
+    lastActivity: Date;
     toyIOffered: Toy;
     status: string;
     toyTargeted: Toy;
@@ -437,6 +448,7 @@ function MyOffersPage() {
             history.push({
                 id: o.id,
                 offerCreated: o.offerCreated as Date,
+                lastActivity: latestOfferActivity(o),
                 mySide,
                 otherSide,
                 isInitiator,
@@ -505,6 +517,7 @@ function MyOffersPage() {
                 toyTargeted,
             });
         });
+        history.sort((a, b) => b.lastActivity.getTime() - a.lastActivity.getTime());
         setHistory(history);
     }, [offers, toys, ratings, t, partnerNamesByUid]);
 
@@ -618,36 +631,25 @@ function MyOffersPage() {
         setDismissedTipIds((prev) => new Set(prev).add(offerId));
     };
 
-    const onShareShipping = async (offerId: string, side: ShipmentSide) => {
-        if (!myShippingProfile) return;
-        try {
-            setSharingShippingId(offerId);
-            await shareShippingInfo(offerId, side, myShippingProfile);
-        } catch (err) {
-            notifyError(err as Error);
-        } finally {
-            setSharingShippingId(undefined);
-        }
-    };
-
-    // First-trade fallback: saves this as the user's reusable default too
-    // (not just a one-off for this offer), so future trades skip straight
-    // to the one-click "Share my shipping info" button above.
+    // The form is always prefilled from myShippingProfile (see the JSX
+    // below) when it exists, but the user may not have touched a field at
+    // all if they're just confirming what's already there - so each value
+    // falls back to the saved profile too, not just the local per-offer
+    // override, otherwise an untouched field would wrongly read as missing.
+    // Always re-saves the profile (not just shares it) so any edit made
+    // here for this one trade also becomes the new default going forward.
     const onSetupAndShareShipping = async (offerId: string, side: ShipmentSide) => {
-        const name = shippingSetupName[offerId]?.trim();
-        const phone = shippingSetupPhone[offerId]?.trim();
+        const name = (shippingSetupName[offerId] ?? myShippingProfile?.name)?.trim();
+        const phone = (shippingSetupPhone[offerId] ?? myShippingProfile?.phone)?.trim();
         const machine = shippingSetupMachine[offerId];
-        if (!name || !phone || !machine) {
+        const parcelMachineId = machine?.id ?? myShippingProfile?.parcelMachineId;
+        const parcelMachineLabel = machine ? `${machine.name} — ${machine.address}` : myShippingProfile?.parcelMachineLabel;
+        const countryCode = machine?.countryCode ?? myShippingProfile?.countryCode;
+        if (!name || !phone || !parcelMachineId || !parcelMachineLabel || !countryCode) {
             notifyError(new Error(t('profile:missingInfoBody')));
             return;
         }
-        const profile: ShippingProfile = {
-            name,
-            phone,
-            parcelMachineId: machine.id,
-            parcelMachineLabel: `${machine.name} — ${machine.address}`,
-            countryCode: machine.countryCode,
-        };
+        const profile: ShippingProfile = { name, phone, parcelMachineId, parcelMachineLabel, countryCode };
         try {
             setSharingShippingId(offerId);
             await saveShippingProfile(profile);
@@ -790,27 +792,30 @@ function MyOffersPage() {
                                             {x.myShippingName}, {x.myShippingPhone}, {x.myShippingParcelMachineLabel}
                                         </p>
                                     </>
-                                : myShippingProfile ?
-                                    <button className="btn-primary" disabled={sharingShippingId === x.id}
-                                        onClick={() => onShareShipping(x.id, x.mySide)}>
-                                        {sharingShippingId === x.id ? t('myOffers:sharing') : t('myOffers:shareMyShippingInfo')}
-                                    </button>
                                 :
+                                    /* Always shown as editable, prefilled fields - never a
+                                       blind one-click "Share my shipping info" button, even
+                                       once a saved profile exists. Clicking through without
+                                       ever seeing what name/phone/parcel machine was about to
+                                       go out, and with no way to tweak it for just this one
+                                       trade, is exactly the thing this form exists to avoid. */
                                     <div className="flex flex-col gap-2 w-full items-center">
                                         <p className="m-0">
-                                            {/* eslint-disable-next-line jsx-a11y/anchor-has-content -- Trans clones this element and fills in the translated link text at render */}
-                                            <Trans i18nKey="myOffers:noShippingInfoYet" components={{ ProfileLink: <a href="/profile" /> }} />
+                                            {myShippingProfile ?
+                                                t('myOffers:reviewShippingInfo') :
+                                                /* eslint-disable-next-line jsx-a11y/anchor-has-content -- Trans clones this element and fills in the translated link text at render */
+                                                <Trans i18nKey="myOffers:noShippingInfoYet" components={{ ProfileLink: <a href="/profile" /> }} />}
                                         </p>
                                         <div className="flex gap-2 w-full">
                                             <input type="text" placeholder={t('myOffers:yourNamePlaceholder')} className="flex-1 min-w-0"
-                                                value={shippingSetupName[x.id] ?? ''}
+                                                value={shippingSetupName[x.id] ?? myShippingProfile?.name ?? ''}
                                                 onChange={(e) => setShippingSetupName((prev) => ({...prev, [x.id]: e.target.value}))} />
                                             <input type="tel" placeholder={t('myOffers:yourPhonePlaceholder')} className="flex-1 min-w-0"
-                                                value={shippingSetupPhone[x.id] ?? ''}
+                                                value={shippingSetupPhone[x.id] ?? myShippingProfile?.phone ?? ''}
                                                 onChange={(e) => setShippingSetupPhone((prev) => ({...prev, [x.id]: e.target.value}))} />
                                         </div>
                                         <ParcelMachinePicker
-                                            value={shippingSetupMachine[x.id]?.id}
+                                            value={shippingSetupMachine[x.id]?.id ?? myShippingProfile?.parcelMachineId}
                                             onChange={(machine) => setShippingSetupMachine((prev) => ({...prev, [x.id]: machine}))}
                                         />
                                         <button className="btn-primary" disabled={sharingShippingId === x.id}

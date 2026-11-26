@@ -93,8 +93,16 @@ function ListPage() {
     return true;
   };
 
+  // Newest first - a toy's updatedAt is set both on initial listing and on
+  // every edit (see addNewToy.tsx/updateToy in helper.ts), so this also
+  // bumps a toy back to the top whenever its owner touches it, not just
+  // when it's first created. A toy from before updatedAt existed sorts last
+  // (0 fallback) rather than being guessed into the middle somewhere.
+  const byLatestUpdated = (a: Toy, b: Toy) => (b.updatedAt?.getTime() ?? 0) - (a.updatedAt?.getTime() ?? 0);
+
   const visibleToys = toys.filter((x: Toy) =>
-    x.userId !== auth.currentUser?.uid && !alreadyOfferedToyIds.has(x.id) && !x.lockedByOfferId && matchesAgeFilter(x));
+    x.userId !== auth.currentUser?.uid && !alreadyOfferedToyIds.has(x.id) && !x.lockedByOfferId && matchesAgeFilter(x))
+    .sort(byLatestUpdated);
   const toyBeingDisplayed = visibleToys.find((x: Toy) => x.id === selectedToyId);
 
   const nextToy = (direction: number | undefined) => {
@@ -174,8 +182,15 @@ function ListPage() {
         <h3>{t('list:heading')}</h3>
 
         {
+          /* Bug fix: this used to list every toy you own with no regard for
+             whether one of them was already locked into an earlier accepted
+             trade - isToyCommittedElsewhere already existed to block
+             *submitting* such an offer (see proposeOffer above), but
+             nothing stopped you from picking an already-spoken-for toy in
+             the first place, which just produced a confusing rejection
+             toast instead of simply not offering it as an option. */
           toyBeingDisplayed &&
-            <ToyDisplay yourToys={toys.filter((x: Toy) => x.userId === auth.currentUser?.uid)}
+            <ToyDisplay yourToys={toys.filter((x: Toy) => x.userId === auth.currentUser?.uid && !isToyCommittedElsewhere(x.id))}
               toy={toyBeingDisplayed} nextToy={nextToy} proposeOffer={proposeOffer} />
         }
 
