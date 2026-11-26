@@ -72,6 +72,7 @@ function AddNew() {
     const [loadingExisting, setLoadingExisting] = useState(isEditMode);
     const [notOwner, setNotOwner] = useState(false);
     const [showCelebration, setShowCelebration] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
     const navigate = useNavigate();
     const { t } = useTranslation();
 
@@ -225,6 +226,10 @@ function AddNew() {
     }, []);
 
     const onSubmitToy = async () => {
+        if (!title.trim()) {
+            notifyError(t('addNewToy:titleRequiredTitle'), t('addNewToy:titleRequiredBody'));
+            return;
+        }
         if (images.length === 0) {
             notifyError(t('addNewToy:pictureRequiredTitle'), t('addNewToy:pictureRequiredBody'));
             return;
@@ -248,6 +253,7 @@ function AddNew() {
             return;
         }
         try {
+          setSubmitting(true);
           if (isEditMode && toyId) {
               await updateToy(
                   toyId,
@@ -279,6 +285,8 @@ function AddNew() {
           }
         } catch (err) {
             notifyError(t('common:toast.actionFailedTitle'), t('common:toast.tryAgainLater'));
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -407,11 +415,14 @@ function AddNew() {
               </label>}
 
           <div className="flex flex-col">
-            <button type="submit"
-                disabled={uploadingImage || uploadingVideo || images.length === 0 || (!isEditMode && !confirmedComplete) ||
-                    ageMin.trim() === '' || ageMax.trim() === ''}
-                className="self-end">
-                {t(isEditMode ? 'addNewToy:saveChanges' : 'addNewToy:add')}
+            {/* Only disabled while something's actively in flight (an
+                upload, or the submit itself) - a disabled button for
+                missing-but-not-yet-attempted required fields just leaves
+                the user guessing why they can't click it. onSubmitToy's own
+                checks (picture/age-range/completeness-checkbox) now surface
+                as a specific, actionable error toast on click instead. */}
+            <button type="submit" disabled={uploadingImage || uploadingVideo || submitting} className="self-end">
+                {submitting ? t('addNewToy:saving') : t(isEditMode ? 'addNewToy:saveChanges' : 'addNewToy:add')}
             </button>
           </div>
         </form>
