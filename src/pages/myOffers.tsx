@@ -650,7 +650,14 @@ function MyOffersPage() {
                             <p className="text-[0.8em] text-danger m-0">
                                 {t('myOffers:shipmentReturned')}
                             </p>}
-                        {x.isAccepted &&
+                        {/* Once both toys are confirmed received there's
+                            nothing left to ship, so this box (whether
+                            showing the shared-info summary, the "share
+                            now" button, or - most confusingly - a blank
+                            name/phone/parcel-machine form) has no reason
+                            to keep showing, even though isAccepted stays
+                            true forever. */}
+                        {x.isAccepted && !x.bothReceived &&
                             <div className="flex flex-col gap-2 items-center text-[0.85em] border border-border rounded-sm p-3">
                                 {x.hasSharedMyShipping ?
                                     <>
