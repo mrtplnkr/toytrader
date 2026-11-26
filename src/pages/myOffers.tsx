@@ -246,6 +246,7 @@ function MyOffersPage() {
     const [quoteByOfferId, setQuoteByOfferId] = useState<Record<string, ShippingPrice | 'loading' | 'error'>>({});
     const [barcodeInputByOfferId, setBarcodeInputByOfferId] = useState<Record<string, string>>({});
     const [starsByOfferId, setStarsByOfferId] = useState<Record<string, number>>({});
+    const [feedbackByOfferId, setFeedbackByOfferId] = useState<Record<string, string>>({});
     const [submittingRatingId, setSubmittingRatingId] = useState<string | undefined>();
     const [dismissedRatingIds, setDismissedRatingIds] = useState<Set<string>>(new Set());
     const [dismissedTipIds, setDismissedTipIds] = useState<Set<string>>(new Set());
@@ -487,7 +488,7 @@ function MyOffersPage() {
         if (!stars) return;
         try {
             setSubmittingRatingId(offerId);
-            await submitRating(offerId, side, toyId, stars);
+            await submitRating(offerId, side, toyId, stars, feedbackByOfferId[offerId]);
         } catch (err) {
             notifyError(err as Error);
         } finally {
@@ -785,7 +786,7 @@ function MyOffersPage() {
                                         <button
                                             key={n}
                                             aria-label={t('myOffers:rateStarsLabel', { count: n })}
-                                            className="bg-transparent border-none cursor-pointer p-0 text-[1.4em]"
+                                            className="starRatingButton bg-transparent border-none cursor-pointer p-0 text-[1.4em]"
                                             onClick={() => setStarsByOfferId((prev) => ({...prev, [x.id]: n}))}
                                         >
                                             <FontAwesomeIcon
@@ -795,6 +796,13 @@ function MyOffersPage() {
                                         </button>
                                     ))}
                                 </div>
+                                <textarea
+                                    className="w-full max-w-[320px]"
+                                    rows={3}
+                                    placeholder={t('myOffers:feedbackPlaceholder') ?? undefined}
+                                    value={feedbackByOfferId[x.id] ?? ''}
+                                    onChange={(e) => setFeedbackByOfferId((prev) => ({...prev, [x.id]: e.target.value}))}
+                                />
                                 <div className="flex gap-2">
                                     <button
                                         className="btn-primary"

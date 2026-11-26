@@ -28,6 +28,9 @@
   "notificationsEnabledBody": "Dabar gausite pranešimus apie mainų veiklą šiame įrenginyje.",
   "notificationsDeniedTitle": "Pranešimai neįjungti",
   "notificationsDeniedBody": "Galite juos įjungti vėliau naršyklės svetainės nustatymuose.",
+  "feedbackHeading": "Jūsų gauti atsiliepimai",
+  "feedbackFrom": "{{name}} · {{date}}",
+  "feedbackSomeone": "Kažkas",
   "dangerZoneHeading": "Jūsų duomenys",
   "dangerZoneDescription": "Ištrinkite dalį savo duomenų paliekant paskyrą arba ištrinkite visą paskyrą.",
   "deleteMyData": "Ištrinti mano duomenis arba paskyrą"

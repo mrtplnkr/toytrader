@@ -407,6 +407,7 @@ export const subscribeRatings = (onChange: (ratings: Rating[]) => void): Unsubsc
                 toyId: data.toyId,
                 raterUid: data.raterUid,
                 stars: data.stars,
+                feedback: data.feedback || undefined,
                 createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : new Date(data.createdAt),
             };
         });
@@ -414,11 +415,14 @@ export const subscribeRatings = (onChange: (ratings: Rating[]) => void): Unsubsc
     }, (err) => console.error(err));
 };
 
-export const submitRating = async (offerId: string, side: ShipmentSide, toyId: string, stars: number) => {
+export const submitRating = async (
+    offerId: string, side: ShipmentSide, toyId: string, stars: number, feedback?: string
+) => {
     await withSessionRecovery(() => setDoc(doc(db, "ratings", `${offerId}_${side}`), {
         offerId,
         toyId,
         stars,
+        ...(feedback?.trim() ? {feedback: feedback.trim()} : {}),
         raterUid: auth.currentUser?.uid,
         createdAt: Date.now(),
     }));

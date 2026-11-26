@@ -4,5 +4,6 @@ export interface Rating {
     toyId: string;
     raterUid: string;
     stars: number;
+    feedback?: string;
     createdAt: Date;
 }

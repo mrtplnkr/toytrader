@@ -1,15 +1,19 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { updateProfile } from "firebase/auth";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { v4 } from 'uuid';
+import { useContextSelector } from "use-context-selector";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBackspace, faCircleCheck, faCircleXmark } from "@fortawesome/free-solid-svg-icons";
+import { faBackspace, faCircleCheck, faCircleXmark, faStar as faStarSolid } from "@fortawesome/free-solid-svg-icons";
 import { Store } from "react-notifications-component";
 import { auth, storage } from "../firebase-config";
-import { getShippingProfile, notificationsSupported, ParcelMachine, requestNotificationPermission, saveShippingProfile } from "../hooks/helper";
+import { getShippingProfile, getTradePartnerNames, notificationsSupported, ParcelMachine, requestNotificationPermission, saveShippingProfile } from "../hooks/helper";
 import ParcelMachinePicker from "../components/parcelMachinePicker";
+import { GoodAppContext } from "../hooks/context";
+import { Toy } from "../types/toy";
+import { Rating } from "../types/rating";
 
 const notify = (title: string, message: string, type: 'success' | 'danger') => {
     Store.addNotification({
@@ -49,6 +53,34 @@ function ProfilePage() {
         notificationsSupported() ? Notification.permission : undefined
     );
     const [enablingNotifications, setEnablingNotifications] = useState(false);
+
+    // Feedback left on toys this user has given away - toy ownership never
+    // transfers in this app (see types/toy.ts), so "my toys" is still the
+    // right lookup even for a toy that's long since been traded away.
+    const toys = useContextSelector(GoodAppContext, (state: any) => state.toys);
+    const ratings = useContextSelector(GoodAppContext, (state: any) => state.ratings);
+
+    const myToyTitleById = useMemo(() => {
+        const map = new Map<string, string>();
+        toys.forEach((toy: Toy) => {
+            if (toy.userId === currentUser?.uid) map.set(toy.id, toy.title);
+        });
+        return map;
+    }, [toys, currentUser]);
+
+    const feedbackReceived = useMemo(() => {
+        return ratings
+            .filter((r: Rating) => !!r.feedback && myToyTitleById.has(r.toyId))
+            .sort((a: Rating, b: Rating) => b.createdAt.getTime() - a.createdAt.getTime());
+    }, [ratings, myToyTitleById]);
+
+    const [raterNames, setRaterNames] = useState<Record<string, string>>({});
+    useEffect(() => {
+        const uids = Array.from(new Set(feedbackReceived.map((r: Rating) => r.raterUid)));
+        if (uids.length === 0) return;
+        getTradePartnerNames(uids as string[]).then(setRaterNames).catch(() => {});
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [feedbackReceived.map((r: Rating) => r.raterUid).join(',')]);
 
     const onEnableNotifications = async () => {
         setEnablingNotifications(true);
@@ -220,6 +252,38 @@ function ProfilePage() {
                                     {enablingNotifications ? t('profile:saving') : t('profile:enableNotifications')}
                                 </button>
                             </>}
+                    </div>
+                </>}
+
+            {feedbackReceived.length > 0 &&
+                <>
+                    <h3>{t('profile:feedbackHeading')}</h3>
+                    <div className="flex flex-col gap-3 max-w-[360px] mx-auto mb-4">
+                        {feedbackReceived.map((r: Rating) => (
+                            <div key={r.id} className="card flex flex-col gap-1.5 p-4">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[0.85em] font-semibold">
+                                        {myToyTitleById.get(r.toyId)}
+                                    </span>
+                                    <span className="flex gap-0.5 text-[0.85em]">
+                                        {[1, 2, 3, 4, 5].map((n) => (
+                                            <FontAwesomeIcon
+                                                key={n}
+                                                icon={faStarSolid}
+                                                color={r.stars >= n ? "var(--color-primary)" : "var(--color-border)"}
+                                            />
+                                        ))}
+                                    </span>
+                                </div>
+                                <p className="m-0 text-[0.9em] text-text-dim">{r.feedback}</p>
+                                <span className="text-[0.75em] text-text-dim">
+                                    {t('profile:feedbackFrom', {
+                                        name: raterNames[r.raterUid] ?? t('profile:feedbackSomeone'),
+                                        date: r.createdAt.toDateString(),
+                                    })}
+                                </span>
+                            </div>
+                        ))}
                     </div>
                 </>}
 

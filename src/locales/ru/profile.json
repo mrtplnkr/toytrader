@@ -28,6 +28,9 @@
   "notificationsEnabledBody": "Теперь вы будете получать уведомления о торговой активности на этом устройстве.",
   "notificationsDeniedTitle": "Уведомления не включены",
   "notificationsDeniedBody": "Вы можете включить их позже в настройках сайта вашего браузера.",
+  "feedbackHeading": "Полученные отзывы",
+  "feedbackFrom": "{{name}} · {{date}}",
+  "feedbackSomeone": "Кто-то",
   "dangerZoneHeading": "Ваши данные",
   "dangerZoneDescription": "Удалите часть своих данных, сохранив учётную запись, или удалите учётную запись целиком.",
   "deleteMyData": "Удалить мои данные или учётную запись"

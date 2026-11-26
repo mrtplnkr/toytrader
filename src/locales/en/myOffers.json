@@ -39,6 +39,7 @@
   "markReceived": "Mark the other toy as received",
   "howWasToy": "How was the {{title}} you received?",
   "rateStarsLabel": "Rate {{count}} star(s)",
+  "feedbackPlaceholder": "Leave feedback for your trade partner (optional)",
   "submitRating": "Submit rating",
   "skip": "Skip",
   "tipPrompt": "This trade is complete! If ToyTrader was useful to you, you're welcome to buy me a coffee - completely optional, no pressure either way.",

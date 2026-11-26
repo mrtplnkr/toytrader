@@ -96,6 +96,17 @@ button:hover:not(:disabled) {
   border-color: var(--color-primary);
 }
 
+/* Icon-only buttons (e.g. the star-rating picker in myOffers.tsx) opt out
+   of the solid-background hover above via Tailwind's bg-transparent - but
+   that's a `@layer utilities` rule, and CSS Cascade Layers makes ANY
+   unlayered rule (like the one above) win regardless of specificity, so
+   the purple background was painting straight over the star glyph on
+   hover. This plain, unlayered selector wins back for just these buttons. */
+.starRatingButton:hover:not(:disabled) {
+  background: transparent;
+  border-color: transparent;
+}
+
 button:active:not(:disabled) {
   transform: translateY(1px);
 }
@@ -136,7 +147,8 @@ input[type="email"],
 input[type="password"],
 input[type="tel"],
 input[type="number"],
-input[type="file"] {
+input[type="file"],
+textarea {
   font: inherit;
   color: var(--color-text);
   background: var(--color-surface);
@@ -145,11 +157,16 @@ input[type="file"] {
   padding: 0.6em 0.8em;
 }
 
+textarea {
+  resize: vertical;
+}
+
 input[type="text"]:focus,
 input[type="email"]:focus,
 input[type="password"]:focus,
 input[type="tel"]:focus,
-input[type="number"]:focus {
+input[type="number"]:focus,
+textarea:focus {
   outline: 2px solid var(--color-primary);
   outline-offset: 1px;
 }
