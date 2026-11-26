@@ -1,6 +1,6 @@
 {
   "name": "toytrader",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "private": true,
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^6.4.2",

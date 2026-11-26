@@ -800,12 +800,18 @@ function MyOffersPage() {
                                        go out, and with no way to tweak it for just this one
                                        trade, is exactly the thing this form exists to avoid. */
                                     <div className="flex flex-col gap-2 w-full items-center">
-                                        <p className="m-0">
-                                            {myShippingProfile ?
-                                                t('myOffers:reviewShippingInfo') :
-                                                /* eslint-disable-next-line jsx-a11y/anchor-has-content -- Trans clones this element and fills in the translated link text at render */
-                                                <Trans i18nKey="myOffers:noShippingInfoYet" components={{ ProfileLink: <a href="/profile" /> }} />}
-                                        </p>
+                                        {/* Once a parcel machine's been picked for this trade (even
+                                            before a reusable profile exists), "no shipping info saved
+                                            yet" is no longer true - the user's already partway through,
+                                            so the hint (and its /profile link, which would just send
+                                            them away from what they're already doing) would be noise. */}
+                                        {myShippingProfile ?
+                                            <p className="m-0">{t('myOffers:reviewShippingInfo')}</p>
+                                        : !shippingSetupMachine[x.id] &&
+                                            <p className="m-0">
+                                                {/* eslint-disable-next-line jsx-a11y/anchor-has-content -- Trans clones this element and fills in the translated link text at render */}
+                                                <Trans i18nKey="myOffers:noShippingInfoYet" components={{ ProfileLink: <a href="/profile" /> }} />
+                                            </p>}
                                         <div className="flex gap-2 w-full">
                                             <input type="text" placeholder={t('myOffers:yourNamePlaceholder')} className="flex-1 min-w-0"
                                                 value={shippingSetupName[x.id] ?? myShippingProfile?.name ?? ''}
