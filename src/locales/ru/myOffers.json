@@ -1,6 +1,8 @@
 {
   "heading": "Все предложенные вами обмены",
   "addYourToy": "добавить свою игрушку",
+  "receivedHeading": "Предложено вам",
+  "sentHeading": "Ваши предложения",
   "today": "сегодня",
   "daysAgo_one": "{{count}} день назад",
   "daysAgo_few": "{{count}} дня назад",

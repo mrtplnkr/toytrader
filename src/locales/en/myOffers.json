@@ -1,6 +1,8 @@
 {
   "heading": "All offers made by you",
   "addYourToy": "add your toy",
+  "receivedHeading": "Offered to you",
+  "sentHeading": "Offers you've made",
   "today": "today",
   "daysAgo_one": "{{count}} day ago",
   "daysAgo_other": "{{count}} days ago",

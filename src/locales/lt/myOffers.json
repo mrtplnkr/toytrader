@@ -1,6 +1,8 @@
 {
   "heading": "Visi jūsų pasiūlyti mainai",
   "addYourToy": "pridėti savo žaislą",
+  "receivedHeading": "Jums pasiūlyta",
+  "sentHeading": "Jūsų pasiūlymai",
   "today": "šiandien",
   "daysAgo_one": "prieš {{count}} dieną",
   "daysAgo_few": "prieš {{count}} dienas",

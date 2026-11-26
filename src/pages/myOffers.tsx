@@ -48,6 +48,7 @@ interface HistoryItem {
     toyTargeted: Toy;
     mySide: ShipmentSide;
     otherSide: ShipmentSide;
+    isInitiator: boolean;
     isAccepted: boolean;
     canOfferTip: boolean;
     isMyTurnToRespond: boolean;
@@ -340,6 +341,7 @@ function MyOffersPage() {
                 offerCreated: o.offerCreated as Date,
                 mySide,
                 otherSide,
+                isInitiator,
                 myShipmentBarcode,
                 myShipmentStatus,
                 hasSharedMyShipping: !!myShippingName,
@@ -615,15 +617,16 @@ function MyOffersPage() {
         }
     };
 
-  return (
-    <>
-        <h3>{t('myOffers:heading')}</h3>
+  // Split by direction rather than one flat list - "offers made to me"
+  // (someone else proposed a trade for my toy, isInitiator false) and
+  // "offers I made to others" (isInitiator true) need different actions
+  // (Accept/Decline vs just Cancel, see isMyTurnToRespond/canCancel below),
+  // so keeping them visually separate avoids scanning past irrelevant cards
+  // to find the one offer still waiting on a response from you.
+  const receivedOffers = history.filter((x) => !x.isInitiator);
+  const sentOffers = history.filter((x) => x.isInitiator);
 
-        <div className="flex justify-end mb-6">
-          <button className="btn-primary" onClick={() => navigate('/addNew')}>{t('myOffers:addYourToy')}</button>
-        </div>
-
-        {history.map((x:HistoryItem) =>
+  const renderOfferCard = (x: HistoryItem) =>
             <div className="card flex flex-col items-center gap-4 mb-4 p-5" key={x.id}>
                 <TradeStepsBar steps={buildTradeSteps(x)} />
                 <span className="text-[0.7em] text-text-dim">{daysAgoText(t, x.offerCreated)}</span>
@@ -850,8 +853,27 @@ function MyOffersPage() {
                         }
                     </div>
                 }
-            </div>
-        )}
+            </div>;
+
+  return (
+    <>
+        <h3>{t('myOffers:heading')}</h3>
+
+        <div className="flex justify-end mb-6">
+          <button className="btn-primary" onClick={() => navigate('/addNew')}>{t('myOffers:addYourToy')}</button>
+        </div>
+
+        {receivedOffers.length > 0 &&
+            <>
+                <h4>{t('myOffers:receivedHeading')}</h4>
+                {receivedOffers.map(renderOfferCard)}
+            </>}
+
+        {sentOffers.length > 0 &&
+            <>
+                <h4>{t('myOffers:sentHeading')}</h4>
+                {sentOffers.map(renderOfferCard)}
+            </>}
 
         {pendingAcceptOfferId &&
             <TradeConsentModal
