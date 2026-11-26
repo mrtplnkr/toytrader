@@ -5,7 +5,7 @@ import { updateProfile } from "firebase/auth";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { v4 } from 'uuid';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBackspace } from "@fortawesome/free-solid-svg-icons";
+import { faBackspace, faCircleCheck, faCircleXmark } from "@fortawesome/free-solid-svg-icons";
 import { Store } from "react-notifications-component";
 import { auth, storage } from "../firebase-config";
 import { getShippingProfile, notificationsSupported, ParcelMachine, requestNotificationPermission, saveShippingProfile } from "../hooks/helper";
@@ -204,9 +204,15 @@ function ProfilePage() {
                     <h3>{t('profile:notificationsHeading')}</h3>
                     <div className="card flex flex-col items-center gap-3 max-w-[360px] mx-auto p-6">
                         {notificationPermission === "granted" ?
-                            <p className="m-0 text-text-dim">{t('profile:notificationsAlreadyEnabled')}</p>
+                            <p className="m-0 flex items-center gap-2 text-text-dim">
+                                <FontAwesomeIcon className="text-[var(--color-success)]" icon={faCircleCheck} />
+                                {t('profile:notificationsAlreadyEnabled')}
+                            </p>
                         : notificationPermission === "denied" ?
-                            <p className="m-0 text-text-dim">{t('profile:notificationsBlocked')}</p>
+                            <p className="m-0 flex items-center gap-2 text-text-dim">
+                                <FontAwesomeIcon className="text-[var(--color-danger)]" icon={faCircleXmark} />
+                                {t('profile:notificationsBlocked')}
+                            </p>
                         :
                             <>
                                 <p className="m-0 text-[0.9em] text-text-dim">{t('profile:notificationsDescription')}</p>
