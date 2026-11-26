@@ -97,13 +97,18 @@ function ParcelMachinePicker({ value, onChange }: Props) {
     return (
         <div className="relative flex flex-col gap-[0.4em] w-full max-w-[360px]">
             {selected && !editing ?
-                <p className="text-[0.85em] text-primary m-0 flex items-center gap-2 flex-wrap">
-                    <span>
+                <p className="text-[0.85em] text-primary m-0 flex items-start gap-2">
+                    {/* flex-1 + min-w-0 lets the address wrap onto its own
+                        lines instead of pushing the button off to the
+                        right (or wrapping below it) - shrink-0 on the
+                        button then keeps it pinned to the right edge,
+                        aligned to the first line via items-start. */}
+                    <span className="flex-1 min-w-0">
                         {t('parcelMachinePicker:selected', { name: selected.name, address: selected.address })}
                         {nearestDistanceKm !== undefined && selected.id === value &&
                             t('parcelMachinePicker:distanceAway', { km: nearestDistanceKm < 1 ? '<1' : nearestDistanceKm.toFixed(1) })}
                     </span>
-                    <button type="button" className="text-[0.85em] text-text-dim underline" onClick={() => setOpen(true)}>
+                    <button type="button" className="text-[0.85em] text-text-dim underline shrink-0" onClick={() => setOpen(true)}>
                         {t('parcelMachinePicker:change')}
                     </button>
                 </p>

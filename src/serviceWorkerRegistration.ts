@@ -64,6 +64,23 @@ function registerValidSW(swUrl: string, config?: Config) {
           }
         };
       };
+
+      // Belt-and-suspenders on top of the browser's own update check
+      // (which only runs on navigation to a controlled page, plus an
+      // infrequent, not-guaranteed background check - the exact gap that
+      // let a deployed version go unseen for days once before onUpdate
+      // above existed at all). A tab left open for a long time without
+      // ever reloading would otherwise still wait on that. Re-checking
+      // whenever the tab regains focus, plus hourly while it's visible,
+      // means onupdatefound (and so the auto-reload in index.tsx) fires
+      // within about an hour of a new deploy even in a long-lived tab.
+      const checkForUpdate = () => registration.update().catch(() => {});
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') checkForUpdate();
+      });
+      setInterval(() => {
+        if (document.visibilityState === 'visible') checkForUpdate();
+      }, 60 * 60 * 1000);
     })
     .catch((error) => {
       console.error('Error during service worker registration:', error);
