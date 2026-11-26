@@ -107,10 +107,10 @@ function Item(props: Props) {
                         {t('item:moreMedia', { count: media.length - 1 })}
                     </span>}
             </div>
-            {props.wished != null && <div className="flex w-full justify-center">
+            {/* {props.wished != null && <div className="flex w-full justify-center">
                 <button className="self-center" onClick={() => props.addRemoveWish(props)}>
                     {props.wished ? t('item:wished') : t('item:wish')}</button>
-            </div>}
+            </div>} */}
 
             {lightboxIndex !== undefined &&
                 <div className="fixed inset-0 z-[1000] flex flex-col items-center justify-center gap-4 bg-bg/90 backdrop-blur-sm"
