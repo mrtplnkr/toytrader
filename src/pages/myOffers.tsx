@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Store } from "react-notifications-component";
 import { Trans, useTranslation } from "react-i18next";
@@ -24,6 +24,7 @@ import {
     faTruck,
     faBoxOpen,
     faChevronRight,
+    faUser,
 } from "@fortawesome/free-solid-svg-icons";
 import { faStar as faStarRegular } from "@fortawesome/free-regular-svg-icons";
 import AdSlot from "../components/adSlot";
@@ -49,6 +50,19 @@ interface HistoryItem {
     mySide: ShipmentSide;
     otherSide: ShipmentSide;
     isInitiator: boolean;
+    partnerUid: string;
+    // Per-person progress for the trade-ladder avatars (TradeStepsBar) -
+    // unlike bothPosted/bothReceived/hasRated above (which are either
+    // symmetric or viewer-only), these track each individual's own two
+    // shipping actions (ship their own toy, confirm receipt of the
+    // incoming one) and their own rating, regardless of which side the
+    // viewer is on.
+    offerPosted: boolean;
+    targetPosted: boolean;
+    offerReceivedConfirmed: boolean;
+    targetReceivedConfirmed: boolean;
+    initiatorRated: boolean;
+    receiverRated: boolean;
     isAccepted: boolean;
     canOfferTip: boolean;
     isMyTurnToRespond: boolean;
@@ -169,11 +183,65 @@ function buildTradeSteps(x: HistoryItem): { key: TradeStepKey; done: boolean }[]
     ];
 }
 
+// Each trader's own position on the ladder - unlike the joint steps above
+// (which need BOTH sides done), this tracks one person's two individual
+// shipping actions (shipping their own toy, confirming receipt of the
+// incoming one) plus their own rating, so the two climber avatars can sit
+// at different rungs (e.g. "I shipped already, they haven't yet").
+// Not a strict prerequisite chain - e.g. canRate only requires the OTHER
+// side's toy to have been posted/received, not that this person has
+// shipped their own yet - so this picks the single highest rung reached
+// rather than requiring every earlier one too.
+function personalRung(isInitiatorPerson: boolean, x: HistoryItem): number {
+    if (!x.isAccepted) return 1;
+    const rated = isInitiatorPerson ? x.initiatorRated : x.receiverRated;
+    if (rated) return 5;
+    const received = isInitiatorPerson ? x.targetReceivedConfirmed : x.offerReceivedConfirmed;
+    if (received) return 4;
+    const shipped = isInitiatorPerson ? x.offerPosted : x.targetPosted;
+    if (shipped) return 3;
+    return 2;
+}
+
+interface Climber {
+    uid: string;
+    photoUrl?: string;
+    rating?: { avg: number; count: number };
+    rung: number;
+}
+
 // Fixed pixel widths (not just gap/padding) so the circles+arrows row and
 // the labels row underneath line up column-for-column regardless of how
 // wide each translated label is.
 const TRADE_STEP_CIRCLE_WIDTH = "w-10";
 const TRADE_STEP_ARROW_WIDTH = "w-5";
+const TRADE_STEP_CIRCLE_PX = 40;
+const TRADE_STEP_ARROW_PX = 20;
+const TRADE_STEP_COUNT = 5;
+const TRADE_LADDER_WIDTH_PX = TRADE_STEP_COUNT * TRADE_STEP_CIRCLE_PX + (TRADE_STEP_COUNT - 1) * TRADE_STEP_ARROW_PX;
+
+function rungCenterX(rung: number): number {
+    return (rung - 1) * (TRADE_STEP_CIRCLE_PX + TRADE_STEP_ARROW_PX) + TRADE_STEP_CIRCLE_PX / 2;
+}
+
+function ClimberAvatar({ climber, offsetX }: { climber: Climber; offsetX: number }) {
+    return (
+        <div
+            className="absolute top-0 flex flex-col items-center gap-0.5"
+            style={{ left: rungCenterX(climber.rung) + offsetX, transform: 'translateX(-50%)' }}
+        >
+            <div className="w-6 h-6 rounded-full border-2 border-solid border-primary overflow-hidden bg-surface-raised flex items-center justify-center shrink-0">
+                {climber.photoUrl ?
+                    <img src={climber.photoUrl} alt="" className="w-full h-full object-cover" /> :
+                    <FontAwesomeIcon icon={faUser} className="text-[0.6em] text-text-dim" />}
+            </div>
+            {climber.rating &&
+                <span className="text-[0.55em] text-text-dim leading-none whitespace-nowrap">
+                    {`★${climber.rating.avg.toFixed(1)}`}
+                </span>}
+        </div>
+    );
+}
 
 function tradeStepCircleClasses(done: boolean, isNext: boolean): string {
     // border-solid/border-dashed is required (not just border-{color}) -
@@ -191,12 +259,16 @@ function tradeStepLabelClasses(done: boolean, isNext: boolean): string {
     return "text-text-dim";
 }
 
-function TradeStepsBar({ steps }: { steps: { key: TradeStepKey; done: boolean }[] }) {
+function TradeStepsBar({ steps, climbers }: { steps: { key: TradeStepKey; done: boolean }[]; climbers: Climber[] }) {
     const { t } = useTranslation();
     const nextIndex = steps.findIndex((s) => !s.done);
 
     return (
         <div className="flex flex-col items-center gap-1 w-full">
+            {climbers.length > 0 &&
+                <div className="relative h-7" style={{ width: TRADE_LADDER_WIDTH_PX }}>
+                    {climbers.map((c, i) => <ClimberAvatar key={c.uid} climber={c} offsetX={i === 0 ? -6 : 6} />)}
+                </div>}
             <div className="flex items-center justify-center">
                 {steps.map((s, i) => (
                     <Fragment key={s.key}>
@@ -237,6 +309,28 @@ function MyOffersPage() {
     const offers = useContextSelector(GoodAppContext, (state: any) => state.offers);
     const ratings = useContextSelector(GoodAppContext, (state: any) => state.ratings);
 
+    // Average star rating per uid, for the trade-ladder avatar badges below -
+    // computed from data every signed-in user can already read (ratings and
+    // toys are both unrestricted, see firestore.rules), not just the
+    // viewer's own trades, by resolving each rating's toyId to that toy's
+    // owner (the person who shipped it, i.e. who's being rated).
+    const avgRatingByUid = useMemo(() => {
+        const sums: Record<string, { total: number; count: number }> = {};
+        ratings.forEach((r: Rating) => {
+            const toy = toys.find((x: Toy) => x.id === r.toyId);
+            if (!toy) return;
+            const entry = sums[toy.userId] ?? { total: 0, count: 0 };
+            entry.total += r.stars;
+            entry.count += 1;
+            sums[toy.userId] = entry;
+        });
+        const result: Record<string, { avg: number; count: number }> = {};
+        Object.entries(sums).forEach(([uid, { total, count }]) => {
+            result[uid] = { avg: total / count, count };
+        });
+        return result;
+    }, [ratings, toys]);
+
     const [history, setHistory] = useState<HistoryItem[]>([]);
     const [pendingAcceptOfferId, setPendingAcceptOfferId] = useState<string | undefined>();
     const [payingId, setPayingId] = useState<string | undefined>();
@@ -254,6 +348,7 @@ function MyOffersPage() {
     const [dismissedRatingIds, setDismissedRatingIds] = useState<Set<string>>(new Set());
     const [dismissedTipIds, setDismissedTipIds] = useState<Set<string>>(new Set());
     const [partnerNamesByUid, setPartnerNamesByUid] = useState<Record<string, string>>({});
+    const [partnerPhotosByUid, setPartnerPhotosByUid] = useState<Record<string, string>>({});
     const [myShippingProfile, setMyShippingProfile] = useState<ShippingProfile | undefined>();
     const [sharingShippingId, setSharingShippingId] = useState<string | undefined>();
     // Inline fallback for a user placing their first trade with no saved
@@ -277,7 +372,10 @@ function MyOffersPage() {
         const uidsToResolve = Array.from(partnerUids).filter((id) => !(id in partnerNamesByUid));
         if (uidsToResolve.length === 0) return;
         getTradePartnerNames(uidsToResolve)
-            .then((names) => setPartnerNamesByUid((prev) => ({ ...prev, ...names })))
+            .then(({ names, photoURLs }) => {
+                setPartnerNamesByUid((prev) => ({ ...prev, ...names }));
+                setPartnerPhotosByUid((prev) => ({ ...prev, ...photoURLs }));
+            })
             .catch(() => {});
     // partnerNamesByUid is a dependency on purpose, not an oversight - it's
     // what lets uidsToResolve correctly shrink to empty once names come
@@ -342,6 +440,17 @@ function MyOffersPage() {
                 mySide,
                 otherSide,
                 isInitiator,
+                partnerUid,
+                offerPosted: !!o.offerPosted,
+                targetPosted: !!o.targetPosted,
+                offerReceivedConfirmed: !!o.offerReceived,
+                targetReceivedConfirmed: !!o.targetReceived,
+                // Rating doc ids are keyed by which toy got rated (see
+                // alreadyRated below) - toyTargeted is rated by the
+                // initiator (they're the one who received it), toyOffered
+                // by the receiver - independent of which side is "me" here.
+                initiatorRated: ratings.some((r: Rating) => r.id === `${o.id}_target`),
+                receiverRated: ratings.some((r: Rating) => r.id === `${o.id}_offer`),
                 myShipmentBarcode,
                 myShipmentStatus,
                 hasSharedMyShipping: !!myShippingName,
@@ -626,9 +735,23 @@ function MyOffersPage() {
   const receivedOffers = history.filter((x) => !x.isInitiator);
   const sentOffers = history.filter((x) => x.isInitiator);
 
+  const myUid = auth.currentUser?.uid;
+  const myPhotoUrl = auth.currentUser?.photoURL ?? undefined;
+
+  const buildClimbers = (x: HistoryItem): Climber[] => {
+        if (!myUid) return [];
+        const initiatorUid = x.isInitiator ? myUid : x.partnerUid;
+        const receiverUid = x.isInitiator ? x.partnerUid : myUid;
+        const photoFor = (uid: string) => uid === myUid ? myPhotoUrl : partnerPhotosByUid[uid];
+        return [
+            { uid: initiatorUid, photoUrl: photoFor(initiatorUid), rating: avgRatingByUid[initiatorUid], rung: personalRung(true, x) },
+            { uid: receiverUid, photoUrl: photoFor(receiverUid), rating: avgRatingByUid[receiverUid], rung: personalRung(false, x) },
+        ];
+  };
+
   const renderOfferCard = (x: HistoryItem) =>
             <div className="card flex flex-col items-center gap-4 mb-4 p-5" key={x.id}>
-                <TradeStepsBar steps={buildTradeSteps(x)} />
+                <TradeStepsBar steps={buildTradeSteps(x)} climbers={buildClimbers(x)} />
                 <span className="text-[0.7em] text-text-dim">{daysAgoText(t, x.offerCreated)}</span>
                 <div className="flex items-center justify-center gap-6">
                     <img className="w-[50px] rounded-sm" alt="offered" src={x.toyIOffered.file} />

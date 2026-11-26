@@ -14,14 +14,16 @@ interface GetTradePartnerNamesRequest {
 }
 
 /**
- * Resolves display names for the caller's own trade partners - myOffers.tsx
- * names the other side of a trade in its status sentences ("Alex accepted
- * the offer") instead of a generic "the offer was accepted". Firebase Auth
- * user records aren't otherwise readable from the client (only
- * getUserProfiles in admin.ts can, and that's admin-only), so this is a
- * narrower, self-service equivalent: a uid is only resolved if the caller
- * actually shares an offer with it (either side), not an open uid->name
- * lookup.
+ * Resolves display names (and, for the trade-progress-ladder avatars in
+ * myOffers.tsx, profile photos) for the caller's own trade partners -
+ * myOffers.tsx names the other side of a trade in its status sentences
+ * ("Alex accepted the offer") instead of a generic "the offer was
+ * accepted". Firebase Auth user records aren't otherwise readable from the
+ * client (only getUserProfiles in admin.ts can, and that's admin-only), so
+ * this is a narrower, self-service equivalent: a uid is only resolved if
+ * the caller actually shares an offer with it (either side), not an open
+ * uid->name lookup. photoURLs only includes uids that actually have one set
+ * (Google/Facebook sign-in) - myOffers.tsx falls back to a generic icon.
  */
 export const getTradePartnerNames = onCall<GetTradePartnerNamesRequest>(
   {region: REGION},
@@ -33,7 +35,7 @@ export const getTradePartnerNames = onCall<GetTradePartnerNamesRequest>(
 
     const {uids} = request.data ?? {};
     if (!Array.isArray(uids) || uids.length === 0) {
-      return {names: {} as Record<string, string>};
+      return {names: {} as Record<string, string>, photoURLs: {} as Record<string, string>};
     }
 
     const db = getFirestore();
@@ -47,15 +49,17 @@ export const getTradePartnerNames = onCall<GetTradePartnerNamesRequest>(
 
     const allowedUids = [...new Set(uids)].filter((uid) => legitimatePartnerUids.has(uid));
     if (allowedUids.length === 0) {
-      return {names: {} as Record<string, string>};
+      return {names: {} as Record<string, string>, photoURLs: {} as Record<string, string>};
     }
 
     const result = await getAuth().getUsers(allowedUids.map((uid) => ({uid})));
     const names: Record<string, string> = {};
+    const photoURLs: Record<string, string> = {};
     result.users.forEach((u) => {
       names[u.uid] = u.displayName || u.email || u.uid;
+      if (u.photoURL) photoURLs[u.uid] = u.photoURL;
     });
 
-    return {names};
+    return {names, photoURLs};
   }
 );

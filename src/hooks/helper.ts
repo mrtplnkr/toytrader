@@ -533,15 +533,18 @@ export const getUserProfiles = async (uids: string[]) => {
 
 const getTradePartnerNamesCallable = httpsCallable<
     { uids: string[] },
-    { names: Record<string, string> }
+    { names: Record<string, string>; photoURLs: Record<string, string> }
 >(functions, "getTradePartnerNames");
 
 // Self-service equivalent of getUserProfiles above - any signed-in user can
 // call this, but a uid is only resolved if the caller actually shares an
 // offer with it (enforced server-side, see functions/src/tradePartners.ts).
+// photoURLs is keyed the same way as names but only has an entry for a uid
+// that actually has a profile photo set - used for the trade-progress-ladder
+// avatars in myOffers.tsx.
 export const getTradePartnerNames = async (uids: string[]) => {
     const result = await getTradePartnerNamesCallable({ uids });
-    return result.data.names;
+    return result.data;
 };
 
 const banUserCallable = httpsCallable<

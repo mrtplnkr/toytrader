@@ -78,7 +78,7 @@ function ProfilePage() {
     useEffect(() => {
         const uids = Array.from(new Set(feedbackReceived.map((r: Rating) => r.raterUid)));
         if (uids.length === 0) return;
-        getTradePartnerNames(uids as string[]).then(setRaterNames).catch(() => {});
+        getTradePartnerNames(uids as string[]).then((r) => setRaterNames(r.names)).catch(() => {});
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [feedbackReceived.map((r: Rating) => r.raterUid).join(',')]);
 
