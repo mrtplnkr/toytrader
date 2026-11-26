@@ -34,7 +34,38 @@ onBackgroundMessage(messaging, (payload) => {
   self.registration.showNotification(payload.notification?.title ?? 'ToyTrader', {
     body: payload.notification?.body,
     icon: '/logo192.png',
+    // Carried through to the notificationclick handler below - every
+    // notification already attaches {offerId}, see sendPushToUser in
+    // functions/src/notifications.ts.
+    data: payload.data,
   });
+});
+
+// Without this, clicking a background notification did nothing at all -
+// no default browser behavior opens or focuses the app, so every push
+// notification was a dead end once dismissed from the tray. Reuses
+// whatever tab is already open (just focusing it, same as clicking the
+// taskbar icon would) rather than always spawning a new one, and lands on
+// /myOffers since that's where every notification kind this app sends is
+// actually about (trade offers, shipping, ratings, tips - see
+// functions/src/notifications.ts).
+self.addEventListener('notificationclick', (event: NotificationEvent) => {
+  event.notification.close();
+  const targetUrl = '/myOffers';
+
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if (new URL(client.url).origin !== self.location.origin) continue;
+        client.focus();
+        if ('navigate' in client) {
+          return (client as WindowClient).navigate(targetUrl);
+        }
+        return;
+      }
+      return self.clients.openWindow(targetUrl);
+    })
+  );
 });
 
 // Precaches every asset the build process generates. The __WB_MANIFEST
