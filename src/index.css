@@ -337,3 +337,23 @@ input[type="file"]::file-selector-button:hover {
   color: rgba(255, 255, 255, 0.45);
   pointer-events: none;
 }
+
+/* myOffers.tsx's sticky trade-steps bar (TradeStepsBar) sits flush with its
+   card's own top edge, landing exactly over .card::before's candy-cane
+   stripe above - but that stripe is positioned relative to the card's own
+   box, which scrolls normally with the page. Once this bar is actually
+   stuck (position:sticky, pinned to the viewport), the card's stripe
+   scrolls away underneath it, leaving what looks like a bare edge. Its own
+   copy of the exact same stripe travels with it instead, so the candy-cane
+   edge still reads correctly however far the card has scrolled. */
+.stickyTradeBar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: var(--radius) var(--radius) 0 0;
+  background: repeating-linear-gradient(-45deg, #c0392b 0 8px, #f1f2f6 8px 16px);
+  pointer-events: none;
+}

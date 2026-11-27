@@ -27,6 +27,7 @@ import {
     faChevronRight,
     faUser,
     faLocationDot,
+    faRightLeft,
 } from "@fortawesome/free-solid-svg-icons";
 import { faStar as faStarRegular } from "@fortawesome/free-regular-svg-icons";
 import AdSlot from "../components/adSlot";
@@ -110,6 +111,14 @@ interface HistoryItem {
     otherShippingParcelMachineLabel?: string;
 }
 
+// Relative ("3 days ago") instead of an absolute date, in a smaller/dimmer
+// font than the surrounding status line - matches the card's own top-level
+// "X days ago" badge instead of repeating a full calendar date on every
+// single status line.
+function smallRelativeDate(t: TFunction, date: Date): string {
+    return `<span class="text-[0.7em] text-text-dim">${daysAgoText(t, date)}</span>`;
+}
+
 function buildStatusHtml(t: TFunction, o: Offer, isInitiator: boolean, isReceiver: boolean, partnerName: string, params: {
     offeredToyUrl: string;
     targetedToyUrl: string;
@@ -125,13 +134,13 @@ function buildStatusHtml(t: TFunction, o: Offer, isInitiator: boolean, isReceive
     // initiator it's the one they offered (toyOffered); for the receiver
     // it's the one that got targeted (toyTargeted, which is theirs).
     const createdLine = isInitiator ?
-        t('myOffers:status.offeredYourToy', { toyUrl: params.offeredToyUrl, title: params.offeredToyTitle, date: (o.offerCreated as Date).toDateString() }) :
-        t('myOffers:status.receivedOfferForYourToy', { name: partnerName, toyUrl: params.targetedToyUrl, title: params.targetedToyTitle, date: (o.offerCreated as Date).toDateString() });
+        t('myOffers:status.offeredYourToy', { toyUrl: params.offeredToyUrl, title: params.offeredToyTitle, date: smallRelativeDate(t, o.offerCreated as Date) }) :
+        t('myOffers:status.receivedOfferForYourToy', { name: partnerName, toyUrl: params.targetedToyUrl, title: params.targetedToyTitle, date: smallRelativeDate(t, o.offerCreated as Date) });
 
     const acceptedLine = o.offerAccepted ?
         (isInitiator ?
-            t('myOffers:status.partnerAcceptedOffer', { name: partnerName, date: (o.offerAccepted as Date).toDateString() }) :
-            t('myOffers:status.youAcceptedOffer', { date: (o.offerAccepted as Date).toDateString() })) :
+            t('myOffers:status.partnerAcceptedOffer', { name: partnerName, date: smallRelativeDate(t, o.offerAccepted as Date) }) :
+            t('myOffers:status.youAcceptedOffer', { date: smallRelativeDate(t, o.offerAccepted as Date) })) :
         isReceiver ?
         t('myOffers:status.yourTurnToRespond') :
         t('myOffers:status.waitingForAcceptance', { name: partnerName });
@@ -297,7 +306,17 @@ function TradeStepsBar({ steps, climbers }: { steps: { key: TradeStepKey; done: 
         // .card's position:relative in index.css), so it releases and
         // scrolls away normally the moment the card itself scrolls past,
         // rather than staying stuck over every other card below it.
-        <div className="sticky top-0 z-10 bg-surface flex flex-col items-center gap-1 w-full pb-1">
+        // -mx-5/-mt-5 (cancelling .card's own p-5) plus px-5/pt-5 (restoring
+        // it as inner spacing) pulls this flush with the card's actual top
+        // and side edges, so it reads as full-bleed/full-width rather than
+        // floating inset within the card's padding - and lands it exactly
+        // where .card::before's candy-cane stripe is drawn. stickyTradeBar
+        // carries its own copy of that same stripe (index.css) because
+        // .card::before is positioned relative to the card's own box, which
+        // scrolls normally - without its own copy, the stripe (and the
+        // rounded top corners it sits on) would scroll out of view the
+        // moment this bar is actually stuck, leaving a plain edge behind.
+        <div className="stickyTradeBar sticky top-0 z-10 bg-surface rounded-t -mx-5 -mt-5 px-5 pt-5 flex flex-col items-center gap-1 w-full pb-1">
             {climbers.length > 0 &&
                 <div className="relative h-7" style={{ width: TRADE_LADDER_WIDTH_PX }}>
                     {climbers.map((c, i) => <ClimberAvatar key={c.uid} climber={c} offsetX={i === 0 ? -6 : 6} />)}
@@ -783,10 +802,24 @@ function MyOffersPage() {
             <div className="card flex flex-col items-center gap-4 mb-4 p-5" key={x.id}>
                 <TradeStepsBar steps={buildTradeSteps(x)} climbers={buildClimbers(x)} />
                 <span className="text-[0.7em] text-text-dim">{daysAgoText(t, x.offerCreated)}</span>
-                <div className="flex items-center justify-center gap-6">
-                    <img className="w-[50px] rounded-sm" alt="offered" src={x.toyIOffered.file} />
-                    <ul className="statusLines" dangerouslySetInnerHTML={{__html: x.status}}></ul>
-                    <img className="w-[50px] rounded-sm" alt="targeted" src={x.toyTargeted.file} />
+                <div className="flex items-center gap-4 w-full">
+                    {/* Both toy photos sit together on the left, overlapping
+                        slightly (classic stacked-avatar look - border-solid
+                        in the card's own background cuts a visible seam
+                        between them, since without Preflight border-style
+                        defaults to none and the border has zero effective
+                        width) with a small swap-arrows badge over the seam
+                        standing in for "this one trades for that one". */}
+                    <div className="relative shrink-0" style={{ width: '76px', height: '50px' }}>
+                        <img className="absolute left-0 top-0 w-[50px] h-[50px] rounded-sm object-cover border-2 border-solid border-surface"
+                            alt="offered" src={x.toyIOffered.file} />
+                        <img className="absolute left-[26px] top-0 w-[50px] h-[50px] rounded-sm object-cover border-2 border-solid border-surface z-[1]"
+                            alt="targeted" src={x.toyTargeted.file} />
+                        <div className="absolute left-[38px] top-1/2 -translate-x-1/2 -translate-y-1/2 z-[2] w-5 h-5 rounded-full bg-primary text-white flex items-center justify-center text-[0.55em] shadow">
+                            <FontAwesomeIcon icon={faRightLeft} />
+                        </div>
+                    </div>
+                    <ul className="statusLines flex-1 min-w-0" dangerouslySetInnerHTML={{__html: x.status}}></ul>
                 </div>
                 {x.isMyTurnToRespond ?
                     <div className="flex gap-2">
@@ -878,23 +911,25 @@ function MyOffersPage() {
                                     <p className="m-0 text-text-dim text-center">
                                         {t('myOffers:waitingForOtherShipping')}
                                     </p>}
-                                <label className="flex items-center gap-2 text-[0.9em]">
-                                    {t('myOffers:toySize')}
-                                    <select
-                                        value={selectedSizeByOfferId[x.id] ?? DEFAULT_TOY_SIZE}
-                                        onChange={(e) => onSizeChange(x.id, e.target.value as ToySize)}
-                                    >
-                                        {TOY_SIZES.map((size) => <option key={size} value={size}>{size}</option>)}
-                                    </select>
-                                </label>
-                                {quoteByOfferId[x.id] === 'loading' ?
-                                    <p className="text-[0.85em] m-0">{t('myOffers:fetchingPrice')}</p>
-                                : quoteByOfferId[x.id] && quoteByOfferId[x.id] !== 'error' ?
-                                    <p className="text-[0.85em] m-0">
-                                        {t('myOffers:estimatedPrice', { price: ((quoteByOfferId[x.id] as ShippingPrice).priceCents / 100).toFixed(2) })}
-                                        {t('myOffers:estimateOnlyNote')}
-                                    </p>
-                                : null}
+                                <div className="flex items-center justify-center flex-wrap gap-x-3 gap-y-1 text-[0.9em]">
+                                    <label className="flex items-center gap-2">
+                                        {t('myOffers:toySize')}
+                                        <select
+                                            value={selectedSizeByOfferId[x.id] ?? DEFAULT_TOY_SIZE}
+                                            onChange={(e) => onSizeChange(x.id, e.target.value as ToySize)}
+                                        >
+                                            {TOY_SIZES.map((size) => <option key={size} value={size}>{size}</option>)}
+                                        </select>
+                                    </label>
+                                    {quoteByOfferId[x.id] === 'loading' ?
+                                        <span className="text-[0.85em] text-text-dim">{t('myOffers:fetchingPrice')}</span>
+                                    : quoteByOfferId[x.id] && quoteByOfferId[x.id] !== 'error' ?
+                                        <span className="text-[0.85em] text-text-dim">
+                                            {t('myOffers:estimatedPrice', { price: ((quoteByOfferId[x.id] as ShippingPrice).priceCents / 100).toFixed(2) })}
+                                            {t('myOffers:estimateOnlyNote')}
+                                        </span>
+                                    : null}
+                                </div>
                                 <a
                                     href={OMNIVA_PRICE_LIST_URL[OMNIVA_DEFAULT_COUNTRY]}
                                     target="_blank"
