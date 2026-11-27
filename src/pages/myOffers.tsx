@@ -861,9 +861,13 @@ function MyOffersPage() {
                             </div>}
                         {x.canSubmitBarcode &&
                             <div className="flex flex-col gap-2 items-center">
-                                <p className="text-[0.85em] text-text-dim m-0 text-center">
-                                    {t('myOffers:registerShipmentInstructions')}
-                                </p>
+                                <ol className="list-decimal text-left pl-5 m-0 text-[0.85em] text-text-dim flex flex-col gap-1 max-w-[320px]">
+                                    <li>{t('myOffers:registerShipmentStep1')}</li>
+                                    <li>{t('myOffers:registerShipmentStep2')}</li>
+                                    <li>{t('myOffers:registerShipmentStep3')}</li>
+                                    <li>{t('myOffers:registerShipmentStep4')}</li>
+                                    <li>{t('myOffers:registerShipmentStep5')}</li>
+                                </ol>
                                 <label className="flex items-center gap-2 text-[0.9em]">
                                     {t('myOffers:toySize')}
                                     <select
