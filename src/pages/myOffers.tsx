@@ -25,6 +25,7 @@ import {
     faBoxOpen,
     faChevronRight,
     faUser,
+    faLocationDot,
 } from "@fortawesome/free-solid-svg-icons";
 import { faStar as faStarRegular } from "@fortawesome/free-regular-svg-icons";
 import AdSlot from "../components/adSlot";
@@ -74,6 +75,13 @@ interface HistoryItem {
     targetReceivedConfirmed: boolean;
     initiatorRated: boolean;
     receiverRated: boolean;
+    // Each side shares their own shipping info independently (see
+    // shareShippingInfo in helper.ts) - initiatorSharedShipping/
+    // receiverSharedShipping are the per-person facts used by the ladder,
+    // bothSharedShipping is their joint AND used by the shared step bar.
+    initiatorSharedShipping: boolean;
+    receiverSharedShipping: boolean;
+    bothSharedShipping: boolean;
     isAccepted: boolean;
     canOfferTip: boolean;
     isMyTurnToRespond: boolean;
@@ -171,14 +179,17 @@ function daysAgoText(t: TFunction, date: Date): string {
 
 // Overall trade lifecycle, independent of which side (initiator/receiver)
 // the viewer is on - unlike the per-side text in buildStatusHtml above,
-// this is the same five milestones for both participants, since "both
-// sides shipped"/"both sides received" are true or false regardless of
-// who's looking.
-type TradeStepKey = 'proposed' | 'accepted' | 'shipped' | 'received' | 'rated';
+// this is the same six milestones for both participants, since "both sides
+// shipped"/"both sides received" are true or false regardless of who's
+// looking. shippingShared sits between accepted and shipped - it's possible
+// (and common) to be accepted but not yet actually ship anything while
+// still having exchanged where/who to send it to.
+type TradeStepKey = 'proposed' | 'accepted' | 'shippingShared' | 'shipped' | 'received' | 'rated';
 
 const TRADE_STEP_ICONS: Record<TradeStepKey, IconDefinition> = {
     proposed: faPaperPlane,
     accepted: faHandshake,
+    shippingShared: faLocationDot,
     shipped: faTruck,
     received: faBoxOpen,
     rated: faStarSolid,
@@ -188,6 +199,7 @@ function buildTradeSteps(x: HistoryItem): { key: TradeStepKey; done: boolean }[]
     return [
         { key: 'proposed', done: true },
         { key: 'accepted', done: x.isAccepted },
+        { key: 'shippingShared', done: x.bothSharedShipping },
         { key: 'shipped', done: x.bothPosted },
         { key: 'received', done: x.bothReceived },
         { key: 'rated', done: x.hasRated },
@@ -206,11 +218,13 @@ function buildTradeSteps(x: HistoryItem): { key: TradeStepKey; done: boolean }[]
 function personalRung(isInitiatorPerson: boolean, x: HistoryItem): number {
     if (!x.isAccepted) return 1;
     const rated = isInitiatorPerson ? x.initiatorRated : x.receiverRated;
-    if (rated) return 5;
+    if (rated) return 6;
     const received = isInitiatorPerson ? x.targetReceivedConfirmed : x.offerReceivedConfirmed;
-    if (received) return 4;
+    if (received) return 5;
     const shipped = isInitiatorPerson ? x.offerPosted : x.targetPosted;
-    if (shipped) return 3;
+    if (shipped) return 4;
+    const sharedShipping = isInitiatorPerson ? x.initiatorSharedShipping : x.receiverSharedShipping;
+    if (sharedShipping) return 3;
     return 2;
 }
 
@@ -228,7 +242,7 @@ const TRADE_STEP_CIRCLE_WIDTH = "w-10";
 const TRADE_STEP_ARROW_WIDTH = "w-5";
 const TRADE_STEP_CIRCLE_PX = 40;
 const TRADE_STEP_ARROW_PX = 20;
-const TRADE_STEP_COUNT = 5;
+const TRADE_STEP_COUNT = 6;
 const TRADE_LADDER_WIDTH_PX = TRADE_STEP_COUNT * TRADE_STEP_CIRCLE_PX + (TRADE_STEP_COUNT - 1) * TRADE_STEP_ARROW_PX;
 
 function rungCenterX(rung: number): number {
@@ -463,6 +477,9 @@ function MyOffersPage() {
                 // by the receiver - independent of which side is "me" here.
                 initiatorRated: ratings.some((r: Rating) => r.id === `${o.id}_target`),
                 receiverRated: ratings.some((r: Rating) => r.id === `${o.id}_offer`),
+                initiatorSharedShipping: !!o.offerShippingName,
+                receiverSharedShipping: !!o.targetShippingName,
+                bothSharedShipping: !!o.offerShippingName && !!o.targetShippingName,
                 myShipmentBarcode,
                 myShipmentStatus,
                 hasSharedMyShipping: !!myShippingName,

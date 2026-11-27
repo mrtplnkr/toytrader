@@ -64,6 +64,7 @@
   "steps": {
     "proposed": "Предложено",
     "accepted": "Принято",
+    "shippingShared": "Адрес передан",
     "shipped": "Отправлено",
     "received": "Получено",
     "rated": "Оценено"

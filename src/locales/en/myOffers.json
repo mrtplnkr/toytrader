@@ -62,6 +62,7 @@
   "steps": {
     "proposed": "Proposed",
     "accepted": "Accepted",
+    "shippingShared": "Address shared",
     "shipped": "Shipped",
     "received": "Received",
     "rated": "Rated"

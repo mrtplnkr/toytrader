@@ -64,6 +64,7 @@
   "steps": {
     "proposed": "Pasiūlyta",
     "accepted": "Priimta",
+    "shippingShared": "Adresas pasidalintas",
     "shipped": "Išsiųsta",
     "received": "Gauta",
     "rated": "Įvertinta"
