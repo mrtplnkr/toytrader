@@ -89,29 +89,109 @@ class StubOmnivaClient implements OmnivaClient {
   }
 }
 
+// Omniva's own "where is my parcel" event-code vocabulary has never been
+// observed populated (see the TODO on getTrackingStatus below) - this
+// matches loosely, by keyword, across every plausible field/shape rather
+// than asserting one exact schema, so it degrades to UNKNOWN instead of
+// throwing when the real shape turns out to differ from any of these
+// guesses. Order matters: checked most-final-state-first, so a shipment
+// that's both "delivered" and "in transit" in confused/overlapping event
+// text still resolves to the more final status.
+function latestStatusKeyword(data: unknown): string {
+  if (!data || typeof data !== "object") return "";
+  const record = data as Record<string, unknown>;
+  const events = (
+    Array.isArray(record.events) ? record.events :
+      Array.isArray(record.trackingEvents) ? record.trackingEvents :
+        Array.isArray(record.history) ? record.history :
+          Array.isArray(data) ? data :
+            []
+  ) as Record<string, unknown>[];
+
+  if (events.length > 0) {
+    const latest = events[events.length - 1];
+    return String(latest.eventCode ?? latest.eventName ?? latest.status ?? latest.name ?? "").toLowerCase();
+  }
+  // No event list found - maybe the response is just a flat status object.
+  return String(record.status ?? record.eventCode ?? record.eventName ?? "").toLowerCase();
+}
+
+function mapOmnivaResponseToStatus(data: unknown): OmnivaShipmentStatus {
+  const keyword = latestStatusKeyword(data);
+  if (!keyword) return "UNKNOWN";
+  if (keyword.includes("deliver")) return "DELIVERED";
+  if (keyword.includes("return")) return "RETURNED";
+  if (keyword.includes("terminal") || keyword.includes("arriv") || keyword.includes("parcel_machine")) {
+    return "ARRIVED_AT_TERMINAL";
+  }
+  if (keyword.includes("transit") || keyword.includes("depart") || keyword.includes("accept") ||
+      keyword.includes("dispatch")) {
+    return "IN_TRANSIT";
+  }
+  if (keyword.includes("register") || keyword.includes("created")) return "REGISTERED";
+  return "UNKNOWN";
+}
+
 /**
- * Best-effort implementation against Omniva's publicly-known REST API shape.
- * No confirmed merchant credentials, sandbox, or docs exist yet - every
- * guessed endpoint/field is marked with a TODO(omniva-real-api) comment and
- * must be validated once real docs are available. Do not enable
- * OMNIVA_MODE=real in any deployed/shared environment until then.
+ * Best-effort implementation against the public "where is my parcel"
+ * endpoint Omniva's own consumer website uses (see the comment on
+ * trackingApiBaseUrl below) - not their documented, credential-gated
+ * business API. No confirmed response shape for a populated (non-empty)
+ * result exists yet - every guessed field is marked with a
+ * TODO(omniva-real-api) comment and must be validated against a real
+ * barcode's response before being trusted. Do not enable OMNIVA_MODE=real
+ * in any deployed/shared environment until then.
  */
 class RealOmnivaClient implements OmnivaClient {
+  // NOT Omniva's documented business API (developer.omniva.ee's
+  // getTrackingInfoByBarCode) - that one requires HTTP Basic Auth
+  // credentials from an Account Manager, the same business-contract
+  // requirement this app deliberately avoids everywhere else (see the
+  // comment on OmnivaClient above). This is instead the public,
+  // unauthenticated endpoint Omniva's own "Where is my parcel"/"Kur mano
+  // siunta?" widget on their consumer website calls - confirmed 2026-11-27
+  // by loading https://www.omniva.ee/en/track-and-receive-parcels/ in a
+  // real browser, typing a barcode into the tracking-number field, and
+  // watching the network request. No login/API key needed, and a
+  // nonexistent test barcode returned HTTP 200 with an empty body rather
+  // than an error. It is an undocumented internal implementation detail of
+  // their WordPress theme, not a published/stable API - it can change or
+  // disappear with zero notice and there's no support channel, since
+  // there's no business relationship behind it.
   private readonly trackingApiBaseUrl = defineString("OMNIVA_TRACKING_API_BASE_URL", {
-    default: "https://tracking.omniva.ee/api",
+    default: "https://www.omniva.ee/wp-json/custom/v1/omniva-where-is-parcel",
   });
 
   async getTrackingStatus(barcode: string): Promise<OmnivaTrackingResult> {
-    // TODO(omniva-real-api): endpoint, auth, and status-code mapping below
-    // are unverified guesses pending real Omniva tracking API docs. Worth
-    // checking whether tracking-by-barcode is public/no-contract-needed even
-    // though shipment creation requires a business contract - trackers
-    // commonly are, since that's a customer-facing feature.
-    throw new Error(
-      "RealOmnivaClient.getTrackingStatus is not implemented - tracking API " +
-      `shape unverified. (base url configured: ${this.trackingApiBaseUrl.value()}, ` +
-      `barcode: ${barcode})`
-    );
+    // TODO(omniva-real-api): the endpoint itself is confirmed (see comment
+    // above), but its response shape for an actual in-transit/delivered
+    // parcel has never been observed - only the empty-result case for a
+    // barcode that doesn't exist. mapOmnivaResponseToStatus below is
+    // best-effort keyword matching across several plausible shapes, not a
+    // verified field-by-field schema. Revisit once a real tracked
+    // barcode's response has actually been seen.
+    const url = `${this.trackingApiBaseUrl.value()}?track=${encodeURIComponent(barcode)}&lang=en`;
+    const res = await fetch(url);
+    if (!res.ok) {
+      throw new Error(`Omniva tracking lookup failed: HTTP ${res.status} for barcode ${barcode}`);
+    }
+
+    const text = await res.text();
+    if (!text.trim()) {
+      // Confirmed real behavior for an unrecognized barcode - not
+      // necessarily an error, just nothing to report yet (e.g. the parcel
+      // was only just registered and hasn't reached Omniva's system).
+      return {status: "UNKNOWN"};
+    }
+
+    let data: unknown;
+    try {
+      data = JSON.parse(text);
+    } catch (err) {
+      throw new Error(`Omniva tracking lookup returned non-JSON response for ${barcode}: ${text.slice(0, 200)}`);
+    }
+
+    return {status: mapOmnivaResponseToStatus(data)};
   }
 
   async getShippingPrice(req: OmnivaShippingPriceRequest): Promise<OmnivaShippingPriceResult> {
