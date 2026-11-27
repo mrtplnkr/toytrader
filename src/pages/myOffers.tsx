@@ -14,7 +14,7 @@ import { ShippingProfile } from "../types/shippingProfile";
 import ParcelMachinePicker from "../components/parcelMachinePicker";
 import TradeConsentModal from "../components/tradeConsentModal";
 import FeedbackCelebration from "../components/feedbackCelebration";
-import { DEFAULT_TOY_SIZE, OMNIVA_COUNTRIES, OMNIVA_PRICE_LIST_URL, OMNIVA_SEND_PARCEL_URL, TOY_SIZES, ToySize } from "../constants/omnivaPricing";
+import { DEFAULT_TOY_SIZE, OMNIVA_PRICE_LIST_URL, OMNIVA_SEND_PARCEL_URL, TOY_SIZES, ToySize } from "../constants/omnivaPricing";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import {
@@ -36,11 +36,13 @@ import AdSlot from "../components/adSlot";
 const MIN_BARCODE_LENGTH = 5;
 const MAX_BARCODE_LENGTH = 30;
 
-const COUNTRY_LABEL_KEYS: Record<typeof OMNIVA_COUNTRIES[number], string> = {
-    EE: 'myOffers:countryEstonia',
-    LV: 'myOffers:countryLatvia',
-    LT: 'myOffers:countryLithuania',
-};
+// The three Omniva country domains all land on the same shared
+// "/parcel/baltics/new" shipment flow (see constants/omnivaPricing.ts), so
+// asking which country to use before showing these links was collecting a
+// choice that didn't actually change the destination - Lithuania's domain
+// works the same for any Baltic user. The price estimate itself only ever
+// depended on toy size, never country, on the backend (getShippingPrice).
+const OMNIVA_DEFAULT_COUNTRY = 'LT';
 
 // The most recent thing that's happened on a trade - used to sort myOffers
 // with the most recently active trades first, rather than by creation date
@@ -362,7 +364,6 @@ function MyOffersPage() {
     const [respondingId, setRespondingId] = useState<string | undefined>();
     const [markingId, setMarkingId] = useState<string | undefined>();
     const [submittingBarcodeId, setSubmittingBarcodeId] = useState<string | undefined>();
-    const [selectedCountryByOfferId, setSelectedCountryByOfferId] = useState<Record<string, string>>({});
     const [selectedSizeByOfferId, setSelectedSizeByOfferId] = useState<Record<string, ToySize>>({});
     const [quoteByOfferId, setQuoteByOfferId] = useState<Record<string, ShippingPrice | 'loading' | 'error'>>({});
     const [barcodeInputByOfferId, setBarcodeInputByOfferId] = useState<Record<string, string>>({});
@@ -689,21 +690,23 @@ function MyOffersPage() {
         }
     };
 
-    // There's no way to carry a chosen destination terminal over to Omniva's
-    // own site (no deep-linking support there), so this only asks for the
-    // country - just enough to send the user to the right Omniva domain and
-    // price-list page. The actual terminal is picked on Omniva's own site.
-    const onCountryChange = (offerId: string, countryCode: string) => {
-        setSelectedCountryByOfferId((prev) => ({...prev, [offerId]: countryCode}));
-        fetchQuote(offerId, selectedSizeByOfferId[offerId] ?? DEFAULT_TOY_SIZE);
-        // Fires from the select's own change handler, within the same user
-        // gesture, so this won't be blocked as a popup.
-        window.open(OMNIVA_SEND_PARCEL_URL[countryCode], '_blank', 'noopener,noreferrer');
-    };
+    // Used to require picking a country first (just to decide which Omniva
+    // domain's link to open), but the price estimate itself only ever
+    // depended on toy size - fetch it for the default size as soon as the
+    // barcode-submission step becomes reachable, instead of waiting on a
+    // selection that no longer exists.
+    useEffect(() => {
+        history.forEach((x) => {
+            if (x.canSubmitBarcode && !(x.id in quoteByOfferId)) {
+                fetchQuote(x.id, selectedSizeByOfferId[x.id] ?? DEFAULT_TOY_SIZE);
+            }
+        });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [history]);
 
     const onSizeChange = (offerId: string, size: ToySize) => {
         setSelectedSizeByOfferId((prev) => ({...prev, [offerId]: size}));
-        if (selectedCountryByOfferId[offerId]) fetchQuote(offerId, size);
+        fetchQuote(offerId, size);
     };
 
     const onSubmitBarcode = async (offerId: string, side: ShipmentSide) => {
@@ -862,17 +865,6 @@ function MyOffersPage() {
                                     {t('myOffers:registerShipmentInstructions')}
                                 </p>
                                 <label className="flex items-center gap-2 text-[0.9em]">
-                                    {t('myOffers:shippingCountry')}
-                                    <select
-                                        value={selectedCountryByOfferId[x.id] ?? ''}
-                                        onChange={(e) => onCountryChange(x.id, e.target.value)}
-                                    >
-                                        <option value="" disabled>{t('myOffers:selectEllipsis')}</option>
-                                        {OMNIVA_COUNTRIES.map((code) =>
-                                            <option key={code} value={code}>{t(COUNTRY_LABEL_KEYS[code])}</option>)}
-                                    </select>
-                                </label>
-                                <label className="flex items-center gap-2 text-[0.9em]">
                                     {t('myOffers:toySize')}
                                     <select
                                         value={selectedSizeByOfferId[x.id] ?? DEFAULT_TOY_SIZE}
@@ -881,37 +873,33 @@ function MyOffersPage() {
                                         {TOY_SIZES.map((size) => <option key={size} value={size}>{size}</option>)}
                                     </select>
                                 </label>
-                                {selectedCountryByOfferId[x.id] &&
-                                    <>
-                                        {quoteByOfferId[x.id] === 'loading' ?
-                                            <p className="text-[0.85em] m-0">{t('myOffers:fetchingPrice')}</p>
-                                        : quoteByOfferId[x.id] && quoteByOfferId[x.id] !== 'error' ?
-                                            <p className="text-[0.85em] m-0">
-                                                {t('myOffers:estimatedPrice', { price: ((quoteByOfferId[x.id] as ShippingPrice).priceCents / 100).toFixed(2) })}
-                                                {t('myOffers:estimateOnlyNote')}
-                                            </p>
-                                        : null}
-                                        <a
-                                            href={OMNIVA_PRICE_LIST_URL[selectedCountryByOfferId[x.id]]}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="text-[0.85em]"
-                                        >
-                                            {t('myOffers:checkExactPrice', { country: selectedCountryByOfferId[x.id] })}
-                                        </a>
-                                        <a
-                                            href={OMNIVA_SEND_PARCEL_URL[selectedCountryByOfferId[x.id]]}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="btn-primary no-underline text-center"
-                                        >
-                                            {t('myOffers:registerOnOmniva')}
-                                        </a>
-                                        <p className="text-[0.8em] text-text-dim m-0 text-center">
-                                            {t('myOffers:openedInNewTab')}
-                                        </p>
-                                    </>
-                                }
+                                {quoteByOfferId[x.id] === 'loading' ?
+                                    <p className="text-[0.85em] m-0">{t('myOffers:fetchingPrice')}</p>
+                                : quoteByOfferId[x.id] && quoteByOfferId[x.id] !== 'error' ?
+                                    <p className="text-[0.85em] m-0">
+                                        {t('myOffers:estimatedPrice', { price: ((quoteByOfferId[x.id] as ShippingPrice).priceCents / 100).toFixed(2) })}
+                                        {t('myOffers:estimateOnlyNote')}
+                                    </p>
+                                : null}
+                                <a
+                                    href={OMNIVA_PRICE_LIST_URL[OMNIVA_DEFAULT_COUNTRY]}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="text-[0.85em]"
+                                >
+                                    {t('myOffers:checkExactPrice')}
+                                </a>
+                                <a
+                                    href={OMNIVA_SEND_PARCEL_URL[OMNIVA_DEFAULT_COUNTRY]}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="btn-primary no-underline text-center"
+                                >
+                                    {t('myOffers:registerOnOmniva')}
+                                </a>
+                                <p className="text-[0.8em] text-text-dim m-0 text-center">
+                                    {t('myOffers:openedInNewTab')}
+                                </p>
                                 <input
                                     type="text"
                                     placeholder={t('myOffers:pasteBarcodePlaceholder')}
