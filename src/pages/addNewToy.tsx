@@ -10,7 +10,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBackspace, faCameraRetro, faStar, faTrash, faVideo, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { addNewToy, updateToy } from "../hooks/helper";
 import { Store } from "react-notifications-component";
-import ToyListedCelebration from "../components/toyListedCelebration";
+import FireworksCelebration from "../components/fireworksCelebration";
 
 const notifyError = (title: string, message: string) => {
     Store.addNotification({
@@ -300,7 +300,8 @@ function AddNew() {
 
     return (
       <>
-        {showCelebration && <ToyListedCelebration />}
+        {showCelebration &&
+            <FireworksCelebration heading={t('addNewToy:celebrationThankYou')} body={t('addNewToy:celebrationRedirecting')} />}
 
         <div className="flex flex-col my-4">
           <button id="backButton" onClick={() => navigate(-1)}>

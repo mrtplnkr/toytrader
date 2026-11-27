@@ -6,7 +6,7 @@ interface Props {
 }
 
 // Shown right after submitting a trade rating in myOffers.tsx - same
-// full-screen-overlay pattern as toyListedCelebration.tsx, but with a quick
+// full-screen-overlay pattern as fireworksCelebration.tsx, but with a quick
 // playable distraction instead of a fireworks animation, and no auto-close
 // (there's nowhere it needs to redirect to - the trade list is already
 // right there underneath once this closes).

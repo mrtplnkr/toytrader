@@ -42,9 +42,9 @@ const STRINGS: Record<Lang, {
     newTradeOffer: (toyTitle) => ({
       title: "New trade offer!", body: `Someone wants to trade for your ${toyTitle}.`,
     }),
-    offerAccepted: {title: "Offer accepted!", body: "Your trade offer was accepted."},
+    offerAccepted: {title: "Offer accepted! 🎉", body: "Hooray! Your trade offer was accepted."},
     shippingInfoShared: {
-      title: "Shipping info shared", body: "Your trade partner shared their shipping details.",
+      title: "Shipping info shared! 🎉", body: "Hooray! Your trade partner shared their shipping details.",
     },
     shipmentUpdateMine: (status) => ({title: "Shipment update", body: `Your shipment is now ${status}.`}),
     shipmentUpdateTheirs: (status) => ({
@@ -64,10 +64,10 @@ const STRINGS: Record<Lang, {
     newTradeOffer: (toyTitle) => ({
       title: "Naujas mainų pasiūlymas!", body: `Kažkas nori išsimainyti jūsų ${toyTitle}.`,
     }),
-    offerAccepted: {title: "Pasiūlymas priimtas!", body: "Jūsų mainų pasiūlymas buvo priimtas."},
+    offerAccepted: {title: "Pasiūlymas priimtas! 🎉", body: "Valio! Jūsų mainų pasiūlymas buvo priimtas."},
     shippingInfoShared: {
-      title: "Pristatymo informacija pasidalinta",
-      body: "Jūsų mainų partneris pasidalino savo pristatymo duomenimis.",
+      title: "Pristatymo informacija pasidalinta! 🎉",
+      body: "Valio! Jūsų mainų partneris pasidalino savo pristatymo duomenimis.",
     },
     shipmentUpdateMine: (status) => ({title: "Siuntos atnaujinimas", body: `Jūsų siunta dabar yra ${status}.`}),
     shipmentUpdateTheirs: (status) => ({
@@ -88,10 +88,10 @@ const STRINGS: Record<Lang, {
     newTradeOffer: (toyTitle) => ({
       title: "Новое предложение обмена!", body: `Кто-то хочет обменять вашу игрушку ${toyTitle}.`,
     }),
-    offerAccepted: {title: "Предложение принято!", body: "Ваше предложение обмена было принято."},
+    offerAccepted: {title: "Предложение принято! 🎉", body: "Ура! Ваше предложение обмена было принято."},
     shippingInfoShared: {
-      title: "Данные доставки отправлены",
-      body: "Ваш партнёр по обмену поделился данными доставки.",
+      title: "Данные доставки отправлены! 🎉",
+      body: "Ура! Ваш партнёр по обмену поделился данными доставки.",
     },
     shipmentUpdateMine: (status) => ({
       title: "Обновление доставки", body: `Статус вашей посылки теперь: ${status}.`,

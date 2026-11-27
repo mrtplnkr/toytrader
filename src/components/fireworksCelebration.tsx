@@ -1,5 +1,4 @@
 import { useMemo } from "react";
-import { useTranslation } from "react-i18next";
 
 const BURST_COUNT = 3;
 const PARTICLES_PER_BURST = 16;
@@ -19,12 +18,29 @@ interface Burst {
     particles: Particle[];
 }
 
-// Shown for a couple of seconds right after successfully listing a brand
-// new toy (addNewToy.tsx), before redirecting to /myToys. Each burst needs
-// its own per-particle end position, which plain CSS classes can't express
-// (every particle flies a different direction/distance) - so the keyframes
-// are generated once per mount and injected via a <style> tag, rather than
-// static rules in index.css.
+interface Props {
+    heading: string;
+    body: string;
+    // Omitted for a moment that's about to navigate away on its own (e.g.
+    // addNewToy.tsx's auto-redirect timer) - shown for a moment the user
+    // stays on the same page for instead (e.g. accepting a trade offer in
+    // myOffers.tsx), where it needs its own way to dismiss. closeLabel is
+    // required alongside it (not a hardcoded default) so this component
+    // stays free of its own i18n dependency - the caller already has a
+    // translated string ready either way.
+    onClose?: () => void;
+    closeLabel?: string;
+}
+
+// A quick, snappy celebratory flash - originally just for successfully
+// listing a brand new toy (addNewToy.tsx), now reused for other one-off
+// "something good just happened" moments (e.g. accepting a trade offer)
+// that don't warrant the heavier HopGame-based FeedbackCelebration (that
+// one's reserved for the single end-of-trade feedback moment). Each burst
+// needs its own per-particle end position, which plain CSS classes can't
+// express (every particle flies a different direction/distance) - so the
+// keyframes are generated once per mount and injected via a <style> tag,
+// rather than static rules in index.css.
 function buildFireworks(): { bursts: Burst[]; keyframeCss: string } {
     let keyframeCss = '';
     const bursts: Burst[] = Array.from({ length: BURST_COUNT }, (_, burstIndex) => {
@@ -53,8 +69,7 @@ function buildFireworks(): { bursts: Burst[]; keyframeCss: string } {
     return { bursts, keyframeCss };
 }
 
-function ToyListedCelebration() {
-    const { t } = useTranslation();
+function FireworksCelebration({ heading, body, onClose, closeLabel }: Props) {
     const { bursts, keyframeCss } = useMemo(buildFireworks, []);
 
     return (
@@ -78,10 +93,11 @@ function ToyListedCelebration() {
                 ))}
             </div>
             <div className="text-[4em]">🎉</div>
-            <h2 className="m-0 text-center">{t('addNewToy:celebrationThankYou')}</h2>
-            <p className="m-0 text-text-dim text-center">{t('addNewToy:celebrationRedirecting')}</p>
+            <h2 className="m-0 text-center">{heading}</h2>
+            <p className="m-0 text-text-dim text-center">{body}</p>
+            {onClose && <button className="btn-primary" onClick={onClose}>{closeLabel}</button>}
         </div>
     );
 }
 
-export default ToyListedCelebration;
+export default FireworksCelebration;

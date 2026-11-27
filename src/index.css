@@ -218,7 +218,7 @@ input[type="file"]::file-selector-button:hover {
      so without this, no z-index on anything *inside* .largeOffer could ever
      escape it to outrank a sibling element elsewhere in the DOM. Still
      below true modals (TradeConsentModal,
-     ToyListedCelebration, item.tsx's lightbox - all z-[1000]). */
+     FireworksCelebration, item.tsx's lightbox - all z-[1000]). */
   z-index: 960;
 }
 

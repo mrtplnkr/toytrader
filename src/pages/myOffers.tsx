@@ -14,6 +14,7 @@ import { ShippingProfile } from "../types/shippingProfile";
 import ParcelMachinePicker from "../components/parcelMachinePicker";
 import TradeConsentModal from "../components/tradeConsentModal";
 import FeedbackCelebration from "../components/feedbackCelebration";
+import FireworksCelebration from "../components/fireworksCelebration";
 import { DEFAULT_TOY_SIZE, OMNIVA_PRICE_LIST_URL, OMNIVA_SEND_PARCEL_URL, TOY_SIZES, ToySize } from "../constants/omnivaPricing";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { IconDefinition } from "@fortawesome/fontawesome-svg-core";
@@ -375,6 +376,7 @@ function MyOffersPage() {
     const [starsByOfferId, setStarsByOfferId] = useState<Record<string, number>>({});
     const [feedbackByOfferId, setFeedbackByOfferId] = useState<Record<string, string>>({});
     const [showFeedbackCelebration, setShowFeedbackCelebration] = useState(false);
+    const [showAcceptCelebration, setShowAcceptCelebration] = useState(false);
     const [submittingRatingId, setSubmittingRatingId] = useState<string | undefined>();
     const [dismissedRatingIds, setDismissedRatingIds] = useState<Set<string>>(new Set());
     const [dismissedTipIds, setDismissedTipIds] = useState<Set<string>>(new Set());
@@ -561,6 +563,7 @@ function MyOffersPage() {
         try {
             setRespondingId(offerId);
             await updateOffer(offerId);
+            setShowAcceptCelebration(true);
 
             // Nothing stops a toy from being offered or targeted by several
             // competing offers at once before any of them is accepted (see
@@ -854,15 +857,6 @@ function MyOffersPage() {
                                             {sharingShippingId === x.id ? t('myOffers:saving') : t('myOffers:saveAndShareShippingInfo')}
                                         </button>
                                     </div>}
-                                {x.otherShippingName ?
-                                    <p className="m-0">
-                                        {t('myOffers:shipTo')} <strong>{x.otherShippingName}</strong>, {x.otherShippingPhone},{' '}
-                                        {x.otherShippingParcelMachineLabel}
-                                    </p>
-                                :
-                                    <p className="m-0 text-text-dim">
-                                        {t('myOffers:waitingForOtherShipping')}
-                                    </p>}
                             </div>}
                         {x.canSubmitBarcode &&
                             <div className="flex flex-col gap-2 items-center">
@@ -873,6 +867,17 @@ function MyOffersPage() {
                                     <li>{t('myOffers:registerShipmentStep4')}</li>
                                     <li>{t('myOffers:registerShipmentStep5')}</li>
                                 </ol>
+                                {x.otherShippingName ?
+                                    <p className="m-0 text-center">
+                                        {t('myOffers:shipTo')}
+                                        <br />
+                                        <strong>{x.otherShippingName}</strong>, {x.otherShippingPhone},{' '}
+                                        {x.otherShippingParcelMachineLabel}
+                                    </p>
+                                :
+                                    <p className="m-0 text-text-dim text-center">
+                                        {t('myOffers:waitingForOtherShipping')}
+                                    </p>}
                                 <label className="flex items-center gap-2 text-[0.9em]">
                                     {t('myOffers:toySize')}
                                     <select
@@ -1043,6 +1048,14 @@ function MyOffersPage() {
 
         {showFeedbackCelebration &&
             <FeedbackCelebration onClose={() => setShowFeedbackCelebration(false)} />}
+
+        {showAcceptCelebration &&
+            <FireworksCelebration
+                heading={t('myOffers:acceptCelebrationHeading')}
+                body={t('myOffers:acceptCelebrationBody')}
+                closeLabel={t('myOffers:acceptCelebrationClose')}
+                onClose={() => setShowAcceptCelebration(false)}
+            />}
     </>
   );
 }
