@@ -291,7 +291,12 @@ function TradeStepsBar({ steps, climbers }: { steps: { key: TradeStepKey; done: 
     const nextIndex = steps.findIndex((s) => !s.done);
 
     return (
-        <div className="flex flex-col items-center gap-1 w-full">
+        // sticky (not fixed) so it only stays pinned while this offer's own
+        // card is scrolled through - .card is its containing block (see
+        // .card's position:relative in index.css), so it releases and
+        // scrolls away normally the moment the card itself scrolls past,
+        // rather than staying stuck over every other card below it.
+        <div className="sticky top-0 z-10 bg-surface flex flex-col items-center gap-1 w-full pb-1">
             {climbers.length > 0 &&
                 <div className="relative h-7" style={{ width: TRADE_LADDER_WIDTH_PX }}>
                     {climbers.map((c, i) => <ClimberAvatar key={c.uid} climber={c} offsetX={i === 0 ? -6 : 6} />)}
