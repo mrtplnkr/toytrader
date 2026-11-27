@@ -399,9 +399,11 @@ function AddNew() {
                     </label>
                     <p className="text-[0.7em] text-text-dim m-0 max-w-[7em] text-center">{t('addNewToy:takeClearPhoto')}</p>
                 </div>}
-          </div>
 
-          <div className="flex flex-wrap gap-3 items-start my-2">
+            {/* Shares the same flex-wrap row as the photos above (not a
+                separate row below them) so the video tile sits right next
+                to "Add photo" whenever there's enough width for both,
+                instead of always starting its own line underneath. */}
             {video ?
                 <div className="relative">
                     <video src={video.url} controls className="w-[12em] rounded-sm" />
