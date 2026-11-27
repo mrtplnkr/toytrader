@@ -41,15 +41,19 @@ function Item(props: Props) {
     const shareToy = (e: MouseEvent) => {
         e.stopPropagation();
         const text = t('item:shareText', { title: props.title });
-        // /toy/<id> is a Cloud Function (functions/src/toyShareCard.ts,
-        // routed via the Hosting rewrite in firebase.json) that serves this
-        // toy's own Open Graph title/image for crawlers, then bounces real
-        // visitors into /viewToy/<id> (src/pages/toyView.tsx) - a real,
-        // public page, no sign-in needed just to see the toy. Always goes
-        // straight to Facebook's own share dialog -
+        // /viewToy/<id> is the canonical per-toy URL - a Cloud Function
+        // (functions/src/toyShareCard.ts's viewToyPage, routed via the
+        // Hosting rewrite in firebase.json) serves this toy's own Open
+        // Graph title/image to link-preview crawlers (Facebook/Messenger's
+        // included), and the real, public app (src/pages/toyView.tsx, no
+        // sign-in needed) to everyone else at this exact same URL - so
+        // however this link ends up getting shared (this button, or a
+        // visitor copying/re-sharing it themselves from their address bar),
+        // the preview is always this toy's, never the generic site-wide
+        // one. Always goes straight to Facebook's own share dialog -
         // navigator.share hands off to whatever the OS offers, which often
         // doesn't even list Facebook as an option.
-        const shareUrl = `${SITE_URL}/toy/${props.id}`;
+        const shareUrl = `${SITE_URL}/viewToy/${props.id}`;
         const fbShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(text)}`;
         window.open(fbShareUrl, '_blank', 'noopener,noreferrer');
     };

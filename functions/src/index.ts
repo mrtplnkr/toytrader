@@ -2,7 +2,8 @@ export {startShipmentCheckout, stripeWebhook, recheckShipmentPayment} from "./sh
 export {getShippingPrice} from "./omnivaShippingPrice";
 export {syncOmnivaShipmentStatuses} from "./omnivaStatusSync";
 export {startDonationCheckout} from "./donation";
-export {toyShareCard} from "./toyShareCard";
+export {toyShareCard, viewToyPage} from "./toyShareCard";
+export {sitemapXml} from "./sitemap";
 export {banUser, unbanUser, getUserProfiles, removeToy} from "./admin";
 export {getTradePartnerNames} from "./tradePartners";
 export {deleteMyData} from "./deleteMyData";
