@@ -36,10 +36,30 @@ interface UploadedFile {
     url: string;
 }
 
-async function uploadToStorage(file: File): Promise<UploadedFile> {
+// Firebase Storage's own SDK has its own internal retry loop that can take
+// a couple of minutes to give up on a stalled connection (observed on some
+// browser/network combinations - the request never cleanly fails, it just
+// silently keeps retrying) - without this, uploadingImage/uploadingVideo
+// would stay true and "Uploading picture..."/"Uploading video..." would
+// just sit there with no feedback and no way to retry for however long
+// that takes. Promise.race here doesn't cancel the underlying request (the
+// SDK has no public abort for uploadBytes), it just stops the UI from
+// waiting on it - an orphaned upload under a throwaway filename nobody
+// ever references is harmless.
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+    return Promise.race([
+        promise,
+        new Promise<T>((_, reject) => setTimeout(() => reject(new Error(`Timed out after ${ms}ms`)), ms)),
+    ]);
+}
+
+const IMAGE_UPLOAD_TIMEOUT_MS = 45_000;
+const VIDEO_UPLOAD_TIMEOUT_MS = 120_000;
+
+async function uploadToStorage(file: File, timeoutMs: number): Promise<UploadedFile> {
     const fileName = v4();
     const fileRef = ref(storage, `projectFiles/${fileName}`);
-    await uploadBytes(fileRef, file);
+    await withTimeout(uploadBytes(fileRef, file), timeoutMs);
     const url = await getDownloadURL(fileRef);
     return { fileName, url };
 }
@@ -138,7 +158,7 @@ function AddNew() {
 
         setUploadingImage(true);
         try {
-            const uploaded = await uploadToStorage(file);
+            const uploaded = await uploadToStorage(file, IMAGE_UPLOAD_TIMEOUT_MS);
             setImages((prev) => [...prev, uploaded]);
         } catch (err) {
             notifyError(t('addNewToy:imageUploadFailedTitle'), t('common:toast.pictureUploadFailedBody'));
@@ -173,7 +193,7 @@ function AddNew() {
 
         setUploadingVideo(true);
         try {
-            const uploaded = await uploadToStorage(file);
+            const uploaded = await uploadToStorage(file, VIDEO_UPLOAD_TIMEOUT_MS);
             setVideo(uploaded);
         } catch (err) {
             notifyError(t('addNewToy:videoUploadFailedTitle'), t('common:toast.tryAgainLater'));
