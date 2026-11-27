@@ -1,5 +1,6 @@
 import packageJson from "../package.json";
 import PublicPage from "./pages/public";
+import ToyViewPage from "./pages/toyView";
 import LoginPage from "./pages/login";
 import ListPage from "./pages/list";
 import 'react-notifications-component/dist/theme.css';
@@ -232,6 +233,7 @@ function App() {
             <Routes>
               <Route element={<Layout />}>
                 <Route path="/" element={<PublicPage />} />
+                <Route path="/viewToy/:toyId" element={<ToyViewPage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/about" element={<AboutPage />} />
                 <Route path="/disclaimer" element={<DisclaimerPage />} />

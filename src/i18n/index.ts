@@ -69,6 +69,9 @@ import hopGameRu from '../locales/ru/hopGame.json';
 import errorBoundaryEn from '../locales/en/errorBoundary.json';
 import errorBoundaryLt from '../locales/lt/errorBoundary.json';
 import errorBoundaryRu from '../locales/ru/errorBoundary.json';
+import toyViewEn from '../locales/en/toyView.json';
+import toyViewLt from '../locales/lt/toyView.json';
+import toyViewRu from '../locales/ru/toyView.json';
 
 export const SUPPORTED_LANGUAGES = ['en', 'lt', 'ru'] as const;
 export type SupportedLanguage = typeof SUPPORTED_LANGUAGES[number];
@@ -105,7 +108,7 @@ i18next
       'common', 'login', 'auth', 'about', 'disclaimer', 'item', 'parcelMachinePicker',
       'myToys', 'inPost', 'list', 'shipmentResult', 'help', 'addNewToy', 'addNewOffer', 'profile',
       'myOffers', 'public', 'privacy', 'deleteData', 'tradeConsent', 'ageProfile',
-      'hopGame', 'errorBoundary',
+      'hopGame', 'errorBoundary', 'toyView',
     ],
     defaultNS: 'common',
     resources: {
@@ -115,7 +118,7 @@ i18next
         list: listEn, shipmentResult: shipmentResultEn, help: helpEn, addNewToy: addNewToyEn,
         addNewOffer: addNewOfferEn, profile: profileEn, myOffers: myOffersEn, public: publicEn,
         privacy: privacyEn, deleteData: deleteDataEn, tradeConsent: tradeConsentEn, ageProfile: ageProfileEn,
-        hopGame: hopGameEn, errorBoundary: errorBoundaryEn,
+        hopGame: hopGameEn, errorBoundary: errorBoundaryEn, toyView: toyViewEn,
       },
       lt: {
         common: commonLt, login: loginLt, auth: authLt, about: aboutLt, disclaimer: disclaimerLt,
@@ -123,7 +126,7 @@ i18next
         list: listLt, shipmentResult: shipmentResultLt, help: helpLt, addNewToy: addNewToyLt,
         addNewOffer: addNewOfferLt, profile: profileLt, myOffers: myOffersLt, public: publicLt,
         privacy: privacyLt, deleteData: deleteDataLt, tradeConsent: tradeConsentLt, ageProfile: ageProfileLt,
-        hopGame: hopGameLt, errorBoundary: errorBoundaryLt,
+        hopGame: hopGameLt, errorBoundary: errorBoundaryLt, toyView: toyViewLt,
       },
       ru: {
         common: commonRu, login: loginRu, auth: authRu, about: aboutRu, disclaimer: disclaimerRu,
@@ -131,7 +134,7 @@ i18next
         list: listRu, shipmentResult: shipmentResultRu, help: helpRu, addNewToy: addNewToyRu,
         addNewOffer: addNewOfferRu, profile: profileRu, myOffers: myOffersRu, public: publicRu,
         privacy: privacyRu, deleteData: deleteDataRu, tradeConsent: tradeConsentRu, ageProfile: ageProfileRu,
-        hopGame: hopGameRu, errorBoundary: errorBoundaryRu,
+        hopGame: hopGameRu, errorBoundary: errorBoundaryRu, toyView: toyViewRu,
       },
     },
     interpolation: { escapeValue: false },

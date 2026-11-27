@@ -44,9 +44,9 @@ function Item(props: Props) {
         // /toy/<id> is a Cloud Function (functions/src/toyShareCard.ts,
         // routed via the Hosting rewrite in firebase.json) that serves this
         // toy's own Open Graph title/image for crawlers, then bounces real
-        // visitors into /list?toyId=<id> (which opens it in the viewer -
-        // works even logged-out, since login.tsx returns here after
-        // sign-in). Always goes straight to Facebook's own share dialog -
+        // visitors into /viewToy/<id> (src/pages/toyView.tsx) - a real,
+        // public page, no sign-in needed just to see the toy. Always goes
+        // straight to Facebook's own share dialog -
         // navigator.share hands off to whatever the OS offers, which often
         // doesn't even list Facebook as an option.
         const shareUrl = `${SITE_URL}/toy/${props.id}`;

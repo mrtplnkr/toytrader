@@ -46,21 +46,26 @@ function buildToyKeywords(title: string): string {
  * server-side rendering, so it can only ever serve the one static set of
  * meta tags in public/index.html regardless of route - Facebook/etc. would
  * see the generic ToyTrader card for every toy. Routed here via the
- * Hosting rewrite on /toy/** (firebase.json), ahead of the SPA catch-all.
- * Real visitors get bounced into the actual app (meta refresh + JS
- * redirect); crawlers read the raw HTML's <head> without following either.
- * Must stay fully public (no auth) - crawlers never sign in.
+ * Hosting rewrite on /toy/** (firebase.json), ahead of the SPA catch-all -
+ * note this means /toy/** itself can never be a client-side route, which is
+ * why real visitors land on /viewToy/{id} instead (a real, public SPA page,
+ * see src/pages/toyView.tsx) rather than /toy/{id}. Real visitors get
+ * bounced into the actual app (meta refresh + JS redirect); crawlers read
+ * the raw HTML's <head> without following either. Must stay fully public
+ * (no auth) - crawlers never sign in.
  */
 export const toyShareCard = onRequest(
   {region: REGION},
   async (req, res) => {
     const toyId = decodeURIComponent(req.path.replace(/^\/toy\/?/, "").replace(/\/$/, ""));
-    const redirectUrl = `${APP_URL}/list?toyId=${encodeURIComponent(toyId)}`;
-
+    // /viewToy/:toyId (the client route) requires an id segment - a bare
+    // /toy/ hit with nothing to redirect to falls back to the general
+    // browse page instead of a dead link.
     if (!toyId) {
-      res.redirect(302, redirectUrl);
+      res.redirect(302, `${APP_URL}/list`);
       return;
     }
+    const redirectUrl = `${APP_URL}/viewToy/${encodeURIComponent(toyId)}`;
 
     try {
       const db = getFirestore();
